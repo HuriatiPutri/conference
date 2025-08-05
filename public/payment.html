@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment</title>
+    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="SB-Mid-client-MfO9Oktqm9bY9o5d"></script>
+</head>
+<body>
+    <button id="pay-button">Pay!</button>
+
+    <script>
+        document.getElementById('pay-button').addEventListener('click', function () {
+            fetch('/payment/token')
+                .then(response => response.json())
+                .then(data => {
+                    window.snap.pay(data.snap_token, {
+                        onSuccess: function(result){ console.log('success', result); },
+                        onPending: function(result){ console.log('pending', result); },
+                        onError: function(result){ console.log('error', result); },
+                        onClose: function(){ console.log('popup closed'); }
+                    });
+                });
+        });
+    </script>
+</body>
+</html>

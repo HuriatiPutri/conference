@@ -34,6 +34,51 @@ class Audience extends Model
         'payment_method' => 'string',
     ];
 
+    public function getPaymentMethodText()
+    {
+        switch ($this->payment_method) {
+            case 'transfer_bank':
+                return 'Transfer Bank';
+            case 'payment_gateway':
+                return 'Payment Gateway';
+            default:
+                return 'Metode Pembayaran Tidak Diketahui';
+        }
+    }
+
+    public function getPresentationTypeText()
+    {
+        switch ($this->presentation_type) {
+            case 'online_author':
+                return 'Online (author/presenter)';
+            case 'onsite':
+                return 'Onsite';
+            case 'participant_only':
+                return 'Participant Only';
+            default:
+                return 'Jenis Peserta Tidak Diketahui';
+        }
+    }
+
+
+    public function getPaymentStatusText()
+    {
+        switch ($this->payment_status) {
+            case 'pending_payment':
+                return '<span class="badge badge-warning">Menunggu Pembayaran</span>';
+            case 'paid':
+                return '<span class="badge badge-success">Sudah Dibayar</span>';
+            case 'failed':
+                return '<span class="badge badge-danger">Pembayaran Gagal</span>';
+            case 'refunded':
+                return '<span class="badge badge-info">Dikembalikan</span>';
+            case 'cancelled':
+                return '<span class="badge badge-danger">Dibatalkan</span>';
+            default:
+                return '<span class="badge badge-dark">Status Tidak Diketahui</span>';
+        }
+    }
+
     // Relasi 'belongsTo' ke Conference
     public function conference()
     {

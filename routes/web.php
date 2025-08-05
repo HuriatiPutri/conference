@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ConferenceController;
 use App\Http\Controllers\RegistrationController; 
 use App\Http\Controllers\AudienceController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PaypalController;
 
 
 
@@ -35,8 +37,14 @@ Route::resource('conference', ConferenceController::class);
 //registration
 Route::get('/registration/{conference}', [RegistrationController::class, 'create'])->name('registration.create');
 Route::post('/registration/{conference}', [RegistrationController::class, 'store'])->name('registration.store');
+Route::get('/registration/detail/{audience_id}', [RegistrationController::class, 'show'])->name('registration.show');
 
+//payment
+Route::post('/registration/checkout/token', [PaymentController::class, 'getSnapToken'])->name('payment.getSnapToken');
 
+Route::post('/paypal/pay', [PaypalController::class, 'createTransaction'])->name('paypal.pay');
+Route::get('/paypal/success', [PaypalController::class, 'captureTransaction'])->name('paypal.success');
+Route::get('/paypal/cancel', [PaypalController::class, 'cancelTransaction'])->name('paypal.cancel');
 
 
 //audience

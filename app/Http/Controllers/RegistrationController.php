@@ -4,12 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Models\Audience; // Model untuk menyimpan data pendaftar
 use App\Models\Conference; // Model untuk mendapatkan detail konferensi
+use App\Models\InvoiceHistory; // Model untuk menyimpan riwayat pembayaran
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage; // Untuk mengelola upload file
 use Illuminate\Validation\Rule; // Digunakan untuk aturan validasi 'unique'
+use Midtrans\Snap;
+use Midtrans\Config;
 
 class RegistrationController extends Controller
 {
+    public function __construct()
+    {
+        Config::$serverKey = config('midtrans.server_key');
+        Config::$isProduction = config('midtrans.is_production');
+        Config::$isSanitized = true;
+        Config::$is3ds = true;
+    }
     /**
      * Menampilkan formulir pendaftaran peserta untuk konferensi tertentu.
      * Conference ID diambil dari URL melalui Route Model Binding.
@@ -21,8 +31,12 @@ class RegistrationController extends Controller
     {
         // Variabel $conference sudah berisi objek Konferensi dari URL
         // View yang akan dimuat adalah 'resources/views/registrations/create.blade.php'
-        return view('registration', compact('conference'));
-    }
+        return view('registration', [
+            'conference' => $conference,
+            'snapToken' => null,
+            'audience_id' => null, // ID peserta akan diisi setelah pendaftaran berhasil
+        ]);
+        }
 
     /**
      * Menyimpan data pendaftaran peserta baru dari formulir publik.
@@ -53,6 +67,7 @@ class RegistrationController extends Controller
             'country' => 'required|string|max:255',
             'presentation_type' => 'required|in:online_author,onsite,participant_only',
             'full_paper' => 'nullable|file|mimes:doc,docx|max:5120', // Upload file dokumen, max 5MB
+            'payment_method' => 'required|in:transfer_bank,payment_gateway', // Metode pembayaran yang didukung
         ]);
 
         // 2. Tangani Upload File 'full_paper'
@@ -89,9 +104,38 @@ class RegistrationController extends Controller
             'paid_fee' => $paidFee,
             'payment_status' => 'pending_payment', // Status pembayaran default 'pending_payment'
             'full_paper_path' => $fullPaperPath,
+            'payment_method' => $validatedData['payment_method'], // Metode pembayaran default
         ]);
 
+
+            // Ambil data Audience yang baru saja dibuat (alternatif: simpan hasil create ke variable)
+            $audience = Audience::where('email', $validatedData['email'])
+                                ->where('conference_id', $conference->id)
+                                ->latest('id')->first();
+
+
         // 5. Redirect ke Halaman Formulir Pendaftaran dengan Pesan Sukses
-        return redirect()->route('registration.create', $conference->id)->with('success', 'Pendaftaran Anda berhasil! Harap selesaikan pembayaran.');
+        return redirect()->route('registration.show', $audience->id)->with('success', 'Pendaftaran Anda berhasil! Harap selesaikan pembayaran.');
+    }
+
+    /**
+     * Menampilkan halaman detail pendaftaran peserta.
+     * Halaman ini akan menampilkan informasi pendaftaran dan status pembayaran.
+     */
+
+    public function show($audience_id)
+    {
+
+        $audience = Audience::findOrFail($audience_id);
+        $invoiceHistory = InvoiceHistory::where('audience_id', $audience_id)->first();
+
+        return view('show', [
+            'audience' => $audience,
+            'conference' => $audience->conference,
+            'snapToken' => null, // Token Snap akan diisi saat pembayaran
+            'audience_id' => $audience->id, // ID peserta untuk referensi
+            'expiresAt' => $invoiceHistory ? $invoiceHistory->expired_at : 0, // Waktu kedaluwarsa token
+            'paymentMethod' => $invoiceHistory->payment_method ?? null, 
+        ]);
     }
 }
