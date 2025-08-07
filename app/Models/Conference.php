@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Conference extends Model
 {
     use HasFactory;
-
+    
     /**
      * The table associated with the model.
      *

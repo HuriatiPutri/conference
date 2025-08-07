@@ -105,20 +105,36 @@ class PaypalController extends Controller
                 Audience::where('id', $invoiceHistory->audience_id)->update([
                     'payment_status' => 'paid' ?? 'unknown',
                 ]);
+
+                // Kirim email konfirmasi pembayaran
+                $invoiceHistory->sendEmail();
             }
 
-            return redirect()->route('registration.show', $invoiceHistory->audience_id)->with('success', 'Pembayaran berhasil!');
+            return redirect()->route('registration.show', $invoiceHistory->audience->public_id)->with('success', 'Pembayaran berhasil!');
         }
 
-        return redirect()->route('registration.show', $invoiceHistory->audience_id)->with('error', 'Pembayaran gagal.');
+        return redirect()->route('registration.show', $invoiceHistory->audience->public_id)->with('error', 'Pembayaran gagal.');
     }
 
     public function cancelTransaction(Request $request)
-    {
-        // Logika untuk menangani pembatalan transaksi
-        
-        $invoiceHistory = InvoiceHistory::where('snap_token', $request['token'])->first();
+{
+    // Cari histori invoice berdasarkan snap_token
+    $invoiceHistory = InvoiceHistory::where('snap_token', $request->input('token'))->first();
 
-        return redirect()->route('registration.show', $invoiceHistory->audience_id)->with('error', 'Transaksi dibatalkan oleh pengguna.');
+    // Jika tidak ditemukan, redirect dengan pesan error
+    if (!$invoiceHistory) {
+        return redirect()->route('home')->with('error', 'Data transaksi tidak ditemukan.');
     }
+
+    // Jika audience tidak ditemukan (jaga-jaga)
+    if (!$invoiceHistory->audience) {
+        return redirect()->route('home')->with('error', 'Data peserta tidak ditemukan.');
+    }
+
+    // Jika semua data ditemukan, lanjut redirect ke halaman registrasi dengan pesan error
+    return redirect()
+        ->route('registration.show', $invoiceHistory->audience->public_id)
+        ->with('error', 'Transaksi dibatalkan oleh pengguna.');
+}
+
 }

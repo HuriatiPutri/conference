@@ -86,7 +86,7 @@
                                                     <td class="text-end">Rp {{ number_format($conference->participant_fee, 0, ',', '.') }}</td>
                                                     <td class="text-center">
                                                         @php
-                                                        $registrationUrl = route('registration.create', $conference->id);
+                                                        $registrationUrl = route('registration.create', $conference->public_id);
                                                         @endphp
                                                         <i class="fas fa-copy copy-button"
                                                             data-url="{{ $registrationUrl }}"

@@ -33,6 +33,10 @@ Route::get('/home/conference/create', function () {
 Route::get('/home/conference/', [ConferenceController::class, 'index'])->name('home.conference.index');
 Route::resource('conference', ConferenceController::class);
 
+//home
+Route::get('/home', function () {
+    return view('public.home');
+})->name('home');
 
 //registration
 Route::get('/registration/{conference}', [RegistrationController::class, 'create'])->name('registration.create');

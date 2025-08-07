@@ -92,6 +92,7 @@ class RegistrationController extends Controller
 
         // 4. Simpan Data Pendaftaran ke Database (Tabel 'audiences')
         Audience::create([
+            'public_id' => uniqid(), // Buat ID unik untuk peserta
             'conference_id' => $conference->id, // ID konferensi diambil dari objek Conference di URL
             'first_name' => $validatedData['first_name'],
             'last_name' => $validatedData['last_name'],
@@ -113,9 +114,10 @@ class RegistrationController extends Controller
                                 ->where('conference_id', $conference->id)
                                 ->latest('id')->first();
 
-
+        // 4.1. Kirim Email Konfirmasi Pendaftaran
+        $audience->sendEmail();
         // 5. Redirect ke Halaman Formulir Pendaftaran dengan Pesan Sukses
-        return redirect()->route('registration.show', $audience->id)->with('success', 'Pendaftaran Anda berhasil! Harap selesaikan pembayaran.');
+        return redirect()->route('registration.show', $audience->public_id)->with('success', 'Pendaftaran Anda berhasil! Harap selesaikan pembayaran.');
     }
 
     /**
@@ -126,7 +128,7 @@ class RegistrationController extends Controller
     public function show($audience_id)
     {
 
-        $audience = Audience::findOrFail($audience_id);
+        $audience = Audience::where('public_id', $audience_id)->firstOrFail();
         $invoiceHistory = InvoiceHistory::where('audience_id', $audience_id)->first();
 
         return view('show', [

@@ -101,6 +101,9 @@ class PaymentController extends Controller
         Audience::where('id', $invoiceHistory->audience_id)->update([
             'payment_status' => $mappingStatus[$transaction] ?? 'unknown',
         ]);
+
+        // Kirim email konfirmasi pembayaran
+        $invoiceHistory->sendEmail();
         return response()->json(['message' => 'Notification handled'], 200);
     }
 

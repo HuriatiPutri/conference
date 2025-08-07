@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Mail;
 
 class Audience extends Model
 {
@@ -12,6 +13,7 @@ class Audience extends Model
     protected $table = 'audiences';
 
     protected $fillable = [
+        'public_id',
         'conference_id',
         'first_name',
         'last_name',
@@ -83,5 +85,26 @@ class Audience extends Model
     public function conference()
     {
         return $this->belongsTo(Conference::class);
+    }
+
+    public function sendEmail(){
+        $data = [
+            'name' => $this->first_name . ' ' . $this->last_name,
+            'initial' => $this->conference->initial,
+            'registration_number' => $this->public_id,
+            'registration_date' => $this->created_at->format('d M Y'),
+            'paper_title' => $this->paper_title,
+            'conference_name' => $this->conference->name,
+            'year' => $this->conference->year,
+            'place' => $this->conference->city . ', ' . $this->conference->country,
+            'email' => $this->email,
+            'phone_number' => $this->phone_number,
+            'payment_link' => route('registration.show', ['audience_id' => $this->public_id]),
+        ];
+
+        Mail::send('emails.registration_confirmation', $data, function ($message) {
+            $message->to($this->email, "{$this->first_name} {$this->last_name}")
+                    ->subject('Registration Confirmation');
+        });
     }
 }

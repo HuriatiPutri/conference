@@ -76,8 +76,8 @@
                             </p>
                             @endif
                             <div id="container-payment">
-                                <button id="pay-button" class="btn btn-primary" {{ $paymentMethod === 'paypal' ? 'disabled' : '' }}>Bayar sekarang dengan Midtrans</button>
-                                <button id="paypal-pay-button" class="btn btn-primary"  {{ $paymentMethod === 'midtrans' ? 'disabled' : '' }}>Bayar dengan PayPal</button>
+                                <button id="pay-button" class="btn btn-primary" {{ $paymentMethod === 'paypal' ? 'disabled' : '' }}>Bayar sekarang dengan Virtual Account (VA)</button>
+                                <button id="paypal-pay-button" class="btn btn-primary"  {{ $paymentMethod === 'midtrans' ? 'disabled' : '' }}>Bayar dengan PayPal / Credit Card</button>
                             </div>
                         @else
                             Silakan transfer ke rekening yang telah ditentukan.

@@ -36,6 +36,7 @@ class ConferenceController extends Controller
     {
         // 1. Validasi Data
         $validatedData = $request->validate([
+            'public_id' => 'required|unique:conferences,public_id',
             'name' => 'required|string|max:255',
             'initial' => 'nullable|string|max:255', // Initial bisa kosong
             'date' => 'nullable|date', // Tanggal bisa kosong, format YYYY-MM-DD
@@ -59,6 +60,7 @@ class ConferenceController extends Controller
 
         // 3. Buat entri baru di database
         // Gabungkan path cover poster ke dalam data yang divalidasi
+        $validatedData['public_id'] = uniqid();
         $validatedData['cover_poster_path'] = $coverPosterPath;
 
         Conference::create($validatedData);

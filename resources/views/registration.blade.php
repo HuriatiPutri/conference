@@ -3,17 +3,12 @@ use App\Constants\Countries;
 
 ?>
 
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+@extends('layouts.app')
+@section('title', 'Detail Pendaftaran Peserta Konferensi')
 
-<head>
-</head>
 <link href="https://getbootstrap.com/docs/4.1/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://getbootstrap.com/docs/4.1/examples/starter-template/starter-template.css" rel="stylesheet">
-
-<body>
-
-    <body>
+@section('content')
 
         <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
             <a class="navbar-brand" href="#">SOTVI</a>
@@ -53,7 +48,7 @@ use App\Constants\Countries;
                             @endif
                         </div>
                         <div class="card-body">
-                            <form action="{{ route('registration.store', $conference->id) }}" method="POST" enctype="multipart/form-data">
+                            <form action="{{ route('registration.store', $conference->public_id) }}" method="POST" enctype="multipart/form-data">
                                 @csrf
 
                                 {{-- Hidden input untuk conference_id --}}
@@ -197,6 +192,9 @@ use App\Constants\Countries;
 
 
         </main><!-- /.container -->
+@endsection
+
+@section('scripts')
         <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
         <script src="https://getbootstrap.com/docs/4.1/assets/js/vendor/popper.min.js"></script>
         <script src="https://getbootstrap.com/docs/4.1/dist/js/bootstrap.min.js"></script>
@@ -272,5 +270,4 @@ use App\Constants\Countries;
             }
         });
     </script>
-    </body>
-</html>
+    @endsection
