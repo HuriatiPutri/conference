@@ -19,7 +19,7 @@
                         </h3>
                     </div>
                     <div class="card-body">
-                        <form action="{{ route('conference.update', $conference->id) }}" method="POST" enctype="multipart/form-data">
+                        <form action="{{ route('conference.update', $conference->public_id) }}" method="POST" enctype="multipart/form-data">
                             @csrf {{-- Token CSRF untuk keamanan Laravel --}}
                             @method('PUT') {{-- Digunakan untuk mengirimkan permintaan PUT/PATCH --}}
 

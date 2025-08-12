@@ -93,9 +93,9 @@
                                                             title="Salin Link Registrasi"></i>
                                                     </td>
                                                     <td class="text-center">
-                                                        <a href="{{ route('conference.show', $conference->id) }}" class="btn btn-info btn-sm" title="Lihat"><i class="fas fa-eye"></i></a>
-                                                        <a href="{{ route('conference.edit', $conference->id) }}" class="btn btn-warning btn-sm" title="Edit"><i class="fas fa-edit"></i></a>
-                                                        <form action="{{ route('conference.destroy', $conference->id) }}" method="POST" style="display:inline-block;">
+                                                        <a href="{{ route('conference.show', $conference->public_id) }}" class="btn btn-info btn-sm" title="Lihat"><i class="fas fa-eye"></i></a>
+                                                        <a href="{{ route('conference.edit', $conference->public_id) }}" class="btn btn-warning btn-sm" title="Edit"><i class="fas fa-edit"></i></a>
+                                                        <form action="{{ route('conference.destroy', $conference->public_id) }}" method="POST" style="display:inline-block;">
                                                             @csrf
                                                             @method('DELETE')
                                                             <button type="submit" class="btn btn-danger btn-sm" title="Hapus" onclick="return confirm('Apakah Anda yakin ingin menghapus konferensi ini?')"><i class="fas fa-trash"></i></button>

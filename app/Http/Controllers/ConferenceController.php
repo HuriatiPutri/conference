@@ -36,7 +36,6 @@ class ConferenceController extends Controller
     {
         // 1. Validasi Data
         $validatedData = $request->validate([
-            'public_id' => 'required|unique:conferences,public_id',
             'name' => 'required|string|max:255',
             'initial' => 'nullable|string|max:255', // Initial bisa kosong
             'date' => 'nullable|date', // Tanggal bisa kosong, format YYYY-MM-DD
@@ -75,7 +74,7 @@ class ConferenceController extends Controller
     public function show(Conference $conference)
     {
         // Menampilkan detail satu konferensi
-        return view('conference.show', compact('conference'));
+        return view('home.conference.show', compact('conference'));
     }
 
     /**

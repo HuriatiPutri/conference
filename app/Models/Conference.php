@@ -22,6 +22,7 @@ class Conference extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'public_id',
         'name',
         'initial',
         'cover_poster_path',
