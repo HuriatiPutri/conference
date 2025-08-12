@@ -129,7 +129,7 @@ class RegistrationController extends Controller
     {
 
         $audience = Audience::where('public_id', $audience_id)->firstOrFail();
-        $invoiceHistory = InvoiceHistory::where('audience_id', $audience_id)->first();
+        $invoiceHistory = InvoiceHistory::where('audience_id', $audience->id)->first();
 
         return view('show', [
             'audience' => $audience,
