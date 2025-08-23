@@ -161,6 +161,19 @@
                   <label for="online_fee" class="form-label fw-bold"> Rooms <span class="text-danger">*</span></label>
                   <button type="button" class="btn btn-primary btn-sm" onclick="addRoom()">+ Add Room</button>
                 </div>
+                @if($conference->rooms->isEmpty())
+                  @php
+                    $index = 0;
+                  @endphp
+                <div id="rooms-wrapper" class="mb-3">
+                    <div class="room-group input-group mb-2">
+                      <input type="text" class="form-control" name="room[{{$index}}][room_name]" placeholder="Room Name" required>
+                      <button type="button" class="btn btn-danger" onclick="removeRoom(this)">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                @endif
                 @foreach ($conference->rooms as $index => $room)
                 <div id="rooms-wrapper" class="mb-3">
                   <div class="room-group input-group mb-2">

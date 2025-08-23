@@ -44,6 +44,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('audience', AudienceController::class);
     Route::get('/home/audience/create', [AudienceController::class, 'create'])->name('home.audience.create');
     Route::get('/home/audience/', [AudienceController::class, 'index'])->name('home.audience.index');
+    Route::get('/home/audience/download/{audience}', [AudienceController::class, 'downloadCertificate'])->name('home.audience.download');
 });
 
 // home

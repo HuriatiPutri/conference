@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers; // Perhatikan namespace ini
 
-use App\Http\Controllers\Controller; // Pastikan menggunakan base Controller
+// Pastikan menggunakan base Controller
 use App\Models\Audience; // Import Model Audience
 use App\Models\Conference; // Import Model Conference
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage; // Untuk upload file
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request; // Untuk upload file
+use Illuminate\Support\Facades\Storage;
 
 class AudienceController extends Controller
 {
@@ -17,6 +18,7 @@ class AudienceController extends Controller
     {
         // Ambil semua data audience, eager load relasi conference
         $audiences = Audience::with('conference')->get();
+
         return view('home.audience.index', compact('audiences')); // View di folder 'audience/index.blade.php'
     }
 
@@ -26,14 +28,17 @@ class AudienceController extends Controller
     public function create()
     {
         $conferences = Conference::all(); // Ambil daftar conference untuk dropdown
+
         return view('home.audience.create', compact('conferences')); // View di folder 'audience/create.blade.php'
     }
 
     public function regis()
     {
         $conferences = Conference::all(); // Ambil daftar conference untuk dropdown
+
         return view('registration', compact('conferences')); // View di folder 'audience/create.blade.php'
     }
+
     /**
      * Store a newly created resource in storage (Menyimpan audience baru).
      */
@@ -79,6 +84,7 @@ class AudienceController extends Controller
     public function edit(Audience $audience) // Route Model Binding
     {
         $conferences = Conference::all(); // Ambil daftar conference untuk dropdown
+
         return view('home.audience.edit', compact('audience', 'conferences')); // View di folder 'audience/edit.blade.php'
     }
 
@@ -93,7 +99,7 @@ class AudienceController extends Controller
             'last_name' => 'required|string|max:255',
             'paper_title' => 'nullable|string|max:255',
             'institution' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:audiences,email,' . $audience->id, // Email unik, kecuali untuk audience ini sendiri
+            'email' => 'required|email|max:255|unique:audiences,email,'.$audience->id, // Email unik, kecuali untuk audience ini sendiri
             'phone_number' => 'nullable|string|max:20',
             'country' => 'required|string|max:255',
             'presentation_type' => 'required|in:online_author,onsite,participant_only',
@@ -139,5 +145,44 @@ class AudienceController extends Controller
         $audience->delete();
 
         return redirect()->route('home.audience.index')->with('success', 'Audience berhasil dihapus!');
+    }
+
+    public function downloadCertificate(Audience $audience)
+    {
+        $conference = Conference::find($audience->conference_id);
+
+        if (!$conference) {
+            return redirect()->back()->withInput()->withErrors(['conference_id' => 'Selected conference does not exist.']);
+        }
+
+        $audience = Audience::where('email', $audience->email)
+            ->where('conference_id', $conference->id)
+            ->first();
+
+        if (!$audience) {
+            return redirect()->back()->withInput()->withErrors(['email' => 'This email is not registered for the selected conference.']);
+        }
+
+        $keynoteIsExist = $audience ? $audience->keynote()->exists() : false;
+        $parallelSessionIsExist = $audience ? $audience->parallelSession()->exists() : false;
+        if (!$keynoteIsExist && !$parallelSessionIsExist) {
+            return redirect()->back()->withInput()->withErrors(['email' => 'This email has not participated in any sessions for the selected conference.']);
+        }
+
+        // Jika validasi berhasil, arahkan ke rute untuk mengunduh sertifikat
+        $positions = json_decode($conference->certificate_template_position, true);
+        $layout = json_decode($positions['positions'], true);
+        $background = storage_path('app/public/'.$conference->certificate_template_path);
+
+        $data = [
+            'name' => $audience->first_name.' '.$audience->last_name,
+            'conference' => $conference->name,
+            'date' => $conference->date,
+        ];
+
+        $pdf = Pdf::loadView('certificate.template', compact('data', 'layout', 'background'))
+                  ->setPaper('A5', 'landscape');
+
+        return $pdf->stream("certificate-{$data['name']}.pdf");
     }
 }

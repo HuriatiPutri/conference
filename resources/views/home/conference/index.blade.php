@@ -59,7 +59,7 @@
                             <th class="text-end">Biaya Onsite</th>
                             <th class="text-end">Biaya Partisipan</th>
                             <th class="text-center">Link Registrasi</th>
-                            <th style="width: 150px" class="text-center">Aksi</th>
+                            <th class="text-center">Aksi</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -94,15 +94,15 @@
                                   $parallelSessionUrl = route('parallel-session.index', $conference->public_id);
                                 @endphp
                                 <div class="d-flex flex-column align-items-start">
-                                  <div class="p-2">
-                                    <i class="fas fa-copy copy-button" data-url="{{ $registrationUrl }}"
+                                    <div style="font-size: 14px; white-space: nowrap;">
+                                        <i class="fas fa-copy copy-button" data-url="{{ $registrationUrl }}"
                                       title="Salin Link Registrasi"></i> Registration
                                   </div>
-                                  <div class="p-2">
+                                  <div style="font-size: 14px; white-space: nowrap;">
                                     <i class="fas fa-copy copy-button" data-url="{{ $keynoteUrl }}"
                                       title="Salin Link Keynote"></i> Key Note
                                   </div>
-                                  <div class="p-2">
+                                  <div style="font-size: 14px; white-space: nowrap;">
                                     <i class="fas fa-copy copy-button" data-url="{{ $parallelSessionUrl }}"
                                       title="Salin Link Parallel Session"></i> Parallel Session
                                   </div>
