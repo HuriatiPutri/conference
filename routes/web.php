@@ -1,65 +1,81 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-
-use App\Http\Controllers\ConferenceController;
-use App\Http\Controllers\RegistrationController; 
 use App\Http\Controllers\AudienceController;
+use App\Http\Controllers\CertificateController;
+use App\Http\Controllers\ConferenceController;
+use App\Http\Controllers\KeyNoteController;
+use App\Http\Controllers\LoginController;
+use App\Http\Controllers\ParallelSessionController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaypalController;
-use App\Http\Controllers\LoginController;
-
+use App\Http\Controllers\RegistrationController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Route::get('/register', [LoginController::class, 'showRegistrationForm'])->name('register')->middleware('role:superadmin');;
-// Route::post('/register', [LoginController::class, 'register']); 
+// Route::post('/register', [LoginController::class, 'register']);
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/', function () {
         return view('welcome');
     });
-    
+
     Route::get('/home', function () {
         return view('home.dashboard');
     });
-    
+
     Route::get('/home/test', function () {
         return view('home.test');
     });
-    //conference
+    // conference
     Route::get('/home/conference/create', function () {
         return view('home.conference.create');
     });
     Route::get('/home/conference/', [ConferenceController::class, 'index'])->name('home.conference.index');
     Route::resource('conference', ConferenceController::class);
+    Route::get('/home/conference/setting-certificate/{conference}', [ConferenceController::class, 'settingCertificate'])->name('home.conference.setting-certificate');
+    Route::post('/home/conference/store-template/{conference}', [ConferenceController::class, 'storeTemplate'])->name('conference.storeTemplate');
+    Route::post('/home/conference/store-template/position/{conference}', [ConferenceController::class, 'storeTemplatePosition'])->name('conference.storeTemplatePosition');
 
-    //audience
+    // audience
     Route::resource('audience', AudienceController::class);
     Route::get('/home/audience/create', [AudienceController::class, 'create'])->name('home.audience.create');
     Route::get('/home/audience/', [AudienceController::class, 'index'])->name('home.audience.index');
-
 });
 
-//home
+// home
 Route::get('/home', function () {
     return view('public.home');
 })->name('home');
 
-//registration
+// registration
 Route::get('/registration/{conference}', [RegistrationController::class, 'create'])->name('registration.create');
 Route::post('/registration/{conference}', [RegistrationController::class, 'store'])->name('registration.store');
 Route::get('/registration/detail/{audience_id}', [RegistrationController::class, 'show'])->name('registration.show');
 
-//payment
+// payment
 Route::post('/registration/checkout/token', [PaymentController::class, 'getSnapToken'])->name('payment.getSnapToken');
 
 Route::post('/paypal/pay', [PaypalController::class, 'createTransaction'])->name('paypal.pay');
 Route::get('/paypal/success', [PaypalController::class, 'captureTransaction'])->name('paypal.success');
 Route::get('/paypal/cancel', [PaypalController::class, 'cancelTransaction'])->name('paypal.cancel');
 
+// keynote
+Route::get('/keynote/{conference}', [KeyNoteController::class, 'index'])->name('keynote.index');
+Route::post('/keynote/{conference}', [KeyNoteController::class, 'store'])->name('keynote.store');
+Route::get('/keynote/detail/{keyNote}', [KeyNoteController::class, 'show'])->name('keynote.show');
+
+// parallel session
+Route::get('/parallel-session/{conference}', [ParallelSessionController::class, 'index'])->name('parallel-session.index');
+Route::post('/parallel-session/{conference}', [ParallelSessionController::class, 'store'])->name('parallel-session.store');
+Route::get('/parallel-session/detail/{parallelSession}', [ParallelSessionController::class, 'show'])->name('parallel-session.show');
+
+// certificate
+Route::get('/certificate', [CertificateController::class, 'index'])->name('certificate.index');
+Route::post('/certificate', [CertificateController::class, 'store'])->name('certificate.store');
 
 Route::get('/check-role', function () {
     $user = auth()->user();

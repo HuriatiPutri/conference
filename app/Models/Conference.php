@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Conference extends Model
 {
     use HasFactory;
-    
+
     /**
      * The table associated with the model.
      *
@@ -37,7 +37,7 @@ class Conference extends Model
 
     /**
      * The attributes that should be cast.
-     * Untuk memastikan 'date' adalah objek Carbon
+     * Untuk memastikan 'date' adalah objek Carbon.
      *
      * @var array<string, string>
      */
@@ -52,5 +52,10 @@ class Conference extends Model
     public function registrations()
     {
         return $this->hasMany(Registration::class);
+    }
+
+    public function rooms()
+    {
+        return $this->hasMany(Room::class);
     }
 }

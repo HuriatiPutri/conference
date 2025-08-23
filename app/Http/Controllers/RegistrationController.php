@@ -6,10 +6,10 @@ use App\Models\Audience; // Model untuk menyimpan data pendaftar
 use App\Models\Conference; // Model untuk mendapatkan detail konferensi
 use App\Models\InvoiceHistory; // Model untuk menyimpan riwayat pembayaran
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage; // Untuk mengelola upload file
+// Untuk mengelola upload file
 use Illuminate\Validation\Rule; // Digunakan untuk aturan validasi 'unique'
-use Midtrans\Snap;
 use Midtrans\Config;
+use Midtrans\Snap;
 
 class RegistrationController extends Controller
 {
@@ -20,11 +20,13 @@ class RegistrationController extends Controller
         Config::$isSanitized = true;
         Config::$is3ds = true;
     }
+
     /**
      * Menampilkan formulir pendaftaran peserta untuk konferensi tertentu.
      * Conference ID diambil dari URL melalui Route Model Binding.
      *
-     * @param  \App\Models\Conference  $conference  Instance Konferensi dari URL.
+     * @param Conference $conference instance Konferensi dari URL
+     *
      * @return \Illuminate\View\View
      */
     public function create(Conference $conference)
@@ -36,14 +38,15 @@ class RegistrationController extends Controller
             'snapToken' => null,
             'audience_id' => null, // ID peserta akan diisi setelah pendaftaran berhasil
         ]);
-        }
+    }
 
     /**
      * Menyimpan data pendaftaran peserta baru dari formulir publik.
      * Data akan disimpan ke tabel 'audiences'.
      *
-     * @param  \Illuminate\Http\Request  $request  Objek permintaan HTTP yang berisi data form.
-     * @param  \App\Models\Conference  $conference Instance Konferensi yang di-resolve dari URL.
+     * @param Request    $request    objek permintaan HTTP yang berisi data form
+     * @param Conference $conference instance Konferensi yang di-resolve dari URL
+     *
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(Request $request, Conference $conference)
@@ -68,7 +71,12 @@ class RegistrationController extends Controller
             'presentation_type' => 'required|in:online_author,onsite,participant_only',
             'full_paper' => 'nullable|file|mimes:doc,docx|max:5120', // Upload file dokumen, max 5MB
             'payment_method' => 'required|in:transfer_bank,payment_gateway', // Metode pembayaran yang didukung
-        ]);
+        ],
+            [
+                'email.unique' => 'This email has already been registered for this conference.',
+                'full_paper.mimes' => 'The full paper must be a file of type: doc, docx.',
+                'full_paper.max' => 'The full paper may not be greater than 5MB.',
+            ]);
 
         // 2. Tangani Upload File 'full_paper'
         $fullPaperPath = null;
@@ -108,14 +116,14 @@ class RegistrationController extends Controller
             'payment_method' => $validatedData['payment_method'], // Metode pembayaran default
         ]);
 
-
-            // Ambil data Audience yang baru saja dibuat (alternatif: simpan hasil create ke variable)
-            $audience = Audience::where('email', $validatedData['email'])
-                                ->where('conference_id', $conference->id)
-                                ->latest('id')->first();
+        // Ambil data Audience yang baru saja dibuat (alternatif: simpan hasil create ke variable)
+        $audience = Audience::where('email', $validatedData['email'])
+                            ->where('conference_id', $conference->id)
+                            ->latest('id')->first();
 
         // 4.1. Kirim Email Konfirmasi Pendaftaran
         $audience->sendEmail();
+
         // 5. Redirect ke Halaman Formulir Pendaftaran dengan Pesan Sukses
         return redirect()->route('registration.show', $audience->public_id)->with('success', 'Pendaftaran Anda berhasil! Harap selesaikan pembayaran.');
     }
@@ -124,10 +132,8 @@ class RegistrationController extends Controller
      * Menampilkan halaman detail pendaftaran peserta.
      * Halaman ini akan menampilkan informasi pendaftaran dan status pembayaran.
      */
-
     public function show($audience_id)
     {
-
         $audience = Audience::where('public_id', $audience_id)->firstOrFail();
         $invoiceHistory = InvoiceHistory::where('audience_id', $audience->id)->first();
 
@@ -137,7 +143,7 @@ class RegistrationController extends Controller
             'snapToken' => null, // Token Snap akan diisi saat pembayaran
             'audience_id' => $audience->id, // ID peserta untuk referensi
             'expiresAt' => $invoiceHistory ? $invoiceHistory->expired_at : 0, // Waktu kedaluwarsa token
-            'paymentMethod' => $invoiceHistory->payment_method ?? null, 
+            'paymentMethod' => $invoiceHistory->payment_method ?? null,
         ]);
     }
 }

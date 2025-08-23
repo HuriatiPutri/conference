@@ -42,10 +42,15 @@ class ConferenceController extends Controller
             'cover_poster' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Validasi gambar, max 2MB (2048 KB)
             'city' => 'required|string|max:255',
             'country' => 'required|string|max:255',
-            'year' => 'required|integer|min:' . (date('Y') - 10) . '|max:' . (date('Y') + 10),
+            'year' => 'required|integer|min:'.(date('Y') - 10).'|max:'.(date('Y') + 10),
             'online_fee' => 'required|numeric|min:0',
             'onsite_fee' => 'required|numeric|min:0',
             'participant_fee' => 'required|numeric|min:0',
+        ]);
+
+        $validatedDataRoom = $request->validate([
+            'room' => 'required|array|min:1',
+            'room.*.room_name' => 'required|string|max:255',
         ]);
 
         $coverPosterPath = null;
@@ -62,7 +67,18 @@ class ConferenceController extends Controller
         $validatedData['public_id'] = uniqid();
         $validatedData['cover_poster_path'] = $coverPosterPath;
 
-        Conference::create($validatedData);
+        $conference = Conference::create($validatedData);
+
+        // Simpan data rooms terkait konferensi
+        foreach ($validatedDataRoom['room'] as $roomData) {
+            $roomData['conference_id'] = $conference->id;
+            $conference->rooms()->create($roomData);
+        }
+
+        // show error if room not added
+        if ($conference->rooms()->count() == 0) {
+            return redirect()->back()->withErrors(['rooms' => 'At least one room must be added.'])->withInput();
+        }
 
         // 4. Redirect ke halaman daftar konferensi dengan pesan sukses
         return redirect()->route('conference.index')->with('success', 'Konferensi berhasil ditambahkan!');
@@ -99,10 +115,15 @@ class ConferenceController extends Controller
             'cover_poster' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Cover Poster tidak wajib diupdate
             'city' => 'required|string|max:255',
             'country' => 'required|string|max:255',
-            'year' => 'required|integer|min:' . (date('Y') - 10) . '|max:' . (date('Y') + 10),
+            'year' => 'required|integer|min:'.(date('Y') - 10).'|max:'.(date('Y') + 10),
             'online_fee' => 'required|numeric|min:0',
             'onsite_fee' => 'required|numeric|min:0',
             'participant_fee' => 'required|numeric|min:0',
+        ]);
+
+        $validatedDataRoom = $request->validate([
+            'room' => 'required|array|min:1',
+            'room.*.room_name' => 'required|string|max:255',
         ]);
 
         // 2. Tangani Upload File Cover Poster (jika ada perubahan)
@@ -120,6 +141,14 @@ class ConferenceController extends Controller
 
         // 3. Update data konferensi di database
         $conference->update($validatedData);
+
+        // Update data rooms terkait konferensi
+        // Hapus semua room lama dan tambahkan yang baru
+        $conference->rooms()->delete();
+        foreach ($validatedDataRoom['room'] as $roomData) {
+            $roomData['conference_id'] = $conference->id;
+            $conference->rooms()->create($roomData);
+        }
 
         // 4. Redirect dengan pesan sukses
         return redirect()->route('conference.index')->with('success', 'Konferensi berhasil diperbarui!');
@@ -140,5 +169,63 @@ class ConferenceController extends Controller
 
         // 3. Redirect dengan pesan sukses
         return redirect()->route('conference.index')->with('success', 'Konferensi berhasil dihapus!');
+    }
+
+    public function settingCertificate(Conference $conference)
+    {
+        $background = $conference->certificate_template_path ? Storage::url($conference->certificate_template_path) : null;
+
+        $routeStore = $background ? route('conference.storeTemplatePosition', $conference->public_id) : route('conference.storeTemplate', $conference->public_id);
+
+        $data = [
+            'name' => 'Nama Peserta',
+            'conference' => $conference->name,
+            'date' => now()->format('d F Y'),
+        ];
+
+        $templatePosition = $conference->certificate_template_position ? json_decode($conference->certificate_template_position, true) : json_decode('{"positions":"{}"}', true);
+
+        return view('home.conference.setting_certificate', [
+            'conference' => $conference,
+            'data' => $data,
+            'background' => $background,
+            'routeStore' => $routeStore,
+            'positions' => json_decode($templatePosition['positions'], true) ?? null,
+        ]);
+    }
+
+    public function storeTemplate(Request $request, Conference $conference)
+    {
+        // Validasi dan simpan template sertifikat yang diupload admin
+        $validatedData = $request->validate([
+            'template' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Validasi gambar, max 2MB (2048 KB)
+        ]);
+
+        // Tangani Upload File Template Sertifikat
+        if ($request->hasFile('template')) {
+            // Simpan file ke direktori 'public/uploads'
+            $templatePath = $request->file('template')->store('conference_certificate', 'public');
+            // Path yang disimpan akan seperti: 'uploads/template_unik.jpg'
+
+            // Simpan path template ke database (misal di kolom certificate_template_path di tabel conferences)
+            $conference->certificate_template_path = $templatePath;
+            $conference->save();
+        }
+
+        return redirect()->route('home.conference.setting-certificate', $conference->public_id)->with('success', 'Template sertifikat berhasil disimpan!');
+    }
+
+    public function storeTemplatePosition(Request $request, Conference $conference)
+    {
+        // Validasi dan simpan posisi elemen teks pada template sertifikat
+        $validatedData = $request->validate([
+            'positions' => 'required', // Simpan posisi sebagai string JSON
+        ]);
+
+        // Simpan posisi ke database (misal di kolom certificate_template_position di tabel conferences)
+        $conference->certificate_template_position = json_encode($validatedData);
+        $conference->save();
+
+        return redirect()->route('home.conference.setting-certificate', $conference->public_id)->with('success', 'Posisi elemen sertifikat berhasil disimpan!');
     }
 }
