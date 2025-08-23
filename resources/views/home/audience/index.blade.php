@@ -74,7 +74,7 @@
                         </td>
                         <td>
                             @if(($audience->keynote || $audience->parallelSession) && $audience->conference->certificate_template_position)
-                            <a class="btn btn-primary btn-sm" href="{{ route('home.audience.download', $audience->id)}}">Download</a>
+                            <a class="btn btn-primary btn-sm" target="_blank" href="{{ route('home.audience.download', $audience->id)}}">Download</a>
                             @endif
                         </td>
                         <td class="text-center">
