@@ -67,7 +67,7 @@ class InvoiceHistory extends Model
             'cancelled' => 'emails.payment_cancelled',
         ];
 
-        Mail::send('emails.payment_success', $data, function ($message) {
+        Mail::send($template[$this->payment_status], $data, function ($message) {
             $message->to($this->audience->email)
                     ->subject('Payment Confirmation – '.$this->audience->conference->initial);
         });

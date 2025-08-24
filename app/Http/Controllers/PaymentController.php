@@ -102,10 +102,7 @@ class PaymentController extends Controller
             'payment_status' => $mappingStatus[$transaction] ?? 'unknown',
         ]);
 
-        if ($mappingStatus[$transaction] === 'paid') {
-            // Kirim email konfirmasi pembayaran
-            $invoiceHistory->sendEmail();
-        }
+        $invoiceHistory->sendEmail();
 
         return response()->json(['message' => 'Notification handled'], 200);
     }
