@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Midtrans\Snap;
-use Midtrans\Config;
 use App\Models\Audience;
 use App\Models\InvoiceHistory;
+use Illuminate\Http\Request;
+use Midtrans\Config;
+use Midtrans\Snap;
 
 class PaymentController extends Controller
 {
@@ -32,13 +32,13 @@ class PaymentController extends Controller
                 'snap_token' => $invoiceHistory->snap_token,
                 'audience_id' => $invoiceHistory->audience_id,
             ]);
-        }else{
+        } else {
             // Jika belum ada, buat riwayat pembayaran baru
             // Ambil data peserta berdasarkan ID
             $audience = Audience::findOrFail($request->input('audience_id'));
 
             // Buat order ID unik untuk transaksi
-            $order_id = 'ORDER-' . uniqid();
+            $order_id = 'ORDER-'.uniqid();
             // Siapkan parameter untuk Snap Token
             $params = [
                 'transaction_details' => [
@@ -52,14 +52,14 @@ class PaymentController extends Controller
                     'phone' => $audience->phone_number,
                 ],
                 'expiry' => [
-                    'start_time' => date("Y-m-d H:i:s T"), // Format harus sesuai dengan dokumentasi Midtrans
-                    'unit'       => 'hour',
-                    'duration'   => 24, // expired dalam 60 menit, misalnya
+                    'start_time' => date('Y-m-d H:i:s T'), // Format harus sesuai dengan dokumentasi Midtrans
+                    'unit' => 'hour',
+                    'duration' => 24, // expired dalam 60 menit, misalnya
                 ],
             ];
 
             // Dapatkan Snap Token dari Midtrans
-            $snapToken = \Midtrans\Snap::getSnapToken($params);
+            $snapToken = Snap::getSnapToken($params);
 
             InvoiceHistory::create([
                 'id' => $order_id,
@@ -78,8 +78,8 @@ class PaymentController extends Controller
         }
     }
 
-    public function handleNotification(Request $request){
-
+    public function handleNotification(Request $request)
+    {
         $notif = new \Midtrans\Notification();
         $transaction = $notif->transaction_status;
         $orderId = $notif->order_id;
@@ -102,9 +102,11 @@ class PaymentController extends Controller
             'payment_status' => $mappingStatus[$transaction] ?? 'unknown',
         ]);
 
-        // Kirim email konfirmasi pembayaran
-        $invoiceHistory->sendEmail();
+        if ($mappingStatus[$transaction] === 'paid') {
+            // Kirim email konfirmasi pembayaran
+            $invoiceHistory->sendEmail();
+        }
+
         return response()->json(['message' => 'Notification handled'], 200);
     }
-
 }
