@@ -2,10 +2,10 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
-use App\Models\Conference;
 use App\Models\Audience;
+use App\Models\Conference;
+use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Route;
 
 class RouteServiceProvider extends ServiceProvider
 {
@@ -33,9 +33,7 @@ class RouteServiceProvider extends ServiceProvider
         });
 
         Route::bind('audience', function ($value) {
-            return is_numeric($value)
-                ? Audience::findOrFail($value)
-                : Audience::where('public_id', $value)->firstOrFail();
+            return Audience::where('public_id', $value)->firstOrFail();
         });
     }
 }

@@ -41,9 +41,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/home/conference/store-template/position/{conference}', [ConferenceController::class, 'storeTemplatePosition'])->name('conference.storeTemplatePosition');
 
     // audience
-    Route::resource('audience', AudienceController::class);
-    Route::get('/home/audience/create', [AudienceController::class, 'create'])->name('home.audience.create');
     Route::get('/home/audience/', [AudienceController::class, 'index'])->name('home.audience.index');
+    Route::resource('audience', AudienceController::class);
+    // Route::get('/home/audience/create', [AudienceController::class, 'create'])->name('home.audience.create');
+    // Route::post('/home/audience/', [AudienceController::class, 'update'])->name('audience.update');
     Route::get('/home/audience/download/{audience}', [AudienceController::class, 'downloadCertificate'])->name('home.audience.download');
 });
 

@@ -117,4 +117,34 @@ class Audience extends Model
                     ->subject('Registration Confirmation');
         });
     }
+
+    public function sendPaymentConfirmationEmail()
+    {
+        $data = [
+            'name' => $this->first_name.' '.$this->last_name,
+            'initial' => $this->conference->initial,
+            'registration_number' => $this->public_id,
+            'registration_date' => $this->created_at->format('d M Y'),
+            'paper_title' => $this->paper_title,
+            'conference_name' => $this->conference->name,
+            'year' => $this->conference->year,
+            'place' => $this->conference->city.', '.$this->conference->country,
+            'email' => $this->email,
+            'phone_number' => $this->phone_number,
+            'amount' => $this->paid_fee,
+            'payment_method' => $this->getPaymentMethodText(),
+            'payment_status' => $this->getPaymentStatusText(),
+        ];
+
+        $template = [
+            'paid' => 'emails.payment_confirmation',
+            'cancelled' => 'emails.payment_cancelled',
+            'refunded' => 'emails.payment_refunded',
+        ];
+
+        Mail::send($template[$this->payment_status], $data, function ($message) {
+            $message->to($this->email, "{$this->first_name} {$this->last_name}")
+                    ->subject('Payment Confirmation');
+        });
+    }
 }

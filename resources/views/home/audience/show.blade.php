@@ -29,11 +29,11 @@
                         </tr>
                         <tr>
                             <th>Tipe Partisipan</th>
-                            <td>{{ $audience->email }}</td>
+                            <td>{{ $audience->presentation_type }}</td>
                         </tr>
                         <tr>
                             <th>Biaya Dibayar</th>
-                            <td>{{ $audience->email }}</td>
+                            <td>{{ $audience->paid_fee }}</td>
                         </tr>
                         <tr>
                             <th>Status Pembayaran</th>

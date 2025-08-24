@@ -78,9 +78,11 @@
                             @endif
                         </td>
                         <td class="text-center">
-                          <a href="{{ route('audience.show', $audience->id) }}" class="btn btn-info btn-sm"
+                          <a href="{{ route('audience.show', $audience->public_id) }}" class="btn btn-info btn-sm"
                             title="Lihat"><i class="fas fa-eye"></i></a>
-                          <form action="{{ route('audience.destroy', $audience->id) }}" method="POST"
+                          <a href="{{ route('audience.edit', $audience->public_id) }}" class="btn btn-warning btn-sm"
+                              title="Lihat"><i class="fas fa-edit"></i></a>
+                          <form action="{{ route('audience.destroy', $audience->public_id) }}" method="POST"
                             style="display:inline-block;">
                             @csrf
                             @method('DELETE')
