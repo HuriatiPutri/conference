@@ -61,14 +61,13 @@ class InvoiceHistory extends Model
 
         $template = [
             'paid' => 'emails.payment_success',
-            'settlement' => 'emails.payment_success',
-            'pending' => 'emails.payment_pending',
-            'deny' => 'emails.payment_failed',
-            'expire' => 'emails.payment_expired',
-            'cancel' => 'emails.payment_cancelled',
+            'pending_payment' => 'emails.payment_pending',
+            'failed' => 'emails.payment_failed',
+            'expired' => 'emails.payment_expired',
+            'cancelled' => 'emails.payment_cancelled',
         ];
 
-        Mail::send($template[$this->payment_status], $data, function ($message) {
+        Mail::send($template[$this->status], $data, function ($message) {
             $message->to($this->audience->email)
                     ->subject('Payment Confirmation – '.$this->audience->conference->initial);
         });
