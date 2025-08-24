@@ -98,6 +98,12 @@ class RegistrationController extends Controller
                 break;
         }
 
+        // 4. upload bukti pembayaran jika metode transfer bank
+        $paymentProofPath = null;
+        if ($validatedData['payment_method'] === 'transfer_bank' && $request->hasFile('payment_proof')) {
+            $paymentProofPath = $request->file('payment_proof')->store('payment_proofs', 'public');
+        }
+
         // 4. Simpan Data Pendaftaran ke Database (Tabel 'audiences')
         Audience::create([
             'public_id' => uniqid(), // Buat ID unik untuk peserta
@@ -114,6 +120,7 @@ class RegistrationController extends Controller
             'payment_status' => 'pending_payment', // Status pembayaran default 'pending_payment'
             'full_paper_path' => $fullPaperPath,
             'payment_method' => $validatedData['payment_method'], // Metode pembayaran default
+            'payment_proof_path' => $paymentProofPath, // Belum ada bukti pembayaran
         ]);
 
         // Ambil data Audience yang baru saja dibuat (alternatif: simpan hasil create ke variable)

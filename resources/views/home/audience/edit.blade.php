@@ -77,8 +77,8 @@
                   <tr>
                     <th>Proof of Payment</th>
                     <td>
-                      @if ($audience->proof_of_payment_path)
-                        <a href="{{ asset($audience->proof_of_payment_path) }}" target="_blank"
+                      @if ($audience->payment_proof_path)
+                        <a href="{{ Storage::url($audience->payment_proof_path) }}" target="_blank"
                           class="btn btn-primary btn-sm">
                           <i class="fas fa-file"></i> View Proof
                         </a>
@@ -92,7 +92,7 @@
                   <th>Paper</th>
                   <td>
                     @if ($audience->paper)
-                      <a href="{{ asset($audience->paper->full_paper_path) }}" target="_blank"
+                      <a href="{{ asseStorage::url($audience->paper->full_paper_path) }}" target="_blank"
                         class="btn btn-primary btn-sm">
                         <i class="fas fa-file"></i> View Paper
                       </a>

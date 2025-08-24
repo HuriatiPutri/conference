@@ -168,6 +168,7 @@
             "url": "//cdn.datatables.net/plug-ins/2.0.8/i18n/id.json"
           },
           "responsive": true,
+          "order": [[0, "desc"]], // kolom pertama (ID) urut desc
           "columnDefs": [{
               "orderable": false,
               "targets": [8, 9]
