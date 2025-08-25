@@ -46,6 +46,9 @@ class ConferenceController extends Controller
             'online_fee' => 'required|numeric|min:0',
             'onsite_fee' => 'required|numeric|min:0',
             'participant_fee' => 'required|numeric|min:0',
+            'online_fee_usd' => 'required|numeric|min:0',
+            'onsite_fee_usd' => 'required|numeric|min:0',
+            'participant_fee_usd' => 'required|numeric|min:0',
         ]);
 
         $validatedDataRoom = $request->validate([
@@ -119,6 +122,9 @@ class ConferenceController extends Controller
             'online_fee' => 'required|numeric|min:0',
             'onsite_fee' => 'required|numeric|min:0',
             'participant_fee' => 'required|numeric|min:0',
+            'online_fee_usd' => 'required|numeric|min:0',
+            'onsite_fee_usd' => 'required|numeric|min:0',
+            'participant_fee_usd' => 'required|numeric|min:0',
         ]);
 
         $validatedDataRoom = $request->validate([

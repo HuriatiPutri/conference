@@ -94,45 +94,105 @@
                 <hr class="my-4">
                 <h4>Biaya Pendaftaran</h4>
 
-                <div class="mb-3">
-                  <label for="online_fee" class="form-label fw-bold">Biaya Online <span
-                      class="text-danger">*</span></label>
-                  <div class="input-group">
-                    <span class="input-group-text">Rp</span>
-                    <input type="number" step="0.01" class="form-control @error('online_fee') is-invalid @enderror"
-                      id="online_fee" name="online_fee" value="{{ old('online_fee', 0) }}" required min="0">
-                  </div>
-                  @error('online_fee')
-                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                  @enderror
-                </div>
+                <div class="container">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <span>Partisipan Nasional (IDR)</span>
+                      <div class="mb-3">
+                        <label for="online_fee" class="form-label fw-bold">Biaya Online <span
+                            class="text-danger">*</span></label>
+                        <div class="input-group">
+                          <span class="input-group-text">Rp</span>
+                          <input type="number" step="0.01"
+                            class="form-control @error('online_fee') is-invalid @enderror" id="online_fee"
+                            name="online_fee" value="{{ old('online_fee', 0) }}" required
+                            min="0">
+                        </div>
+                        @error('online_fee')
+                          <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                      </div>
 
-                <div class="mb-3">
-                  <label for="onsite_fee" class="form-label fw-bold">Biaya Onsite <span
-                      class="text-danger">*</span></label>
-                  <div class="input-group">
-                    <span class="input-group-text">Rp</span>
-                    <input type="number" step="0.01" class="form-control @error('onsite_fee') is-invalid @enderror"
-                      id="onsite_fee" name="onsite_fee" value="{{ old('onsite_fee', 0) }}" required min="0">
-                  </div>
-                  @error('onsite_fee')
-                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                  @enderror
-                </div>
+                      <div class="mb-3">
+                        <label for="onsite_fee" class="form-label fw-bold">Biaya Onsite <span
+                            class="text-danger">*</span></label>
+                        <div class="input-group">
+                          <span class="input-group-text">Rp</span>
+                          <input type="number" step="0.01"
+                            class="form-control @error('onsite_fee') is-invalid @enderror" id="onsite_fee"
+                            name="onsite_fee" value="{{ old('onsite_fee', 0) }}" required
+                            min="0">
+                        </div>
+                        @error('onsite_fee')
+                          <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                      </div>
 
-                <div class="mb-3">
-                  <label for="participant_fee" class="form-label fw-bold">Biaya Partisipan Saja <span
-                      class="text-danger">*</span></label>
-                  <div class="input-group">
-                    <span class="input-group-text">Rp</span>
-                    <input type="number" step="0.01"
-                      class="form-control @error('participant_fee') is-invalid @enderror" id="participant_fee"
-                      name="participant_fee" value="{{ old('participant_fee', 0) }}" required min="0">
+                      <div class="mb-3">
+                        <label for="participant_fee" class="form-label fw-bold">Biaya Partisipan Saja <span
+                            class="text-danger">*</span></label>
+                        <div class="input-group">
+                          <span class="input-group-text">Rp</span>
+                          <input type="number" step="0.01"
+                            class="form-control @error('participant_fee') is-invalid @enderror" id="participant_fee"
+                            name="participant_fee" value="{{ old('participant_fee', 0) }}"
+                            required min="0">
+                        </div>
+                        @error('participant_fee')
+                          <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <span>Partisipan Internasional (USD)</span>
+                      <div class="mb-3">
+                        <label for="online_fee_usd" class="form-label fw-bold">Biaya Online <span
+                            class="text-danger">*</span></label>
+                        <div class="input-group">
+                          <span class="input-group-text">Rp</span>
+                          <input type="number" step="0.01"
+                            class="form-control @error('online_fee_usd') is-invalid @enderror" id="online_fee_usd"
+                            name="online_fee_usd" value="{{ old('online_fee_usd', 0) }}" required
+                            min="0">
+                        </div>
+                        @error('online_fee_usd')
+                          <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                      </div>
+
+                      <div class="mb-3">
+                        <label for="onsite_fee_usd" class="form-label fw-bold">Biaya Onsite <span
+                            class="text-danger">*</span></label>
+                        <div class="input-group">
+                          <span class="input-group-text">Rp</span>
+                          <input type="number" step="0.01"
+                            class="form-control @error('onsite_fee_usd') is-invalid @enderror" id="onsite_fee_usd"
+                            name="onsite_fee_usd" value="{{ old('onsite_fee_usd', 0) }}" required
+                            min="0">
+                        </div>
+                        @error('onsite_fee_usd')
+                          <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                      </div>
+
+                      <div class="mb-3">
+                        <label for="participant_fee_usd" class="form-label fw-bold">Biaya Partisipan Saja <span
+                            class="text-danger">*</span></label>
+                        <div class="input-group">
+                          <span class="input-group-text">Rp</span>
+                          <input type="number" step="0.01"
+                            class="form-control @error('participant_fee_usd') is-invalid @enderror" id="participant_fee_usd"
+                            name="participant_fee_usd" value="{{ old('participant_fee_usd', 0) }}"
+                            required min="0">
+                        </div>
+                        @error('participant_fee_usd')
+                          <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                      </div>
+                    </div>
                   </div>
-                  @error('participant_fee')
-                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                  @enderror
                 </div>
+                
                 <hr class="my-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                   <label for="online_fee" class="form-label fw-bold"> Rooms <span class="text-danger">*</span></label>

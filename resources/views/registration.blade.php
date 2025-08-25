@@ -4,7 +4,7 @@ use App\Constants\Countries;
 ?>
 
 @extends('layouts.app')
-@section('title', 'Detail Pendaftaran Peserta Konferensi')
+@section('title', 'Conference Participant Registration Form')
 
 <link href="https://getbootstrap.com/docs/4.1/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://getbootstrap.com/docs/4.1/examples/starter-template/starter-template.css" rel="stylesheet">
@@ -133,6 +133,19 @@ use App\Constants\Countries;
                 @enderror
               </div>
 
+              <div class="mb-3">
+                <label for="paid_fee" class="form-label">Fee Paid</label>
+                <div class="input-group">
+                  <span class="input-group-text" id="currency">Rp</span>
+                  <input type="number" step="0.01" class="form-control @error('paid_fee') is-invalid @enderror"
+                    id="paid_fee" name="paid_fee" value="{{ old('paid_fee', 0) }}" readonly>
+                </div>
+                <div class="form-text">The fee will be automatically updated according to the selection above.</div>
+                @error('paid_fee')
+                  <div class="invalid-feedback d-block">{{ $message }}</div>
+                @enderror
+              </div>
+
               <div id="paper-title-and-file-section"
                 class="{{ in_array(old('presentation_type'), ['online_author', 'onsite']) ? '' : 'd-none' }}">
                 <div class="mb-3">
@@ -153,19 +166,6 @@ use App\Constants\Countries;
                     <div class="invalid-feedback">{{ $message }}</div>
                   @enderror
                 </div>
-              </div>
-
-              <div class="mb-3">
-                <label for="paid_fee" class="form-label">Fee Paid</label>
-                <div class="input-group">
-                  <span class="input-group-text">Rp</span>
-                  <input type="number" step="0.01" class="form-control @error('paid_fee') is-invalid @enderror"
-                    id="paid_fee" name="paid_fee" value="{{ old('paid_fee', 0) }}" readonly>
-                </div>
-                <div class="form-text">The fee will be automatically updated according to the selection above.</div>
-                @error('paid_fee')
-                  <div class="invalid-feedback d-block">{{ $message }}</div>
-                @enderror
               </div>
 
               <h5 class="mb-3 mt-4">Payment Method <span class="text-danger">*</span></h5>
@@ -193,11 +193,11 @@ use App\Constants\Countries;
                     </div>
                   </div>
                   <div class="mb-3" id="payment-proof-upload">
-                    <label for="payment_proof" class="form-label">Upload Bukti Pembayaran <span
+                    <label for="payment_proof" class="form-label">Upload Proof of Payment <span
                         class="text-danger">*</span></label>
                     <input class="form-control @error('payment_proof') is-invalid @enderror" type="file"
                       id="payment_proof" name="payment_proof" accept="image/*">
-                    <div class="form-text">Hanya file gambar (JPG, PNG) maksimal 2MB.</div>
+                    <div class="form-text">Only image files (JPG, PNG) are allowed, maximum size 2MB.</div>
                     @error('payment_proof')
                       <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
@@ -250,18 +250,28 @@ use App\Constants\Countries;
         participant: parseFloat("{{ $conference->participant_fee ?? 0 }}")
       };
 
+      var conferenceFeesUSD = {
+        online: parseFloat("{{ $conference->online_fee_usd ?? 0 }}"),
+        onsite: parseFloat("{{ $conference->onsite_fee_usd ?? 0 }}"),
+        participant: parseFloat("{{ $conference->participant_fee_usd ?? 0 }}")
+      };
       // Fungsi untuk mengupdate biaya dibayar
       function updatePaidFee() {
+        var countrySelected = $('#country').val();
+        var isIndonesia = countrySelected === 'ID';
         var selectedPresentationType = $('input[name="presentation_type"]:checked').val();
         var paidFeeField = $('#paid_fee');
         var fee = 0;
 
+        var currencySymbol = isIndonesia ? 'Rp' : 'USD';
+        $('#currency').text(currencySymbol);
+
         if (selectedPresentationType === 'online_author') {
-          fee = conferenceFees.online;
+          fee = isIndonesia ? conferenceFees.online : conferenceFeesUSD.online;
         } else if (selectedPresentationType === 'onsite') {
-          fee = conferenceFees.onsite;
+          fee = isIndonesia ? conferenceFees.onsite : conferenceFeesUSD.onsite;
         } else if (selectedPresentationType === 'participant_only') {
-          fee = conferenceFees.participant;
+          fee = isIndonesia ? conferenceFees.participant : conferenceFeesUSD.participant;
         }
 
         paidFeeField.val(fee.toFixed(2)); // Mengisi field dengan 2 angka di belakang koma
@@ -269,11 +279,18 @@ use App\Constants\Countries;
 
       // Fungsi untuk mengupdate tampilan biaya di samping radio button
       function updateFeeDisplays() {
+        var countrySelected = $('#country').val();
+        var isIndonesia = countrySelected === 'ID';
         // Tampilkan biaya di samping radio button
-        $('#online-fee-display').text(' (Rp ' + conferenceFees.online.toLocaleString('id-ID') + ')');
-        $('#onsite-fee-display').text(' (Rp ' + conferenceFees.onsite.toLocaleString('id-ID') + ')');
-        $('#participant-fee-display').text(' (Rp ' + conferenceFees.participant.toLocaleString('id-ID') +
-          ')');
+        if(isIndonesia) {
+          $('#online-fee-display').text(' (Rp ' + conferenceFees.online.toLocaleString('id-ID') + ')');
+          $('#onsite-fee-display').text(' (Rp ' + conferenceFees.onsite.toLocaleString('id-ID') + ')');
+          $('#participant-fee-display').text(' (Rp ' + conferenceFees.participant.toLocaleString('id-ID') + ')');
+        } else {
+          $('#online-fee-display').text(' (USD ' + conferenceFeesUSD.online.toFixed(2) + ')');
+          $('#onsite-fee-display').text(' (USD ' + conferenceFeesUSD.onsite.toFixed(2) + ')');
+          $('#participant-fee-display').text(' (USD ' + conferenceFeesUSD.participant.toFixed(2) + ')');
+        }
       }
 
       function paperTitleRequired() {
@@ -342,6 +359,11 @@ use App\Constants\Countries;
       // Panggil fungsi ketika radio button Metode Pembayaran berubah
       $('.payment-method-radio').change(function() {
         togglePaymentProof();
+      });
+
+      $('#country').change(function() {
+        updatePaidFee();
+        updateFeeDisplays();
       });
 
       // Panggil fungsi saat halaman dimuat (untuk mengisi nilai awal jika ada old() value)

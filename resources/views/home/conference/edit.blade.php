@@ -113,85 +113,144 @@
                 <hr class="my-4">
                 <h4>Biaya Pendaftaran</h4>
 
-                <div class="mb-3">
-                  <label for="online_fee" class="form-label fw-bold">Biaya Online <span
-                      class="text-danger">*</span></label>
-                  <div class="input-group">
-                    <span class="input-group-text">Rp</span>
-                    <input type="number" step="0.01" class="form-control @error('online_fee') is-invalid @enderror"
-                      id="online_fee" name="online_fee" value="{{ old('online_fee', $conference->online_fee) }}"
-                      required min="0">
-                  </div>
-                  @error('online_fee')
-                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                  @enderror
-                </div>
+                <div class="container">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <span>Partisipan Nasional (IDR)</span>
+                      <div class="mb-3">
+                        <label for="online_fee" class="form-label fw-bold">Biaya Online <span
+                            class="text-danger">*</span></label>
+                        <div class="input-group">
+                          <span class="input-group-text">Rp</span>
+                          <input type="number" step="0.01"
+                            class="form-control @error('online_fee') is-invalid @enderror" id="online_fee"
+                            name="online_fee" value="{{ old('online_fee', $conference->online_fee) }}" required
+                            min="0">
+                        </div>
+                        @error('online_fee')
+                          <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                      </div>
 
-                <div class="mb-3">
-                  <label for="onsite_fee" class="form-label fw-bold">Biaya Onsite <span
-                      class="text-danger">*</span></label>
-                  <div class="input-group">
-                    <span class="input-group-text">Rp</span>
-                    <input type="number" step="0.01" class="form-control @error('onsite_fee') is-invalid @enderror"
-                      id="onsite_fee" name="onsite_fee" value="{{ old('onsite_fee', $conference->onsite_fee) }}"
-                      required min="0">
-                  </div>
-                  @error('onsite_fee')
-                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                  @enderror
-                </div>
+                      <div class="mb-3">
+                        <label for="onsite_fee" class="form-label fw-bold">Biaya Onsite <span
+                            class="text-danger">*</span></label>
+                        <div class="input-group">
+                          <span class="input-group-text">Rp</span>
+                          <input type="number" step="0.01"
+                            class="form-control @error('onsite_fee') is-invalid @enderror" id="onsite_fee"
+                            name="onsite_fee" value="{{ old('onsite_fee', $conference->onsite_fee) }}" required
+                            min="0">
+                        </div>
+                        @error('onsite_fee')
+                          <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                      </div>
 
-                <div class="mb-3">
-                  <label for="participant_fee" class="form-label fw-bold">Biaya Partisipan Saja <span
-                      class="text-danger">*</span></label>
-                  <div class="input-group">
-                    <span class="input-group-text">Rp</span>
-                    <input type="number" step="0.01"
-                      class="form-control @error('participant_fee') is-invalid @enderror" id="participant_fee"
-                      name="participant_fee" value="{{ old('participant_fee', $conference->participant_fee) }}"
-                      required min="0">
-                  </div>
-                  @error('participant_fee')
-                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                  @enderror
-                </div>
+                      <div class="mb-3">
+                        <label for="participant_fee" class="form-label fw-bold">Biaya Partisipan Saja <span
+                            class="text-danger">*</span></label>
+                        <div class="input-group">
+                          <span class="input-group-text">Rp</span>
+                          <input type="number" step="0.01"
+                            class="form-control @error('participant_fee') is-invalid @enderror" id="participant_fee"
+                            name="participant_fee" value="{{ old('participant_fee', $conference->participant_fee) }}"
+                            required min="0">
+                        </div>
+                        @error('participant_fee')
+                          <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <span>Partisipan Internasional (USD)</span>
+                      <div class="mb-3">
+                        <label for="online_fee_usd" class="form-label fw-bold">Biaya Online <span
+                            class="text-danger">*</span></label>
+                        <div class="input-group">
+                          <span class="input-group-text">Rp</span>
+                          <input type="number" step="0.01"
+                            class="form-control @error('online_fee_usd') is-invalid @enderror" id="online_fee_usd"
+                            name="online_fee_usd" value="{{ old('online_fee_usd', $conference->online_fee_usd) }}" required
+                            min="0">
+                        </div>
+                        @error('online_fee_usd')
+                          <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                      </div>
 
-                <hr class="my-4">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <label for="online_fee" class="form-label fw-bold"> Rooms <span class="text-danger">*</span></label>
-                  <button type="button" class="btn btn-primary btn-sm" onclick="addRoom()">+ Add Room</button>
-                </div>
-                @if($conference->rooms->isEmpty())
-                  @php
-                    $index = 0;
-                  @endphp
-                <div id="rooms-wrapper" class="mb-3">
-                    <div class="room-group input-group mb-2">
-                      <input type="text" class="form-control" name="room[{{$index}}][room_name]" placeholder="Room Name" required>
-                      <button type="button" class="btn btn-danger" onclick="removeRoom(this)">
-                        <i class="fas fa-trash"></i>
-                      </button>
+                      <div class="mb-3">
+                        <label for="onsite_fee_usd" class="form-label fw-bold">Biaya Onsite <span
+                            class="text-danger">*</span></label>
+                        <div class="input-group">
+                          <span class="input-group-text">Rp</span>
+                          <input type="number" step="0.01"
+                            class="form-control @error('onsite_fee_usd') is-invalid @enderror" id="onsite_fee_usd"
+                            name="onsite_fee_usd" value="{{ old('onsite_fee_usd', $conference->onsite_fee_usd) }}" required
+                            min="0">
+                        </div>
+                        @error('onsite_fee_usd')
+                          <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                      </div>
+
+                      <div class="mb-3">
+                        <label for="participant_fee_usd" class="form-label fw-bold">Biaya Partisipan Saja <span
+                            class="text-danger">*</span></label>
+                        <div class="input-group">
+                          <span class="input-group-text">Rp</span>
+                          <input type="number" step="0.01"
+                            class="form-control @error('participant_fee_usd') is-invalid @enderror" id="participant_fee_usd"
+                            name="participant_fee_usd" value="{{ old('participant_fee_usd', $conference->participant_fee_usd) }}"
+                            required min="0">
+                        </div>
+                        @error('participant_fee_usd')
+                          <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                      </div>
                     </div>
                   </div>
-                @endif
-                @foreach ($conference->rooms as $index => $room)
-                <div id="rooms-wrapper" class="mb-3">
-                  <div class="room-group input-group mb-2">
-                    <input type="text" class="form-control" name="room[{{$index}}][room_name]" placeholder="Room Name"
-                    value="{{ old("room.$index.room_name", $room->room_name) }}" required>
-                    <button type="button" class="btn btn-danger" onclick="removeRoom(this)">
-                      <i class="fas fa-trash"></i>
-                    </button>
-                  </div>
                 </div>
-                @endforeach
 
-                <button type="submit" class="btn btn-warning mt-3">
-                  <i class="fas fa-save mr-1"></i> Update Konferensi
-                </button>
-                <a href="{{ route('conference.index') }}" class="btn btn-secondary mt-3">
-                  <i class="fas fa-arrow-left mr-1"></i> Kembali
-                </a>
+                  <hr class="my-4">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <label for="online_fee" class="form-label fw-bold">Ruangan <span
+                        class="text-danger">*</span></label>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="addRoom()">+ Add Room</button>
+                  </div>
+                  @if ($conference->rooms->isEmpty())
+                    @php
+                      $index = 0;
+                    @endphp
+                    <div id="rooms-wrapper" class="mb-3">
+                      <div class="room-group input-group mb-2">
+                        <input type="text" class="form-control" name="room[{{ $index }}][room_name]"
+                          placeholder="Room Name" required>
+                        <button type="button" class="btn btn-danger" onclick="removeRoom(this)">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                  @endif
+                  @foreach ($conference->rooms as $index => $room)
+                    <div id="rooms-wrapper" class="mb-3">
+                      <div class="room-group input-group mb-2">
+                        <input type="text" class="form-control" name="room[{{ $index }}][room_name]"
+                          placeholder="Room Name" value="{{ old("room.$index.room_name", $room->room_name) }}"
+                          required>
+                        <button type="button" class="btn btn-danger" onclick="removeRoom(this)">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                  @endforeach
+
+                  <button type="submit" class="btn btn-warning mt-3">
+                    <i class="fas fa-save mr-1"></i> Update Konferensi
+                  </button>
+                  <a href="{{ route('conference.index') }}" class="btn btn-secondary mt-3">
+                    <i class="fas fa-arrow-left mr-1"></i> Kembali
+                  </a>
               </form>
             </div>
           </div>

@@ -88,13 +88,13 @@ class RegistrationController extends Controller
         $paidFee = 0;
         switch ($validatedData['presentation_type']) {
             case 'online_author':
-                $paidFee = $conference->online_fee;
+                $paidFee = $validatedData['country'] === 'ID' ? $conference->online_fee : $conference->online_fee_usd;
                 break;
             case 'onsite':
-                $paidFee = $conference->onsite_fee;
+                $paidFee = $validatedData['country'] === 'ID' ? $conference->onsite_fee : $conference->onsite_fee_usd;
                 break;
             case 'participant_only':
-                $paidFee = $conference->participant_fee;
+                $paidFee = $validatedData['country'] === 'ID' ? $conference->participant_fee : $conference->participant_fee_usd;
                 break;
         }
 

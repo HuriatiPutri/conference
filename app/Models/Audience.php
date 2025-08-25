@@ -66,17 +66,17 @@ class Audience extends Model
     {
         switch ($this->payment_status) {
             case 'pending_payment':
-                return '<span class="badge badge-warning">Menunggu Pembayaran</span>';
+                return '<span class="badge badge-warning">Pending Payment</span>';
             case 'paid':
-                return '<span class="badge badge-success">Sudah Dibayar</span>';
+                return '<span class="badge badge-success">Paid</span>';
             case 'failed':
-                return '<span class="badge badge-danger">Pembayaran Gagal</span>';
+                return '<span class="badge badge-danger">Failed</span>';
             case 'refunded':
-                return '<span class="badge badge-info">Dikembalikan</span>';
+                return '<span class="badge badge-info">Refunded</span>';
             case 'cancelled':
-                return '<span class="badge badge-danger">Dibatalkan</span>';
+                return '<span class="badge badge-danger">Canceled</span>';
             default:
-                return '<span class="badge badge-dark">Status Tidak Diketahui</span>';
+                return '<span class="badge badge-dark">Unknow</span>';
         }
     }
 

@@ -33,6 +33,9 @@ class Conference extends Model
         'online_fee',
         'onsite_fee',
         'participant_fee',
+        'online_fee_usd',
+        'onsite_fee_usd',
+        'participant_fee_usd',
     ];
 
     /**
@@ -46,6 +49,9 @@ class Conference extends Model
         'online_fee' => 'decimal:2',
         'onsite_fee' => 'decimal:2',
         'participant_fee' => 'decimal:2',
+        'online_fee_usd' => 'decimal:2',
+        'onsite_fee_usd' => 'decimal:2',
+        'participant_fee_usd' => 'decimal:2',
     ];
 
     // Jika ada relasi dengan tabel registrations, bisa didefinisikan di sini
