@@ -84,9 +84,18 @@
                               <td>{{ $conference->city }}</td>
                               <td>{{ $conference->country }}</td>
                               <td>{{ $conference->year }}</td>
-                              <td class="text-end">Rp {{ number_format($conference->online_fee, 0, ',', '.') }}</td>
-                              <td class="text-end">Rp {{ number_format($conference->onsite_fee, 0, ',', '.') }}</td>
-                              <td class="text-end">Rp {{ number_format($conference->participant_fee, 0, ',', '.') }}</td>
+                              <td class="text-end">
+                                Rp {{ number_format($conference->online_fee, 0, ',', '.') }}<br/>
+                                USD {{ number_format($conference->online_fee_usd, 2, '.', ',') }}
+                              </td>
+                              <td class="text-end">
+                                Rp {{ number_format($conference->onsite_fee, 0, ',', '.') }}<br/>
+                                USD {{ number_format($conference->onsite_fee_usd, 2, '.', ',') }}
+                              </td>
+                              <td class="text-end">
+                                Rp {{ number_format($conference->participant_fee, 0, ',', '.') }}<br/>
+                                USD {{ number_format($conference->participant_fee_usd, 2, '.', ',') }}
+                              </td>
                               <td class="text-center">
                                 @php
                                   $registrationUrl = route('registration.create', $conference->public_id);
