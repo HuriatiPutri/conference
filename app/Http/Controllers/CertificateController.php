@@ -30,6 +30,11 @@ class CertificateController extends Controller
             return redirect()->back()->withInput()->withErrors(['conference_id' => 'Selected conference does not exist.']);
         }
 
+        if ($conference->certificate_template_path === null || $conference->certificate_template_position === null) {
+            return redirect()->back()->withInput()
+            ->withErrors(['conference_id' => 'Certificate template is not available for the selected conference. Please contact the administrator.']);
+        }
+
         $audience = Audience::where('email', $request->email)
             ->where('conference_id', $conference->id)
             ->first();
