@@ -75,13 +75,19 @@ class PaypalController extends Controller
                 'status' => 'pending',
             ]);
             if ($redirect_url) {
-                return response()->json(['redirect_url' => $redirect_url]);
+                dd($redirect_url);
+
+                return response()->json(['success' => true, 'redirect_url' => $redirect_url]);
             } else {
-                return response()->json(['error' => 'Approve URL tidak ditemukan.'], 500);
+                return response()->json(['success' => false, 'error' => 'Approve URL tidak ditemukan.'], 500);
             }
         }
 
-        return response()->json(['error' => 'Terjadi kesalahan saat membuat order.'], 500);
+        return response()->json(['
+        success' => false,
+            'error' => 'An error occurred during the payment process.',
+            'details' => $response,
+        ], 500);
     }
 
     public function captureTransaction(Request $request)

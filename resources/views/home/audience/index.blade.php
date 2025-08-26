@@ -49,7 +49,7 @@
                         <td>{{ $audience->last_name }}</td>
                         <td>{{ $audience->email }}</td>
                         <td>{{ Str::headline($audience->presentation_type) }}</td>
-                        <td>Rp {{ number_format($audience->paid_fee, 0, ',', '.') }}</td>
+                        <td>{{ $audience->country === 'ID' ? 'Rp' : 'USD'}} {{ number_format($audience->paid_fee, 0, ',', '.') }}</td>
                         <td>
                           @php
                             $statusClass =

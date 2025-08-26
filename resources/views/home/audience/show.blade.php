@@ -33,7 +33,7 @@
                         </tr>
                         <tr>
                             <th>Biaya Dibayar</th>
-                            <td>{{ $audience->paid_fee }}</td>
+                            <td>{{ $audience->country === 'ID' ? 'Rp' : 'USD'}}{{ $audience->paid_fee }}</td>
                         </tr>
                         <tr>
                             <th>Status Pembayaran</th>

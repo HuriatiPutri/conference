@@ -40,7 +40,7 @@
           </tr>
           <tr>
             <th>Fee Paid</th>
-            <td>{{ $audience->country === 'ID' ? 'Rp' : 'USD'}}{{ number_format($audience->paid_fee) }}</td>
+            <td>{{ $audience->country === 'ID' ? 'Rp' : 'USD' }}{{ number_format($audience->paid_fee) }}</td>
           </tr>
           <tr>
             <th>Conference</th>
@@ -77,9 +77,9 @@
                     </p>
                   @endif
                   <div id="container-payment">
-                    @if($audience->country === 'ID')
-                    <button id="pay-button" class="btn btn-primary"
-                      {{ $paymentMethod === 'paypal' ? 'disabled' : '' }}>Pay Now with Virtual Account (VA)</button>
+                    @if ($audience->country === 'ID')
+                      <button id="pay-button" class="btn btn-primary"
+                        {{ $paymentMethod === 'paypal' ? 'disabled' : '' }}>Pay Now with Virtual Account (VA)</button>
                     @endif
                     <button id="paypal-pay-button" class="btn btn-primary"
                       {{ $paymentMethod === 'midtrans' ? 'disabled' : '' }}>Pay with PayPal / Credit Card</button>
@@ -120,8 +120,8 @@
       }
     }, 1000);
 
-    function payWithMidtrans(){
-        fetch("{{ route('payment.getSnapToken') }}", {
+    function payWithMidtrans() {
+      fetch("{{ route('payment.getSnapToken') }}", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -158,8 +158,8 @@
         .catch(error => console.error('Error:', error));
     }
 
-    function payWithPayPal(){
-        fetch("{{ route('paypal.pay') }}", {
+    function payWithPayPal() {
+      fetch("{{ route('paypal.pay') }}", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -172,17 +172,23 @@
         .then(response => response.json())
         .then(data => {
           // Pastikan respons mengandung paypalToken
-          let paypalToken = data.paypal_token;
-          window.location.href = data.redirect_url; // Redirect ke PayPal
+          console.log(data);
+          if (data.success === false) {
+            alert(data.error);
+            return;
+          } else {
+            let paypalToken = data.paypal_token;
+            // window.location.href = data.redirect_url; // Redirect ke PayPal
+          }
         })
         .catch(error => console.error('Error:', error));
     }
     $('#pay-button').click(function() {
-        payWithMidtrans();
+      payWithMidtrans();
     });
 
     $('#paypal-pay-button').click(function() {
-        payWithPayPal();
+      payWithPayPal();
     });
   </script>
 @endsection
