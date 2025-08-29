@@ -178,7 +178,7 @@
             return;
           } else {
             let paypalToken = data.paypal_token;
-            // window.location.href = data.redirect_url; // Redirect ke PayPal
+            window.location.href = data.redirect_url; // Redirect ke PayPal
           }
         })
         .catch(error => console.error('Error:', error));
