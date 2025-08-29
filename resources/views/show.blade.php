@@ -53,10 +53,20 @@
           <tr>
             <th>File Full Paper</th>
             <td>
-              @if ($audience->full_paper)
-                <a href="{{ asset('storage/' . $audience->full_paper) }}" target="_blank">View Full Paper</a>
+              @if ($audience->full_paper_path)
+                <a href="{{ asset('storage/' . $audience->full_paper_path) }}" target="_blank">View Full Paper</a>
               @else
                 No full paper file uploaded.
+              @endif
+            </td>
+          </tr>
+          <tr>
+            <th>Proof of Payment</th>
+            <td>
+              @if ($audience->payment_proof_path)
+                <a href="{{ asset('storage/' . $audience->payment_proof_path) }}" target="_blank">View Payment Proof</a>
+              @else
+                No payment proof uploaded.
               @endif
             </td>
           </tr>
@@ -85,7 +95,7 @@
                       {{ $paymentMethod === 'midtrans' ? 'disabled' : '' }}>Pay with PayPal / Credit Card</button>
                   </div>
                 @else
-                  Please transfer to the specified account.
+                  We have received your data. Our admin will verify and confirm your payment shortly.
                 @endif
               </td>
             </tr>

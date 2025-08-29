@@ -56,7 +56,7 @@ class AudienceController extends Controller
             'presentation_type' => 'required|in:online_author,onsite,participant_only',
             'paid_fee' => 'nullable|numeric|min:0',
             'payment_status' => 'required|in:pending_payment,paid,cancelled,refunded', // Validasi status
-            'full_paper' => 'nullable|file|mimes:doc,docx|max:5120',
+            'full_paper' => 'nullable|file|mimes:doc,docx|max:51200',
         ]);
 
         $fullPaperPath = null;
