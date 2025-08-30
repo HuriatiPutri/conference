@@ -69,6 +69,7 @@ Route::post('/registration/checkout/token', [PaymentController::class, 'getSnapT
 Route::post('/paypal/pay', [PaypalController::class, 'createTransaction'])->name('paypal.pay');
 Route::get('/paypal/success', [PaypalController::class, 'captureTransaction'])->name('paypal.success');
 Route::get('/paypal/cancel', [PaypalController::class, 'cancelTransaction'])->name('paypal.cancel');
+Route::post('/paypal/webhook', [PaypalController::class, 'handle']);
 
 // keynote
 Route::get('/keynote/{conference}', [KeyNoteController::class, 'index'])->name('keynote.index');

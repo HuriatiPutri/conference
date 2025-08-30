@@ -11,6 +11,26 @@ use Srmklive\PayPal\Services\PayPal as PayPalClient;
 
 class PaypalController extends Controller
 {
+    public function handle(Request $request)
+    {
+        $event = $request->all();
+
+        if ($event['event_type'] === 'PAYMENT.CAPTURE.COMPLETED') {
+            $captureId = $event['resource']['id'];
+
+            // Cari payment di DB
+            $audience = Audience::where('paypal_capture_id', $captureId)->first();
+
+            if ($audience) {
+                $audience->update(['payment_status' => 'paid']);
+            }
+        }
+
+        event(new ActivityLogEvent('INFO', 'PayPal Webhook Received', $event));
+
+        return response()->json(['status' => 'ok', 'message' => 'Webhook received', 'data' => $event], 200);
+    }
+
     public function createTransaction(Request $request)
     {
         try {
@@ -159,5 +179,32 @@ class PaypalController extends Controller
         return redirect()
             ->route('registration.show', $invoiceHistory->audience->public_id)
             ->with('error', 'Transaksi dibatalkan oleh pengguna.');
+    }
+
+    public function checkPaypalOrder($orderId)
+    {
+        $provider = new PayPalClient();
+        $provider->setApiCredentials(config('paypal'));
+        $provider->getAccessToken();
+
+        $order = $provider->showCapturedPaymentDetails($orderId);
+
+        // Contoh: $order['status'] bisa "COMPLETED", "CREATED", "APPROVED"
+        if ($order['status'] === 'COMPLETED') {
+            $invoiceHistory = InvoiceHistory::where('snap_token', $orderId)->update([
+                'status' => 'paid',
+            ]);
+
+            if ($invoiceHistory) {
+                Audience::where('id', $invoiceHistory->audience_id)->update([
+                    'payment_status' => 'paid' ?? 'unknown',
+                ]);
+
+                // Kirim email konfirmasi pembayaran
+                $invoiceHistory->sendEmail();
+            }
+        }
+
+        return response()->json($order);
     }
 }
