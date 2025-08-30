@@ -4,11 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Mail;
 
 class Audience extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'audiences';
 
@@ -29,6 +31,8 @@ class Audience extends Model
         'payment_proof_path', // Tambahkan ini
         'full_paper_path',
     ];
+
+    protected $dates = ['deleted_at'];
 
     // Definisikan 'payment_status' sebagai enum di PHP
     protected $casts = [

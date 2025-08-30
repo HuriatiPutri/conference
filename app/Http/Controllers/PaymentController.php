@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ActivityLogEvent;
 use App\Models\Audience;
 use App\Models\InvoiceHistory;
 use Illuminate\Http\Request;
@@ -70,6 +71,12 @@ class PaymentController extends Controller
                 'expired_at' => now()->addHours(24)->timestamp, // Set waktu expired 24 jam dari sekarang
                 'status' => 'pending', // Status awal adalah pending
             ]);
+            event(new ActivityLogEvent('SUCCESS', 'Midtrans GetSnapToken', [
+                'order_id' => $order_id,
+                'audience_id' => $audience->id,
+                'amount' => $audience->paid_fee,
+                'snap_token' => $snapToken,
+            ]));
 
             return response()->json([
                 'snap_token' => $snapToken,
@@ -101,6 +108,11 @@ class PaymentController extends Controller
         Audience::where('id', $invoiceHistory->audience_id)->update([
             'payment_status' => $mappingStatus[$transaction] ?? 'unknown',
         ]);
+
+        event(new ActivityLogEvent($transaction, 'Midtrans Notification', [
+            'order_id' => $orderId,
+            'transaction_status' => $transaction,
+        ]));
 
         $invoiceHistory->sendEmail();
 

@@ -158,7 +158,7 @@ use App\Constants\Countries;
                 </div>
 
                 <div class="mb-3">
-                  <label for="full_paper" class="form-label">Upload Full Paper (Doc/Docx)</label>
+                  <label for="full_paper" class="form-label">Upload Full Paper (Doc/Docx) <span class="text-danger">*</span></label>
                   <input type="file" class="form-control @error('full_paper') is-invalid @enderror" id="full_paper"
                     name="full_paper" accept=".doc,.docx">
                   <div class="form-text">Maximum file size: 5MB. Only .doc and .docx formats are allowed.</div>
@@ -298,6 +298,7 @@ use App\Constants\Countries;
         var paperTitleWrapper = $('#paper-title-wrapper');
         var selectedPresentationType = $('input[name="presentation_type"]:checked').val();
         var paperTitleField = $('#paper_title');
+        var fullPaperField = $('#full_paper');
 
         // Tampilkan atau sembunyikan field Paper Title berdasarkan pilihan
         if (selectedPresentationType === 'online_author' || selectedPresentationType === 'onsite') {
@@ -309,8 +310,10 @@ use App\Constants\Countries;
 
         if (selectedPresentationType === 'online_author' || selectedPresentationType === 'onsite') {
           paperTitleField.attr('required', true);
+          fullPaperField.attr('required', true);
         } else {
           paperTitleField.removeAttr('required');
+          fullPaperField.removeAttr('required');
         }
       }
 

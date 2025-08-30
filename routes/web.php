@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AudienceController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\ConferenceController;
@@ -46,6 +47,10 @@ Route::middleware(['auth'])->group(function () {
     // Route::get('/home/audience/create', [AudienceController::class, 'create'])->name('home.audience.create');
     // Route::post('/home/audience/', [AudienceController::class, 'update'])->name('audience.update');
     Route::get('/home/audience/download/{audience}', [AudienceController::class, 'downloadCertificate'])->name('home.audience.download');
+
+    // Activity Log
+    Route::get('/home/activity-logs', [ActivityLogController::class, 'index'])->name('home.activity-log.index');
+    Route::resource('activity-logs', ActivityLogController::class);
 });
 
 // home

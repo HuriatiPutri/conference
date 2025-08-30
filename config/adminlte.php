@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Title
@@ -311,7 +310,7 @@ return [
         ],
 
         // Sidebar items:
-        
+
         ['header' => 'Conference Management'],
         // Menu Manajemen Konferensi (hanya untuk role 'admin' atau editor dengan permission 'manage conferences')
         [
@@ -320,55 +319,55 @@ return [
             'submenu' => [
                 [
                     'text' => 'Conference List',
-                    'url'  => 'home/conference',
-                    'icon' => 'far fa-table',        
+                    'url' => 'home/conference',
+                    'icon' => 'far fa-table',
                 ],
                 [
                     'text' => 'Add New Conferences',
-                    'url'  => 'home/conference/create',
-                    'icon' => 'far fa-plus-circle',                
+                    'url' => 'home/conference/create',
+                    'icon' => 'far fa-plus-circle',
                 ],
-                
             ],
         ],
-        
-        
+
         [
             'text' => 'Audience',
             'icon' => 'fas fa-fw fa-users',
             'submenu' => [
                 [
                     'text' => 'Audience List',
-                    'url'  => 'home/audience',
-                    'icon' => 'far fa-table',        
+                    'url' => 'home/audience',
+                    'icon' => 'far fa-table',
                 ],
                 [
                     'text' => 'Add New Audience',
-                    'url'  => 'home/audience/create',
-                    'icon' => 'far fa-plus-circle',                
+                    'url' => 'home/audience/create',
+                    'icon' => 'far fa-plus-circle',
                 ],
-                
             ],
         ],
-        
+
         [
             'text' => 'Payment',
             'icon' => 'fas fa-fw fa-money-bill-alt',
             'submenu' => [
                 [
                     'text' => 'Payment List',
-                    'url'  => 'home/payment',
-                    'icon' => 'far fa-table',        
+                    'url' => 'home/payment',
+                    'icon' => 'far fa-table',
                 ],
                 [
                     'text' => 'Add New Payment',
-                    'url'  => 'home/payment/create',
-                    'icon' => 'far fa-plus-circle',                
+                    'url' => 'home/payment/create',
+                    'icon' => 'far fa-plus-circle',
                 ],
-                
             ],
         ],
-        
+        [
+            'text' => 'Activity Log',
+            'icon' => 'fas fa-fw fa-clipboard-list',
+            'url' => 'home/activity-logs',
+        ],
     ],
 
     /*

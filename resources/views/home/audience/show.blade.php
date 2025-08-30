@@ -13,7 +13,7 @@
         <div class="content-wrapper" style="min-height: 80vh; margin-left: 0;">
             <section class="content-header"><div class="container-fluid"><h1 class="m-0">Audience Details</h1></div></section>
             <section class="content">
-                <div class="container-fluid">
+                <div class="container-fluid responsive">
                     <table id="audiencesTable" class="table table-bordered table-hover table-striped">
                         <tr>
                             <th>Conference</th>
@@ -30,6 +30,10 @@
                         <tr>
                             <th>Tipe Partisipan</th>
                             <td>{{ $audience->presentation_type }}</td>
+                        </tr>
+                        <tr>
+                            <th>Metode Pembayaran</th>
+                            <td>{{ $audience->getPaymentMethodText() }}</td>
                         </tr>
                         <tr>
                             <th>Biaya Dibayar</th>
@@ -52,15 +56,29 @@
                             </td>
                         </tr>
                         <tr>
+                            <th>Judul Paper</th>
+                            <td>{{ $audience->paper_title ?? 'N/A' }}</td>
+                        </tr>
+                        <tr>
                             <th>Paper</th>
                             <td>
-                                @if($audience->paper)
-                                    <a href="{{ asset($audience->paper->full_paper_path) }}" target="_blank" class="btn btn-primary btn-sm">
-                                        <i class="fas fa-file"></i> View Paper
-                                    </a>
-                                @else
-                                    <span class="text-muted">No Paper Submitted</span>
-                                @endif
+                                @if ($audience->full_paper_path)
+                                <a href="{{ Storage::url($audience->full_paper_path) }}" target="_blank"
+                                  class="btn btn-sm btn-info"><i class="fas fa-download"></i> Paper</a>
+                              @else
+                                -
+                              @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Sertifikat</th>
+                            <td>
+                                @if(($audience->keynote || $audience->parallelSession) && $audience->conference->certificate_template_position)
+                                <a class="btn btn-primary btn-sm" target="_blank" href="{{ route('home.audience.download', $audience->id)}}">
+                                  <i class="fas fa-download"></i> Download</a>
+                              @else
+                                -
+                              @endif
                             </td>
                         </tr>
                     </table>

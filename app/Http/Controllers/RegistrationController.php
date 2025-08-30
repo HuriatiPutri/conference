@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Audience; // Model untuk menyimpan data pendaftar
-use App\Models\Conference; // Model untuk mendapatkan detail konferensi
-use App\Models\InvoiceHistory; // Model untuk menyimpan riwayat pembayaran
-use Illuminate\Http\Request;
+use App\Models\Audience; // Model untuk mendapatkan detail konferensi
+use App\Models\Conference; // Model untuk menyimpan riwayat pembayaran
+use App\Models\InvoiceHistory;
 // Untuk mengelola upload file
-use Illuminate\Validation\Rule; // Digunakan untuk aturan validasi 'unique'
+use Illuminate\Http\Request; // Digunakan untuk aturan validasi 'unique'
+use Illuminate\Validation\Rule;
 use Midtrans\Config;
 use Midtrans\Snap;
 
@@ -63,7 +63,7 @@ class RegistrationController extends Controller
                 'max:255',
                 // Pastikan email unik di tabel 'audiences' untuk konferensi ini saja.
                 Rule::unique('audiences')->where(function ($query) use ($conference) {
-                    return $query->where('conference_id', $conference->id);
+                    return $query->where('conference_id', $conference->id)->whereNull('deleted_at');
                 }),
             ],
             'phone_number' => 'nullable|string|max:20',

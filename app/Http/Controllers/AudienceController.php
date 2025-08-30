@@ -115,11 +115,13 @@ class AudienceController extends Controller
     public function destroy(Audience $audience) // Route Model Binding
     {
         // Hapus file full paper yang terkait jika ada
-        if ($audience->full_paper_path) {
-            Storage::disk('public')->delete($audience->full_paper_path);
-        }
+        // if ($audience->full_paper_path) {
+        //     Storage::disk('public')->delete($audience->full_paper_path);
+        // }
 
-        $audience->delete();
+        // $audience->delete();
+
+        $audience->delete(); // soft delete
 
         return redirect()->route('home.audience.index')->with('success', 'Audience berhasil dihapus!');
     }

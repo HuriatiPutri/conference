@@ -182,13 +182,12 @@
         .then(response => response.json())
         .then(data => {
           // Pastikan respons mengandung paypalToken
-          console.log(data);
-          if (data.success === false) {
-            alert(data.error);
-            return;
-          } else {
+          if (data.success) {
             let paypalToken = data.paypal_token;
             window.location.href = data.redirect_url; // Redirect ke PayPal
+          } else {
+            alert(data.error);
+            return;
           }
         })
         .catch(error => console.error('Error:', error));

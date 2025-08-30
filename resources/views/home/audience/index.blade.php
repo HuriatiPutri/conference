@@ -24,6 +24,7 @@
                       class="fas fa-plus"></i> Tambah Audience</a></div>
               </div>
               <div class="card-body">
+                <div class="table-responsive">
                 <table id="audiencesTable" class="table-bordered table-hover table-striped table">
                   <thead>
                     <tr>
@@ -33,6 +34,7 @@
                       <th>Nama Belakang</th>
                       <th>Email</th>
                       <th>Tipe Partisipan</th>
+                      <th>Metode Pembayaran</th>
                       <th>Biaya Dibayar</th>
                       <th>Status Pembayaran</th>
                       <th>Paper</th>
@@ -49,6 +51,7 @@
                         <td>{{ $audience->last_name }}</td>
                         <td>{{ $audience->email }}</td>
                         <td>{{ Str::headline($audience->presentation_type) }}</td>
+                        <td>{{ $audience->getPaymentMethodText()}}</td>
                         <td>{{ $audience->country === 'ID' ? 'Rp' : 'USD'}} {{ number_format($audience->paid_fee, 0, ',', '.') }}</td>
                         <td>
                           @php
@@ -74,7 +77,8 @@
                         </td>
                         <td>
                             @if(($audience->keynote || $audience->parallelSession) && $audience->conference->certificate_template_position)
-                            <a class="btn btn-primary btn-sm" target="_blank" href="{{ route('home.audience.download', $audience->id)}}">Download</a>
+                            <a class="btn btn-primary btn-sm" target="_blank" href="{{ route('home.audience.download', $audience->id)}}">
+                              <i class="fas fa-download"></i>Download</a>
                             @endif
                         </td>
                         <td class="text-center">
@@ -99,6 +103,7 @@
                     @endforelse
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
           </div>
