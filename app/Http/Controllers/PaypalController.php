@@ -191,9 +191,11 @@ class PaypalController extends Controller
 
         // Contoh: $order['status'] bisa "COMPLETED", "CREATED", "APPROVED"
         if ($order['status'] === 'COMPLETED') {
-            $invoiceHistory = InvoiceHistory::where('snap_token', $orderId)->update([
+            InvoiceHistory::where('capture_id', $orderId)->update([
                 'status' => 'paid',
             ]);
+
+            $invoiceHistory = InvoiceHistory::where('capture_id', $orderId)->first();
 
             if ($invoiceHistory) {
                 Audience::where('id', $invoiceHistory->audience_id)->update([
