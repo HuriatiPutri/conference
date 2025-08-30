@@ -38,7 +38,7 @@
                 </tr>
                 <tr>
                   <th>Tipe Partisipan</th>
-                  <td>{{ $audience->presentation_type }}</td>
+                  <td>{{ Str::headline($audience->presentation_type) }}</td>
                 </tr>
                 <tr>
                   <th>Biaya Dibayar</th>

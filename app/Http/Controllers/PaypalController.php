@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\ActivityLogEvent;
 use App\Helpers\CurrencyHelper;
+use App\Listeners\ActivityLogListener;
 use App\Models\Audience;
 use App\Models\InvoiceHistory;
 use Illuminate\Http\Request;
@@ -16,17 +17,24 @@ class PaypalController extends Controller
         $event = $request->all();
 
         if ($event['event_type'] === 'PAYMENT.CAPTURE.COMPLETED') {
-            $captureId = $event['resource']['id'];
-
-            // Cari payment di DB
-            $audience = Audience::where('paypal_capture_id', $captureId)->first();
-
-            if ($audience) {
-                $audience->update(['payment_status' => 'paid']);
+            $orderId = $event['resource']['supplementary_data']['related_ids']['order_id'];
+            $invoiceHistory = InvoiceHistory::where('snap_token', $orderId)->first();
+            if ($invoiceHistory) {
+                InvoiceHistory::where('snap_token', $request->token)->update([
+                    'status' => 'paid',
+                    'capture_id' => $event['resource']['id'] ?? null,
+                ]);
+                $audience = Audience::where('id', $invoiceHistory->audience_id)->first();
+                // Cari payment di DB
+                if ($audience) {
+                    $audience->update(['payment_status' => 'paid']);
+                }
+                // Kirim email konfirmasi pembayaran
+                $invoiceHistory->sendEmail();
             }
         }
 
-        event(new ActivityLogEvent('INFO', 'PayPal Webhook Received', $event));
+        event(new ActivityLogEvent('WEBHOOK', 'PayPal Webhook Received', $event));
 
         return response()->json(['status' => 'ok', 'message' => 'Webhook received', 'data' => $event], 200);
     }
@@ -75,14 +83,9 @@ class PaypalController extends Controller
                 ],
             ]);
 
-            if (isset($response['id'])) {
-                event(new ActivityLogEvent(
-                    'INFO',
-                    'PayPal Create Order Response',
-                    $response
-                ));
-            }
             if (isset($response['id']) && $response['status'] === 'CREATED') {
+                event(new ActivityLogEvent('CREATE-ORDER', 'PayPal Create Order Response', $response));
+
                 // Simpan order ID dan informasi invoice lainnya ke database
                 $redirect_url = null;
 
@@ -133,14 +136,14 @@ class PaypalController extends Controller
         $response = $provider->capturePaymentOrder($request->token);
         $invoiceHistory = InvoiceHistory::where('snap_token', $request->token)->first();
 
-        if (isset($response['status'])) {
-            event(new ActivityLogListener($response['status'], 'PayPal Capture Order Response', $response));
-        }
+        event(new ActivityLogEvent('CAPTURE', 'PayPal Capture Order Response', $response));
+
         if (isset($response['status']) && $response['status'] === 'COMPLETED') {
             // Simpan ke database jika perlu
 
             InvoiceHistory::where('snap_token', $request->token)->update([
                 'status' => 'paid',
+                'capture_id' => $response['purchase_units'][0]['payments']['captures'][0]['id'] ?? null,
             ]);
 
             if ($invoiceHistory) {

@@ -51,7 +51,13 @@
                         <td>{{ $audience->last_name }}</td>
                         <td>{{ $audience->email }}</td>
                         <td>{{ Str::headline($audience->presentation_type) }}</td>
-                        <td>{{ $audience->getPaymentMethodText()}}</td>
+                        <td>
+                          {{ $audience->getPaymentMethodText()}}
+                          @if ($audience->payment_method === 'transfer_bank' && $audience->payment_proof_path)
+                            <br>
+                            <a href="{{ Storage::url($audience->payment_proof_path) }}" class="mt-2" target="_blank">(Proof Payment)</a>
+                          @endif
+                        </td>
                         <td>{{ $audience->country === 'ID' ? 'Rp' : 'USD'}} {{ number_format($audience->paid_fee, 0, ',', '.') }}</td>
                         <td>
                           @php
