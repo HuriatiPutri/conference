@@ -203,6 +203,7 @@ class PaypalController extends Controller
                 // Kirim email konfirmasi pembayaran
                 $invoiceHistory->sendEmail();
             }
+            event(new ActivityLogEvent('SUCCESS', 'PayPal Order Completed', $order));
         }
 
         return response()->json($order);
