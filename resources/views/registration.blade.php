@@ -161,7 +161,7 @@ use App\Constants\Countries;
                   <label for="full_paper" class="form-label">Upload Full Paper (Doc/Docx) <span class="text-danger">*</span></label>
                   <input type="file" class="form-control @error('full_paper') is-invalid @enderror" id="full_paper"
                     name="full_paper" accept=".doc,.docx">
-                  <div class="form-text">Maximum file size: 5MB. Only .doc and .docx formats are allowed.</div>
+                  <div class="form-text">Maximum file size: 50MB. Only .doc and .docx formats are allowed.</div>
                   @error('full_paper')
                     <div class="invalid-feedback">{{ $message }}</div>
                   @enderror
