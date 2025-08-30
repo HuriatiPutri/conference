@@ -44,7 +44,7 @@ class PaypalController extends Controller
 
             if ($invoiceHistory) {
                 // Invoice sudah ada, kembalikan error via JSON
-                return response()->json(['redirect_url' => $invoiceHistory->redirect_url], 200);
+                return response()->json(['success' => true, 'redirect_url' => $invoiceHistory->redirect_url]);
             }
 
             // Ambil data audience berdasarkan ID
