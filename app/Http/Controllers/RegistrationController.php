@@ -69,13 +69,13 @@ class RegistrationController extends Controller
             'phone_number' => 'nullable|string|max:20',
             'country' => 'required|string|max:255',
             'presentation_type' => 'required|in:online_author,onsite,participant_only',
-            'full_paper' => 'nullable|file|mimes:doc,docx|max:5120', // Upload file dokumen, max 5MB
+            'full_paper' => 'nullable|file|mimes:doc,docx|max:51200', // Upload file dokumen, max 5MB
             'payment_method' => 'required|in:transfer_bank,payment_gateway', // Metode pembayaran yang didukung
         ],
             [
                 'email.unique' => 'This email has already been registered for this conference.',
                 'full_paper.mimes' => 'The full paper must be a file of type: doc, docx.',
-                'full_paper.max' => 'The full paper may not be greater than 5MB.',
+                'full_paper.max' => 'The full paper may not be greater than 50MB.',
             ]);
 
         // 2. Tangani Upload File 'full_paper'

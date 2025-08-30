@@ -68,6 +68,7 @@
                           </span>
                         </td>
                         <td>
+                          {{ $audience->paper_title ?? 'N/A' }}
                           @if ($audience->full_paper_path)
                             <a href="{{ Storage::url($audience->full_paper_path) }}" target="_blank"
                               class="btn btn-sm btn-info"><i class="fas fa-download"></i> Paper</a>

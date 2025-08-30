@@ -67,7 +67,7 @@
                             </tr>
                           @empty
                             <tr>
-                              <td colspan="12" class="text-center">Belum ada data konferensi yang tersedia.</td>
+                              <td colspan="12" class="text-center">Belum ada data activity yang tersedia.</td>
                             </tr>
                           @endforelse
                         </tbody>

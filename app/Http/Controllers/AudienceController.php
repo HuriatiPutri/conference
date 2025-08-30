@@ -96,14 +96,25 @@ class AudienceController extends Controller
         $validatedData = $request->validate([
             'id' => 'required|exists:audiences,id',
             'payment_status' => 'required|in:pending_payment,paid,cancelled,refunded',
+            'full_paper' => 'nullable|file|mimes:doc,docx|max:51200',
+        ], [
+            'full_paper.mimes' => 'The full paper must be a file of type: doc, docx.',
+            'full_paper.max' => 'The full paper may not be greater than 50MB.',
         ]);
-
+        $fullPaperPath = null;
+        if ($request->hasFile('full_paper')) {
+            $fullPaperPath = $request->file('full_paper')->store('audience_full_papers', 'public');
+        }
+        if ($fullPaperPath) {
+            $validatedData['full_paper_path'] = $fullPaperPath;
+        }
         $update = $audience->update($validatedData);
-
         if (!$update) {
             return redirect()->back()->withInput()->withErrors(['error' => 'Failed to update audience. Please try again.']);
         } else {
-            $audience->sendPaymentConfirmationEmail();
+            if ($validatedData['payment_status'] !== 'pending_payment') {
+                $audience->sendPaymentConfirmationEmail();
+            }
         }
 
         return redirect()->route('home.audience.index')->with('success', 'Audience berhasil diperbarui!');

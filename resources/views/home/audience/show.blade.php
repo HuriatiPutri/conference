@@ -81,6 +81,10 @@
                               @endif
                             </td>
                         </tr>
+                        <tr>
+                            <th>Tanggal Registrasi</th>
+                            <td>{{ $audience->created_at ?? 'N/A' }}</td>
+                        </tr>
                     </table>
                     <!-- <a href="{{ route('audience.index') }}" class="btn btn-primary">Back to Audience List</a> -->
                 </div>

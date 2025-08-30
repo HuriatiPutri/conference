@@ -18,10 +18,11 @@
         </section>
         <section class="content">
           <div class="container-fluid">
-            <form action="{{ route('audience.update', $audience->public_id) }}" method="POST" enctype="multipart/form-data">              
-                @csrf
-                @method('PUT') 
-                <input type="hidden" name="id" value="{{ $audience->id }}">
+            <form action="{{ route('audience.update', $audience->public_id) }}" method="POST"
+              enctype="multipart/form-data">
+              @csrf
+              @method('PUT')
+              <input type="hidden" name="id" value="{{ $audience->id }}">
               <table id="audiencesTable" class="table-bordered table-hover table-striped table">
                 <tr>
                   <th>Conference</th>
@@ -69,7 +70,9 @@
                         <option value="refunded" {{ $audience->payment_status == 'refunded' ? 'selected' : '' }}>Refunded
                         </option>
                       </select>
-                      <button type="submit" class="btn btn-primary btn-sm mt-2">Update Status</button>
+                      @error('payment_status')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                      @enderror
                     @endif
                   </td>
                 </tr>
@@ -97,13 +100,20 @@
                         <i class="fas fa-file"></i> View Paper
                       </a>
                     @else
-                      <span class="text-muted">No Paper Submitted</span>
+                    -
+                      {{-- <input type="file" class="form-control @error('full_paper') is-invalid @enderror" id="full_paper"
+                        name="full_paper" accept=".doc,.docx">
+                      <small class="form-text text-muted">Upload full paper (Doc/Docx). Max size: 50MB.</small>
+                      @error('full_paper')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                      @enderror --}}
                     @endif
                   </td>
                 </tr>
               </table>
+              <button type="submit" class="btn btn-warning">Simpan</button>
+              <a href="{{ route('audience.index') }}" class="btn btn-primary">Back to Audience List</a>
             </form>
-            <a href="{{ route('audience.index') }}" class="btn btn-primary">Back to Audience List</a>
           </div>
         </section>
       </div>
