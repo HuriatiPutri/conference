@@ -27,7 +27,7 @@
               <div class="card-body">
                 <h5>Filter Data Audience</h5>
                 <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <div class="mb-3 flex gap-4">
                     <select id="filterConference" class="form-control">
                       <option value="">-- Semua Conference --</option>
@@ -35,13 +35,9 @@
                         <option value="{{ $conference->name }}">{{ $conference->name }}</option>
                       @endforeach
                     </select>
-                  </div>
-                  <div class="mb-3 flex flex-col gap-6">
-                    <span id="summaryTransfer">Transfer: 0</span><br/>
-                    <span id="summaryGateway">Payment Gateway: 0</span>
                   </div>                  
                 </div>
-                <div class="col-md-6">
+                <div class="mb-3 col-md-4">
                   <select id="filterPaymentMethod" class="form-control">
                     <option value="">-- Semua Metode Pembayaran --</option>
                     <option value="Bank Transfer">Bank Transfer</option>
@@ -49,6 +45,23 @@
                     <!-- tambah sesuai kebutuhan -->
                   </select>
                 </div>
+                <div class="mb-3 col-md-4">
+                  <select id="filterPaymentStatus" class="form-control">
+                    <option value="">-- Semua Status Pembayaran --</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Payment Pending">Payment Pending</option>
+                    <option value="Cancelled">Cancelled</option>
+                    <option value="Refunded">Refunded</option>
+                    <!-- tambah sesuai kebutuhan -->
+                  </select>
+                </div>
+                </div>
+
+                <div class="mb-3 flex flex-col gap-6 sm:flex-row">
+                  <span id="summaryPaid" class="bg-green p-2 rounded">Paid 0</span>
+                  <span id="summaryPending" class="bg-yellow p-2 rounded">Pending Payment 0</span>
+                  <span id="summaryExpired" class="bg-red p-2 rounded">Cancelled/Refunded 0</span>
+                  <span id="summaryRefunded" class="bg-gray p-2 rounded">Refunded 0</span>
                 </div>
                 <hr/>
                 <div class="table-responsive">
@@ -218,11 +231,11 @@
           ], // kolom pertama (ID) urut desc
           "columnDefs": [{
               "orderable": false,
-              "targets": [8, 9]
+              "targets": [],
             }, // Kolom Paper dan Aksi tidak bisa disort
             {
               "searchable": false,
-              "targets": [8, 9]
+              "targets": []
             } // Kolom Paper dan Aksi tidak bisa dicari
           ]
         });
@@ -231,13 +244,18 @@
 
         $('#filterConference').on('change', function() {
           var val = $(this).val();
-          console.log(table.column(1).data());
           table.column(1).search(val ? '^' + regexEscape(val) + '$' : '', true, false).draw();
         });
 
         $('#filterPaymentMethod').on('change', function() {
           var val = $(this).val();
-          table.column(6).search(val ? regexEscape(val) : '', true, false).draw();
+          console.log(table.column(6).data());
+          table.column(6).search(val ? val : '', true, false).draw();
+        });
+
+        $('#filterPaymentStatus').on('change', function() {
+          var val = $(this).val();
+          table.column(8).search(val ? val : '', true, false).draw();
         });
 
         table.on('draw', function() {
@@ -248,19 +266,27 @@
           var data = table.rows({ filter: 'applied' }).data();
           var transferCount = 0;
           var gatewayCount = 0;
+          var cancelledCount = 0;
+          var refundedCount = 0;
 
           data.each(function(row) {
             // asumsi kolom payment_method di index 12
-            var payment = row[6]; 
-            if (payment.toLowerCase().includes('transfer')) {
+            var payment = row[8]; 
+            if (payment.toLowerCase().includes('paid')) {
               transferCount++;
-            } else if (payment.toLowerCase().includes('gateway')) {
+            } else if (payment.toLowerCase().includes('pending payment')) {
               gatewayCount++;
+            }else if (payment.toLowerCase().includes('cancelled')) {
+              cancelledCount++;
+            }else if (payment.toLowerCase().includes('refunded')) {
+              refundedCount++;
             }
           });
 
-          $('#summaryTransfer').text('Bank Transfer: ' + transferCount);
-          $('#summaryGateway').text('Payment Gateway: ' + gatewayCount);
+          $('#summaryPaid').text('Paid: ' + transferCount);
+          $('#summaryPending').text('Pending: ' + gatewayCount);
+          $('#summaryCancelled').text('Cancelled/Refunded: ' + cancelledCount); 
+          $('#summaryRefunded').text('Refunded: ' + refundedCount); 
         }        
       });
     </script>
