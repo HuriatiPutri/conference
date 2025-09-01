@@ -44,7 +44,7 @@
                 <div class="col-md-6">
                   <select id="filterPaymentMethod" class="form-control">
                     <option value="">-- Semua Metode Pembayaran --</option>
-                    <option value="Transfer Bank">Bank Transfer</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
                     <option value="Payment Gateway">Payment Gateway</option>
                     <!-- tambah sesuai kebutuhan -->
                   </select>
