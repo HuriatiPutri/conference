@@ -49,7 +49,7 @@
                   <select id="filterPaymentStatus" class="form-control">
                     <option value="">-- Semua Status Pembayaran --</option>
                     <option value="Paid">Paid</option>
-                    <option value="Payment Pending">Payment Pending</option>
+                    <option value="Pending Payment">Payment Pending</option>
                     <option value="Cancelled">Cancelled</option>
                     <option value="Refunded">Refunded</option>
                     <!-- tambah sesuai kebutuhan -->
@@ -249,7 +249,6 @@
 
         $('#filterPaymentMethod').on('change', function() {
           var val = $(this).val();
-          console.log(table.column(6).data());
           table.column(6).search(val ? val : '', true, false).draw();
         });
 
