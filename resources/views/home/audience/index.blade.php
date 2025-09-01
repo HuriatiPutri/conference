@@ -237,7 +237,7 @@
 
         $('#filterPaymentMethod').on('change', function() {
           var val = $(this).val();
-          table.column(6).search(val ? '^' + regexEscape(val) + '$' : '', true, false).draw();
+          table.column(6).search(val ? regexEscape(val) : '', true, false).draw();
         });
 
         table.on('draw', function() {
