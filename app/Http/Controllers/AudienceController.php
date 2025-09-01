@@ -18,8 +18,9 @@ class AudienceController extends Controller
     {
         // Ambil semua data audience, eager load relasi conference
         $audiences = Audience::with('conference')->get();
+        $conferences = Conference::all();
 
-        return view('home.audience.index', compact('audiences')); // View di folder 'audience/index.blade.php'
+        return view('home.audience.index', compact('audiences', 'conferences')); // View di folder 'audience/index.blade.php'
     }
 
     /**

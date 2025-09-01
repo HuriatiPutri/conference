@@ -7,6 +7,7 @@
 @stop
 
 @section('content')
+
   <body class="hold-transition sidebar-mini">
     <div class="wrapper">
       <div class="content-wrapper" style="min-height: 80vh; margin-left: 0;">
@@ -24,92 +25,121 @@
                       class="fas fa-plus"></i> Tambah Audience</a></div>
               </div>
               <div class="card-body">
+                <h5>Filter Data Audience</h5>
+                <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3 flex gap-4">
+                    <select id="filterConference" class="form-control">
+                      <option value="">-- Semua Conference --</option>
+                      @foreach($conferences as $conference)
+                        <option value="{{ $conference->name }}">{{ $conference->name }}</option>
+                      @endforeach
+                    </select>
+                  </div>
+                  <div class="mb-3 flex flex-col gap-6">
+                    <span id="summaryTransfer">Transfer: 0</span><br/>
+                    <span id="summaryGateway">Payment Gateway: 0</span>
+                  </div>                  
+                </div>
+                <div class="col-md-6">
+                  <select id="filterPaymentMethod" class="form-control">
+                    <option value="">-- Semua Metode Pembayaran --</option>
+                    <option value="Transfer Bank">Bank Transfer</option>
+                    <option value="Payment Gateway">Payment Gateway</option>
+                    <!-- tambah sesuai kebutuhan -->
+                  </select>
+                </div>
+                </div>
+                <hr/>
                 <div class="table-responsive">
-                <table id="audiencesTable" class="table-bordered table-hover table-striped table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Konferensi</th>
-                      <th>Nama Depan</th>
-                      <th>Nama Belakang</th>
-                      <th>Email</th>
-                      <th>Tipe Partisipan</th>
-                      <th>Metode Pembayaran</th>
-                      <th>Biaya Dibayar</th>
-                      <th>Status Pembayaran</th>
-                      <th>Paper</th>
-                      <th>Sertifikat</th>
-                      <th class="text-center" width="300px">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @forelse($audiences as $audience)
+                  <table id="audiencesTable" class="table-bordered table-hover table-striped table">
+                    <thead>
                       <tr>
-                        <td>{{ $audience->id }}</td>
-                        <td>{{ $audience->conference->name ?? 'N/A' }}</td>
-                        <td>{{ $audience->first_name }}</td>
-                        <td>{{ $audience->last_name }}</td>
-                        <td>{{ $audience->email }}</td>
-                        <td>{{ Str::headline($audience->presentation_type) }}</td>
-                        <td>
-                          {{ $audience->getPaymentMethodText()}}
-                          @if ($audience->payment_method === 'transfer_bank' && $audience->payment_proof_path)
-                            <br>
-                            <a href="{{ Storage::url($audience->payment_proof_path) }}" class="mt-2" target="_blank">(Proof Payment)</a>
-                          @endif
-                        </td>
-                        <td>{{ $audience->country === 'ID' ? 'Rp' : 'USD'}} {{ number_format($audience->paid_fee, 0, ',', '.') }}</td>
-                        <td>
-                          @php
-                            $statusClass =
-                                [
-                                    'pending_payment' => 'badge-warning badge-pending',
-                                    'paid' => 'badge-success badge-paid',
-                                    'cancelled' => 'badge-danger badge-cancelled',
-                                    'refunded' => 'badge-secondary badge-refunded',
-                                ][$audience->payment_status] ?? 'badge-secondary';
-                          @endphp
-                          <span class="badge badge-status {{ $statusClass }}">
-                            {{ Str::headline(str_replace('_', ' ', $audience->payment_status)) }}
-                          </span>
-                        </td>
-                        <td>
-                          {{ $audience->paper_title ?? 'N/A' }}
-                          @if ($audience->full_paper_path)
-                            <a href="{{ Storage::url($audience->full_paper_path) }}" target="_blank"
-                              class="btn btn-sm btn-info"><i class="fas fa-download"></i> Paper</a>
-                          @else
-                            -
-                          @endif
-                        </td>
-                        <td>
-                            @if(($audience->keynote || $audience->parallelSession) && $audience->conference->certificate_template_position)
-                            <a class="btn btn-primary btn-sm" target="_blank" href="{{ route('home.audience.download', $audience->id)}}">
-                              <i class="fas fa-download"></i>Download</a>
+                        <th>ID</th>
+                        <th>Konferensi</th>
+                        <th>Nama Depan</th>
+                        <th>Nama Belakang</th>
+                        <th>Email</th>
+                        <th>Tipe Partisipan</th>
+                        <th>Metode Pembayaran</th>
+                        <th>Biaya Dibayar</th>
+                        <th>Status Pembayaran</th>
+                        <th>Paper</th>
+                        <th>Sertifikat</th>
+                        <th class="text-center" width="300px">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @forelse($audiences as $audience)
+                        <tr>
+                          <td>{{ $audience->id }}</td>
+                          <td>{{ $audience->conference->name ?? 'N/A' }}</td>
+                          <td>{{ $audience->first_name }}</td>
+                          <td>{{ $audience->last_name }}</td>
+                          <td>{{ $audience->email }}</td>
+                          <td>{{ Str::headline($audience->presentation_type) }}</td>
+                          <td>
+                            {{ $audience->getPaymentMethodText() }}
+                            @if ($audience->payment_method === 'transfer_bank' && $audience->payment_proof_path)
+                              <br>
+                              <a href="{{ Storage::url($audience->payment_proof_path) }}" class="mt-2"
+                                target="_blank">(Proof Payment)</a>
                             @endif
-                        </td>
-                        <td class="text-center">
-                          <a href="{{ route('audience.show', $audience->public_id) }}" class="btn btn-info btn-sm"
-                            title="Lihat"><i class="fas fa-eye"></i></a>
-                          <a href="{{ route('audience.edit', $audience->public_id) }}" class="btn btn-warning btn-sm"
+                          </td>
+                          <td>{{ $audience->country === 'ID' ? 'Rp' : 'USD' }}
+                            {{ number_format($audience->paid_fee, 0, ',', '.') }}</td>
+                          <td>
+                            @php
+                              $statusClass =
+                                  [
+                                      'pending_payment' => 'badge-warning badge-pending',
+                                      'paid' => 'badge-success badge-paid',
+                                      'cancelled' => 'badge-danger badge-cancelled',
+                                      'refunded' => 'badge-secondary badge-refunded',
+                                  ][$audience->payment_status] ?? 'badge-secondary';
+                            @endphp
+                            <span class="badge badge-status {{ $statusClass }}">
+                              {{ Str::headline(str_replace('_', ' ', $audience->payment_status)) }}
+                            </span>
+                          </td>
+                          <td>
+                            {{ $audience->paper_title ?? 'N/A' }}
+                            @if ($audience->full_paper_path)
+                              <a href="{{ Storage::url($audience->full_paper_path) }}" target="_blank"
+                                class="btn btn-sm btn-info"><i class="fas fa-download"></i> Paper</a>
+                            @else
+                              -
+                            @endif
+                          </td>
+                          <td>
+                            @if (($audience->keynote || $audience->parallelSession) && $audience->conference->certificate_template_position)
+                              <a class="btn btn-primary btn-sm" target="_blank"
+                                href="{{ route('home.audience.download', $audience->id) }}">
+                                <i class="fas fa-download"></i>Download</a>
+                            @endif
+                          </td>
+                          <td class="text-center">
+                            <a href="{{ route('audience.show', $audience->public_id) }}" class="btn btn-info btn-sm"
+                              title="Lihat"><i class="fas fa-eye"></i></a>
+                            <a href="{{ route('audience.edit', $audience->public_id) }}" class="btn btn-warning btn-sm"
                               title="Lihat"><i class="fas fa-edit"></i></a>
-                          <form action="{{ route('audience.destroy', $audience->public_id) }}" method="POST"
-                            style="display:inline-block;">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm" title="Hapus"
-                              onclick="return confirm('Yakin ingin menghapus audience ini?')"><i
-                                class="fas fa-trash"></i></button>
-                          </form>
-                        </td>
-                      </tr>
-                    @empty
-                      <tr>
-                        <td colspan="10" class="text-center">Belum ada data audience.</td>
-                      </tr>
-                    @endforelse
-                  </tbody>
-                </table>
+                            <form action="{{ route('audience.destroy', $audience->public_id) }}" method="POST"
+                              style="display:inline-block;">
+                              @csrf
+                              @method('DELETE')
+                              <button type="submit" class="btn btn-danger btn-sm" title="Hapus"
+                                onclick="return confirm('Yakin ingin menghapus audience ini?')"><i
+                                  class="fas fa-trash"></i></button>
+                            </form>
+                          </td>
+                        </tr>
+                      @empty
+                        <tr>
+                          <td colspan="10" class="text-center">Belum ada data audience.</td>
+                        </tr>
+                      @endforelse
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
@@ -174,13 +204,18 @@
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js"></script>
 
     <script>
+      function regexEscape(text) {
+        return text.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      }
       $(document).ready(function() {
-        $('#audiencesTable').DataTable({
+        var table = $('#audiencesTable').DataTable({
           "language": {
             "url": "//cdn.datatables.net/plug-ins/2.0.8/i18n/id.json"
           },
           "responsive": true,
-          "order": [[0, "desc"]], // kolom pertama (ID) urut desc
+          "order": [
+            [0, "desc"]
+          ], // kolom pertama (ID) urut desc
           "columnDefs": [{
               "orderable": false,
               "targets": [8, 9]
@@ -191,6 +226,42 @@
             } // Kolom Paper dan Aksi tidak bisa dicari
           ]
         });
+
+        updateSummary();
+
+        $('#filterConference').on('change', function() {
+          var val = $(this).val();
+          console.log(table.column(1).data());
+          table.column(1).search(val ? '^' + regexEscape(val) + '$' : '', true, false).draw();
+        });
+
+        $('#filterPaymentMethod').on('change', function() {
+          var val = $(this).val();
+          table.column(6).search(val ? '^' + regexEscape(val) + '$' : '', true, false).draw();
+        });
+
+        table.on('draw', function() {
+          updateSummary();
+        });
+
+        function updateSummary() {
+          var data = table.rows({ filter: 'applied' }).data();
+          var transferCount = 0;
+          var gatewayCount = 0;
+
+          data.each(function(row) {
+            // asumsi kolom payment_method di index 12
+            var payment = row[6]; 
+            if (payment.toLowerCase().includes('transfer')) {
+              transferCount++;
+            } else if (payment.toLowerCase().includes('gateway')) {
+              gatewayCount++;
+            }
+          });
+
+          $('#summaryTransfer').text('Bank Transfer: ' + transferCount);
+          $('#summaryGateway').text('Payment Gateway: ' + gatewayCount);
+        }        
       });
     </script>
 

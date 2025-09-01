@@ -44,7 +44,7 @@ class Audience extends Model
     {
         switch ($this->payment_method) {
             case 'transfer_bank':
-                return 'Transfer Bank';
+                return 'Bank Transfer';
             case 'payment_gateway':
                 return 'Payment Gateway';
             default:
