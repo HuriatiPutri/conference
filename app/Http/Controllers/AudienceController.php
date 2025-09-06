@@ -77,6 +77,7 @@ class AudienceController extends Controller
      */
     public function show(Audience $audience) // Route Model Binding
     {
+        if($audience->phone_number) {
         $clearPhoneNumber = preg_replace('/[\s\-\(\)]/', '', $audience->phone_number);
         if (preg_match('/^0/', $clearPhoneNumber) && isset(Countries::LIST[$audience->country])) {
             $phoneNumber = preg_replace('/^0/', Countries::LIST[$audience->country]['code'], $clearPhoneNumber);
@@ -86,6 +87,9 @@ class AudienceController extends Controller
             $phoneNumber =
                 (isset(Countries::LIST[$audience->country]) ? Countries::LIST[$audience->country]['code'] : '') .
                 $clearPhoneNumber;
+        }
+        } else {
+            $phoneNumber = null;
         }
         $audience->phone_number = $phoneNumber;
         $audience->country_name = isset(Countries::LIST[$audience->country]) ? Countries::LIST[$audience->country]['name'] : $audience->country;

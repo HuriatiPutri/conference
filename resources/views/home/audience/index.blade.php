@@ -89,6 +89,7 @@ use App\Constants\Countries;
                     <tbody>
                       @forelse($audiences as $audience)
                       @php
+                      if($audience->phone_number) {
                         $clearPhoneNumber = preg_replace('/[\s\-\(\)]/', '', $audience->phone_number);
                         if(preg_match('/^0/', $clearPhoneNumber) && isset(Countries::LIST[$audience->country])) {
                           $phoneNumber = preg_replace('/^0/', Countries::LIST[$audience->country]['code'], $clearPhoneNumber);
@@ -98,6 +99,7 @@ use App\Constants\Countries;
                           $phoneNumber = (isset(Countries::LIST[$audience->country]) ? Countries::LIST[$audience->country]['code'] : '') . $clearPhoneNumber;
                         }
                         $audience->phone_number = $phoneNumber;
+                      }
                       @endphp
                         <tr>
                           <td>{{ $audience->id }}</td>
