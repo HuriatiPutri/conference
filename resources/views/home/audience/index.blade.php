@@ -90,10 +90,10 @@ use App\Constants\Countries;
                       @forelse($audiences as $audience)
                       @php
                       if($audience->phone_number) {
-                        $clearPhoneNumber = preg_replace('/[\s\-\(\)]/', '', $audience->phone_number);
+                        $clearPhoneNumber = preg_replace('/[\s\-\(\)\+]/', '', $audience->phone_number);
                         if(preg_match('/^0/', $clearPhoneNumber) && isset(Countries::LIST[$audience->country])) {
                           $phoneNumber = preg_replace('/^0/', Countries::LIST[$audience->country]['code'], $clearPhoneNumber);
-                        } else if(preg_match('/^\+/', $clearPhoneNumber)) {
+                        } else if (preg_match('/^(?!\+|0)/', $clearPhoneNumber)) {
                           $phoneNumber = $clearPhoneNumber;
                         } else {
                           $phoneNumber = (isset(Countries::LIST[$audience->country]) ? Countries::LIST[$audience->country]['code'] : '') . $clearPhoneNumber;
