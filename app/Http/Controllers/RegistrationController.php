@@ -52,6 +52,10 @@ class RegistrationController extends Controller
     public function store(Request $request, Conference $conference)
     {
         // 1. Validasi Data
+        $phoneNumberPattern = '/^\+?[0-9]+$/';
+        if ($request->input('phone_number') && !preg_match($phoneNumberPattern, $request->input('phone_number'))) {
+            return back()->withErrors(['phone_number' => 'Invalid phone number format. Use digits only, optionally starting with + (e.g., +628123456789).'])->withInput();
+        }   
         $validatedData = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',

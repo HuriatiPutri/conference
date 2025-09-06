@@ -267,12 +267,12 @@ use App\Constants\Countries;
 
         $('#filterPaymentMethod').on('change', function() {
           var val = $(this).val();
-          table.column(6).search(val ? val : '', true, false).draw();
+          table.column(7).search(val ? val : '', true, false).draw();
         });
 
         $('#filterPaymentStatus').on('change', function() {
           var val = $(this).val();
-          table.column(8).search(val ? val : '', true, false).draw();
+          table.column(9).search(val ? val : '', true, false).draw();
         });
 
         table.on('draw', function() {
@@ -288,7 +288,7 @@ use App\Constants\Countries;
 
           data.each(function(row) {
             // asumsi kolom payment_method di index 12
-            var payment = row[8]; 
+            var payment = row[9]; 
             if (payment.toLowerCase().includes('paid')) {
               transferCount++;
             } else if (payment.toLowerCase().includes('pending payment')) {
