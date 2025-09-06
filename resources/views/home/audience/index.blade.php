@@ -1,3 +1,6 @@
+@php
+use App\Constants\Countries;
+@endphp
 @extends('adminlte::page')
 
 @section('title', 'Dashboard')
@@ -73,6 +76,7 @@
                         <th>Nama Depan</th>
                         <th>Nama Belakang</th>
                         <th>Email</th>
+                        <th>No Handphone</th>
                         <th>Tipe Partisipan</th>
                         <th>Metode Pembayaran</th>
                         <th>Biaya Dibayar</th>
@@ -84,12 +88,24 @@
                     </thead>
                     <tbody>
                       @forelse($audiences as $audience)
+                      @php
+                        $clearPhoneNumber = preg_replace('/[\s\-\(\)]/', '', $audience->phone_number);
+                        if(preg_match('/^0/', $clearPhoneNumber) && isset(Countries::LIST[$audience->country])) {
+                          $phoneNumber = preg_replace('/^0/', Countries::LIST[$audience->country]['code'], $clearPhoneNumber);
+                        } else if(preg_match('/^\+/', $clearPhoneNumber)) {
+                          $phoneNumber = $clearPhoneNumber;
+                        } else {
+                          $phoneNumber = (isset(Countries::LIST[$audience->country]) ? Countries::LIST[$audience->country]['code'] : '') . $clearPhoneNumber;
+                        }
+                        $audience->phone_number = $phoneNumber;
+                      @endphp
                         <tr>
                           <td>{{ $audience->id }}</td>
                           <td>{{ $audience->conference->name ?? 'N/A' }}</td>
                           <td>{{ $audience->first_name }}</td>
                           <td>{{ $audience->last_name }}</td>
                           <td>{{ $audience->email }}</td>
+                          <td><a href="https://wa.me/{{$audience->phone_number}}" target="_blank"> {{$audience->phone_number }}</a></td>
                           <td>{{ Str::headline($audience->presentation_type) }}</td>
                           <td>
                             {{ $audience->getPaymentMethodText() }}
