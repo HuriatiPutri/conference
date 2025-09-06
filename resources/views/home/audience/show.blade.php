@@ -1,3 +1,4 @@
+
 @extends('adminlte::page')
 
 @section('title', 'Dashboard')
@@ -32,8 +33,20 @@
                 <td>{{ $audience->email }}</td>
               </tr>
               <tr>
+                <th>No Handphone</th>
+                <td><a href="https://wa.me/{{ $audience->phone_number }}" target="_blank">
+                    {{ $audience->phone_number }}</a></td>
+              <tr>
                 <th>Tipe Partisipan</th>
                 <td>{{ Str::headline($audience->presentation_type) }}</td>
+              </tr>
+              <tr>
+                <th>Asal Institusi</th>
+                <td>{{ $audience->institution ?? 'N/A' }}</td>
+              </tr>
+              <tr>
+                <th>Negara</th>
+                <td>{{ $audience->country_name ?? 'N/A' }}</td>
               </tr>
               <tr>
                 <th>Metode Pembayaran</th>

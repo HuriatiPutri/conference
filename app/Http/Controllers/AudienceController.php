@@ -8,6 +8,7 @@ use App\Models\Conference; // Import Model Conference
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request; // Untuk upload file
 use Illuminate\Support\Facades\Storage;
+use App\Constants\Countries;
 
 class AudienceController extends Controller
 {
@@ -76,6 +77,18 @@ class AudienceController extends Controller
      */
     public function show(Audience $audience) // Route Model Binding
     {
+        $clearPhoneNumber = preg_replace('/[\s\-\(\)]/', '', $audience->phone_number);
+        if (preg_match('/^0/', $clearPhoneNumber) && isset(Countries::LIST[$audience->country])) {
+            $phoneNumber = preg_replace('/^0/', Countries::LIST[$audience->country]['code'], $clearPhoneNumber);
+        } elseif (preg_match('/^\+/', $clearPhoneNumber)) {
+            $phoneNumber = $clearPhoneNumber;
+        } else {
+            $phoneNumber =
+                (isset(Countries::LIST[$audience->country]) ? Countries::LIST[$audience->country]['code'] : '') .
+                $clearPhoneNumber;
+        }
+        $audience->phone_number = $phoneNumber;
+        $audience->country_name = isset(Countries::LIST[$audience->country]) ? Countries::LIST[$audience->country]['name'] : $audience->country;
         return view('home.audience.show', compact('audience')); // View di folder 'audience/show.blade.php'
     }
 
