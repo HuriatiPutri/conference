@@ -26,7 +26,7 @@ class KeyNoteController extends Controller
     {
         $audience = Audience::where('email', $request->email)
             ->where('conference_id', $request->conference_id)
-            ->where('payment_status', 'paid')
+            // ->where('payment_status', 'paid')
             ->first();
         if (!$audience) {
             return redirect()->back()->withInput()->withErrors(['email' => 'This email is not registered for the conference.']);
