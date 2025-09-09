@@ -28,7 +28,7 @@
 
   <div class="control-panel" style="margin-top: 20px;">
     <button type="button" class="btn btn-sm btn-primary" onclick="addText('name','{{ $data['name'] ?? 'Name' }}')">Add Name</button>
-    <button type="button" class="btn btn-sm btn-primary" onclick="addText('paper_title','{{ $data['paper_title'] ?? 'paper_title' }}')">Paper Title</button>
+    <button type="button" class="btn btn-sm btn-primary" onclick="addText('paper_title','{{ $data['paper_title'] ?? 'paper_title' }}', 14)">Paper Title</button>
     {{-- <button type="button" class="btn btn-sm btn-primary" onclick="addText('conference','{{$data['conference'] ?? 'Conference'}}')">Add Conference</button>
     <button type="button" class="btn btn-sm btn-primary" onclick="addText('date','{{$data['date'] ?? 'Date'}}')">Add Date</button> --}}
     <button type="button" class="btn btn-sm btn-danger" onclick="removeSelectedText()">Remove Selected</button>
@@ -84,7 +84,7 @@ for(const field in savedPositions){
         x: parseFloat(t.x) || canvas.width/2,
         y: parseFloat(t.y) || canvas.height/2,
         size: parseInt(t.size) || 24,
-        width: parseInt(t.width) || 500,
+        width: parseInt(t.width) || 400,
         color: t.color || '#000000',
         align: t.align || 'center'
     });
@@ -96,7 +96,7 @@ background.onload = () => {
 };
 
 // Tambah teks baru
-function addText(type, text){
+function addText(type, text, size = 24, width = 300){
     // Cek jika field sudah ada
     const existingIndex = texts.findIndex(t => t.type === type);
     if(existingIndex >= 0){
@@ -109,8 +109,8 @@ function addText(type, text){
         text: text.toUpperCase(),
         x: canvas.width/2,
         y: canvas.height/2,
-        size: parseInt(document.getElementById('fontSize').value) || 24,
-        width: parseInt(document.getElementById('textWidth').value) || 400,
+        size: parseInt(document.getElementById('fontSize').value) || size,
+        width: parseInt(document.getElementById('textWidth').value) || width,
         color: document.getElementById('textColor').value || '#000000',
         align: document.getElementById('textAlign').value || 'center'
     };

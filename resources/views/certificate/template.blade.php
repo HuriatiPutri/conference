@@ -62,6 +62,11 @@
                         font-size: {{ $fontSizeMm }}mm; 
                         background: 'red';
                         text-align: 'center';
+                        width: {{ $style['width'] ?? 400 }}px;
+                        height: auto;
+                        white-space: normal;
+                        overflow-wrap: anywhere;
+                        word-break: break-word;
                         color: {{ $style['color'] ?? '#000000' }};">
         {{ $data[$field] ?? '' }}
       </div>
