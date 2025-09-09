@@ -57,6 +57,7 @@ class CertificateController extends Controller
         $data = [
             'name' => $audience->first_name.' '.$audience->last_name,
             'conference' => $conference->name,
+            'paper_title' => $audience->paper_title,
             'date' => $conference->date,
         ];
 

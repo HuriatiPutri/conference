@@ -186,6 +186,7 @@ class AudienceController extends Controller
             'name' => $audience->first_name.' '.$audience->last_name,
             'conference' => $conference->name,
             'date' => $conference->date,
+            'paper_title' => $audience->paper_title,
         ];
 
         $pdf = Pdf::loadView('certificate.template', compact('data', 'layout', 'background'))

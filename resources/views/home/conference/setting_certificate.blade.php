@@ -28,6 +28,7 @@
 
   <div class="control-panel" style="margin-top: 20px;">
     <button type="button" class="btn btn-sm btn-primary" onclick="addText('name','{{ $data['name'] ?? 'Name' }}')">Add Name</button>
+    <button type="button" class="btn btn-sm btn-primary" onclick="addText('paper_title','{{ $data['paper_title'] ?? 'paper_title' }}')">Paper Title</button>
     {{-- <button type="button" class="btn btn-sm btn-primary" onclick="addText('conference','{{$data['conference'] ?? 'Conference'}}')">Add Conference</button>
     <button type="button" class="btn btn-sm btn-primary" onclick="addText('date','{{$data['date'] ?? 'Date'}}')">Add Date</button> --}}
     <button type="button" class="btn btn-sm btn-danger" onclick="removeSelectedText()">Remove Selected</button>
