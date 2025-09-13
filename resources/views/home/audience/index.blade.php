@@ -82,6 +82,8 @@
                         <th>Biaya Dibayar</th>
                         <th>Status Pembayaran</th>
                         <th>Paper</th>
+                        <th>Keynote Session</th>
+                        <th>Parallel Session</th>
                         <th>Sertifikat</th>
                         <th class="text-center" width="300px">Aksi</th>
                       </tr>
@@ -150,6 +152,8 @@
                               -
                             @endif
                           </td>
+                          <td><input type="checkbox" {{ $audience->keynote ? 'checked' : '' }}/></td>
+                          <td><input type="checkbox"  {{ $audience->parallelSession ? 'checked' : '' }} /></td>
                           <td>
                             @if (($audience->keynote || $audience->parallelSession) && $audience->conference->certificate_template_position)
                               <a class="btn btn-primary btn-sm" target="_blank"

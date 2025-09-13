@@ -48,6 +48,8 @@ Route::middleware(['auth'])->group(function () {
     // Route::post('/home/audience/', [AudienceController::class, 'update'])->name('audience.update');
     Route::get('/home/audience/download/{audience}', [AudienceController::class, 'downloadCertificate'])->name('home.audience.download');
 
+    //keynote
+    Route::get('/home/keynote/{conference}', [KeyNoteController::class, 'keynoteList'])->name('home.keynote.index');
     // Activity Log
     Route::get('/home/activity-logs', [ActivityLogController::class, 'index'])->name('home.activity-log.index');
     Route::resource('activity-logs', ActivityLogController::class);

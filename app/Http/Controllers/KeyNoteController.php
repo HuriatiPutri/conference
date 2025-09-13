@@ -19,6 +19,17 @@ class KeyNoteController extends Controller
         ]);
     }
 
+    public function keynoteList(Conference $conference)
+    {
+        $keynotes = KeyNote::whereHas('audience', function ($query) use ($conference) {
+            $query->where('conference_id', $conference->id);
+        })->with('audience')->get();
+
+        return view('home/keynote/index', [
+            'keynotes' => $keynotes,
+            'conference' => $conference,
+        ]);
+    }
     /**
      * Store a newly created resource in storage.
      */

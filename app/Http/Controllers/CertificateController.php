@@ -55,9 +55,9 @@ class CertificateController extends Controller
         $background = storage_path('app/public/'.$conference->certificate_template_path);
 
         $data = [
-            'name' => $audience->first_name.' '.$audience->last_name,
+            'name' => $audience->parallelSession->name_of_presenter,
             'conference' => $conference->name,
-            'paper_title' => $audience->paper_title,
+            'paper_title' => $audience->parallelSession->paper_title,
             'date' => $conference->date,
         ];
 
