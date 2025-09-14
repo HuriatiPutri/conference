@@ -23,6 +23,17 @@ class ParallelSessionController extends Controller
         ]);
     }
 
+    public function parallelList()
+    {
+        $parallels = ParallelSession::with('conference')->get();
+        $conferences = Conference::all();
+
+        return view('home/parallel-session/index', [
+            'parallels' => $parallels,
+            'conferences' => $conferences,
+        ]);
+    }
+
     /**
      * Store a newly created resource in storage.
      */

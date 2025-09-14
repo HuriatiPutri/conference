@@ -3,7 +3,7 @@
 @endphp
 @extends('adminlte::page')
 
-@section('title', 'Keynote Session Management')
+@section('title', 'Parallel Session Management')
 
 @section('content_header')
 
@@ -16,17 +16,17 @@
       <div class="content-wrapper" style="min-height: 80vh; margin-left: 0;">
         <section class="content-header">
           <div class="container-fluid">
-            <h1 class="m-0">Keynote Session</h1>
+            <h1 class="m-0">Parallel Session</h1>
           </div>
         </section>
         <section class="content">
           <div class="container-fluid">
             <div class="card card-primary card-outline">
               <div class="card-header">
-                <h3 class="card-title">Keynote Session</h3>
+                <h3 class="card-title">Parallel Session</h3>
               </div>
               <div class="card-body">
-                <h5>Filter Data Keynote</h5>
+                <h5>Filter Data Parallel Session</h5>
                 <div class="row">
                   <div class="col-md-4">
                     <div class="mb-3 flex gap-4">
@@ -40,24 +40,26 @@
                   </div>
                 </div>
                 <div class="table-responsive">
-                  <table class="table-bordered table-hover table" id="keynotesTable">
+                  <table class="table-bordered table-hover table" id="parallelSessionsTable">
                     <thead>
                       <tr>
                         <th>No</th>
                         <th>Conference</th>
                         <th>Nama</th>
                         <th>Email</th>
-                        <th>Feedback</th>
+                        <th>Judul Paper</th>
+                        <th>Ruangan</th>
                       </tr>
                     </thead>
                     <tbody>
-                      @foreach ($keynotes as $index => $keynote)
+                      @foreach ($parallels as $index => $parallel)
                         <tr>
                           <td>{{ $index + 1 }}</td>
-                          <td>{{ $keynote->audience->conference->name }}</td>
-                          <td>{{ $keynote->name_of_participant }}</td>
-                          <td>{{ $keynote->audience->email }}</td>
-                          <td>{{ $keynote->feedback }}</td>
+                          <td>{{ $parallel->audience->conference->name }}</td>
+                          <td>{{ $parallel->name_of_presenter }}</td>
+                          <td>{{ $parallel->audience->email }}</td>
+                          <td>{{ $parallel->paper_title }}</td>
+                          <td>{{ $parallel->room->room_name }}</td>
                         </tr>
                       @endforeach
                     </tbody>
@@ -100,13 +102,13 @@
       return text.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     }
     $(document).ready(function() {
-      var table = $('#keynotesTable').DataTable({
+      var table = $('#parallelSessionsTable').DataTable({
         "dom": 'Bfrtip',
         "buttons": [{
             extend: 'excelHtml5',
             text: '<i class="fas fa-file-excel"></i> Export to Excel',
             className: 'btn btn-info mb-3',
-            title: 'Daftar Keynote Session',
+            title: 'Daftar Parallel Session',
             exportOptions: {
               columns: ':not(:last-child)' // Exclude the last column (Aksi)
             }
@@ -115,7 +117,7 @@
             extend: 'csvHtml5',
             text: '<i class="fas fa-file-csv"></i> Export to CSV',
             className: 'btn btn-info mb-3',
-            title: 'Daftar Keynote Session',
+            title: 'Daftar Parallel Session',
             exportOptions: {
               columns: ':not(:last-child)' // Exclude the last column (Aksi)
             }
@@ -124,7 +126,7 @@
             extend: 'print',
             text: '<i class="fas fa-print"></i> Print',
             className: 'btn btn-info mb-3',
-            title: 'Daftar Keynote Session',
+            title: 'Daftar Parallel Session',
             exportOptions: {
               columns: ':not(:last-child)' // Exclude the last column (Aksi)
             }

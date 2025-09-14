@@ -190,7 +190,7 @@
         </section>
       </div>
     </div>
-
+</body>
   @stop
 
   @section('css')

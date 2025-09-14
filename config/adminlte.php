@@ -364,6 +364,16 @@ return [
             ],
         ],
         [
+            'text' => 'Keynote',
+            'icon' => 'fas fa-fw fa-comment',
+            'url' => 'home/keynote',
+        ],
+        [
+            'text' => 'Parallel Session',
+            'icon' => 'fas fa-fw fa-stroopwafel',
+            'url' => 'home/parallel-session',
+        ],
+        [
             'text' => 'Activity Log',
             'icon' => 'fas fa-fw fa-clipboard-list',
             'url' => 'home/activity-logs',

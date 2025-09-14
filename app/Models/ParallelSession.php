@@ -30,4 +30,9 @@ class ParallelSession extends Model
     {
         return $this->belongsTo(Audience::class);
     }
+
+    public function room()
+    {
+        return $this->belongsTo(Room::class);
+    }
 }
