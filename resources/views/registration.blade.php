@@ -68,9 +68,10 @@ use App\Constants\Countries;
               </div>
 
               <div class="mb-3">
-                <label for="phone_number" class="form-label">Phone Number / WhatsApp <span class="text-danger">*</span></label>
-                <input type="tel" required="true" class="form-control @error('phone_number') is-invalid @enderror" id="phone_number"
-                  name="phone_number" value="{{ old('phone_number') }}">
+                <label for="phone_number" class="form-label">Phone Number / WhatsApp <span
+                    class="text-danger">*</span></label>
+                <input type="tel" required="true" class="form-control @error('phone_number') is-invalid @enderror"
+                  id="phone_number" name="phone_number" value="{{ old('phone_number') }}">
                 @error('phone_number')
                   <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -78,8 +79,8 @@ use App\Constants\Countries;
 
               <div class="mb-3">
                 <label for="country" class="form-label fw-bold">Country <span class="text-danger">*</span></label>
-                <select class="form-control @error('country') is-invalid @enderror" id="country"
-                  name="country" required>
+                <select class="form-control @error('country') is-invalid @enderror" id="country" name="country"
+                  required>
                   <option value="" selected>Choose Country</option>
                   @foreach (Countries::LIST as $code => $country)
                     <option value="{{ $code }}" {{ old('country') == $code ? 'selected' : '' }}>
@@ -158,7 +159,8 @@ use App\Constants\Countries;
                 </div>
 
                 <div class="mb-3">
-                  <label for="full_paper" class="form-label">Upload Full Paper (Doc/Docx) <span class="text-danger">*</span></label>
+                  <label for="full_paper" class="form-label">Upload Full Paper (Doc/Docx) <span
+                      class="text-danger">*</span></label>
                   <input type="file" class="form-control @error('full_paper') is-invalid @enderror" id="full_paper"
                     name="full_paper" accept=".doc,.docx">
                   <div class="form-text">Maximum file size: 50MB. Only .doc and .docx formats are allowed.</div>
@@ -282,7 +284,7 @@ use App\Constants\Countries;
         var countrySelected = $('#country').val();
         var isIndonesia = countrySelected === 'ID';
         // Tampilkan biaya di samping radio button
-        if(isIndonesia) {
+        if (isIndonesia) {
           $('#online-fee-display').text(' (Rp ' + conferenceFees.online.toLocaleString('id-ID') + ')');
           $('#onsite-fee-display').text(' (Rp ' + conferenceFees.onsite.toLocaleString('id-ID') + ')');
           $('#participant-fee-display').text(' (Rp ' + conferenceFees.participant.toLocaleString('id-ID') + ')');
@@ -346,6 +348,20 @@ use App\Constants\Countries;
         });
       }
 
+      function disablePaymentGateway() {
+        var countrySelected = $('#country').val();
+        var isIndonesia = countrySelected === 'ID';
+        if (isIndonesia) {
+          $('#payment_gateway').prop('disabled', true);
+          // Jika yang terpilih adalah payment_gateway, ubah ke transfer_bank
+          if ($('#payment_gateway').is(':checked')) {
+            $('#transfer_bank').prop('checked', true);
+          }
+        } else {
+          $('#payment_gateway').prop('disabled', false);
+        }
+      }
+
       // Panggil fungsi ketika radio button Tipe Partisipasi berubah
       $('.presentation-type-radio').change(function() {
         updatePaidFee();
@@ -367,6 +383,8 @@ use App\Constants\Countries;
       $('#country').change(function() {
         updatePaidFee();
         updateFeeDisplays();
+        disablePaymentGateway();
+        togglePaymentProof();
       });
 
       // Panggil fungsi saat halaman dimuat (untuk mengisi nilai awal jika ada old() value)

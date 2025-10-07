@@ -70,10 +70,6 @@
               @endif
             </td>
           </tr>
-          <tr>
-            <th>Notes</th>
-            <td>{{ $audience->note }}</td>
-          </tr>
           @if ($audience->payment_status === 'pending_payment')
             <tr>
               <td colspan="2">
@@ -87,15 +83,17 @@
                     </p>
                   @endif
                   <div id="container-payment">
-                    @if ($audience->country === 'ID')
+                    {{-- @if ($audience->country === 'ID')
                       <button id="pay-button" class="btn btn-primary"
                         {{ $paymentMethod === 'paypal' ? 'disabled' : '' }}>Pay Now with Virtual Account (VA)</button>
-                    @endif
+                    @endif --}}
                     <button id="paypal-pay-button" class="btn btn-primary"
                       {{ $paymentMethod === 'midtrans' ? 'disabled' : '' }}>Pay with PayPal / Credit Card</button>
                   </div>
                 @else
-                  We have received your data. Our admin will verify and confirm your payment shortly.
+                  We have received your data. Our admin will verify and confirm your payment shortly. Please note that the
+                  manual bank transfer verification process may take up to <strong>2×24 hours</strong>. Thank you for your
+                  patience and understanding.
                 @endif
               </td>
             </tr>
