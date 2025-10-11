@@ -71,6 +71,21 @@ class InvoiceHistory extends Model
         Mail::send($template[$this->status], $data, function ($message) {
             $message->to($this->audience->email)
                     ->subject('Payment Confirmation – '.$this->audience->conference->initial);
+
+            // Attach receipt PDF jika status adalah 'paid'
+            if ($this->status === 'paid') {
+                try {
+                    $receiptPdf = $this->audience->downloadReceiptFromUrl();
+                    if ($receiptPdf) {
+                        $fileName = "receipt-{$this->audience->first_name}-{$this->audience->last_name}.pdf";
+                        $message->attachData($receiptPdf, $fileName, [
+                            'mime' => 'application/pdf',
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Error attaching receipt PDF: ' . $e->getMessage());
+                }
+            }
         });
     }
 }
