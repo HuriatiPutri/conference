@@ -47,6 +47,7 @@ Route::middleware(['auth'])->group(function () {
     // Route::get('/home/audience/create', [AudienceController::class, 'create'])->name('home.audience.create');
     // Route::post('/home/audience/', [AudienceController::class, 'update'])->name('audience.update');
     Route::get('/home/audience/download/{audience}', [AudienceController::class, 'downloadCertificate'])->name('home.audience.download');
+    Route::get('/home/audience/download-receipt/{audience}', [AudienceController::class, 'downloadReceiptPayment'])->name('home.audience.download-receipt');
 
     //keynote
     Route::get('/home/keynote', [KeyNoteController::class, 'keynoteList'])->name('home.keynote.index');

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class Audience extends Model
 {
@@ -149,6 +150,66 @@ class Audience extends Model
         Mail::send($template[$this->payment_status], $data, function ($message) {
             $message->to($this->email, "{$this->first_name} {$this->last_name}")
                     ->subject('Payment Confirmation');
+            
+            // Attach receipt PDF jika status adalah 'paid'
+            if ($this->payment_status === 'paid') {
+                try {
+                    $receiptPdf = $this->downloadReceiptFromUrl();
+                    if ($receiptPdf) {
+                        $fileName = "receipt-{$this->first_name}-{$this->last_name}.pdf";
+                        $message->attachData($receiptPdf, $fileName, [
+                            'mime' => 'application/pdf',
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Error attaching receipt PDF: ' . $e->getMessage());
+                }
+            }
         });
+    }
+
+    /**
+     * Download receipt PDF from controller URL
+     */
+    private function downloadReceiptFromUrl()
+    {
+        try {
+            // Ambil data yang sama seperti di controller
+            $conference = $this->conference;
+            
+            if (!$conference) {
+                Log::warning('No conference found for audience ID: ' . $this->id);
+                return null;
+            }
+
+            if ($this->payment_status !== 'paid') {
+                Log::warning('Payment not completed for audience ID: ' . $this->id);
+                return null;
+            }
+
+            // Generate data yang sama seperti di controller
+            $data = [
+                'name' => $this->first_name.' '.$this->last_name,
+                'address' => $this->institution. ', '.$this->country,
+                'paper_title' => $this->paper_title ?? 'N/A',
+                'conference' => $conference->initial,
+                'conference_cover' => $conference->cover_poster_path ? storage_path('app/public/'.$conference->cover_poster_path) : null,
+                'date' => $conference->date,
+                'amount' => $this->country === 'ID' ?  'Rp'.number_format($this->paid_fee, 2) : '$'.number_format($this->paid_fee, 2),
+                'payment_method' => $this->payment_method,
+                'payment_date' => $this->updated_at->format('d M Y H:i'),
+                'invoice_id' => 'Ref. No.'.$this->id.'/PAID/SOTVIA/2025',
+                'signature' => storage_path('app/public/images/signature.png'),
+            ];
+
+            // Generate PDF menggunakan DomPDF
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('home.audience.receipt', compact('data'))
+                      ->setPaper('A4', 'portrait');
+
+            return $pdf->output();
+        } catch (\Exception $e) {
+            Log::error('Error downloading receipt from URL: ' . $e->getMessage());
+            return null;
+        }
     }
 }

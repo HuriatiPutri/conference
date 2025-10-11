@@ -80,8 +80,8 @@
                         <th>Tipe Partisipan</th>
                         <th>Metode Pembayaran</th>
                         <th>Biaya Dibayar</th>
-                        <th>Status Pembayaran</th>
                         <th>Paper</th>
+                        <th>Status Pembayaran</th>
                         <th>Keynote Session</th>
                         <th>Parallel Session</th>
                         <th>Sertifikat</th>
@@ -128,20 +128,7 @@
                             @endif
                           </td>
                           <td>{{ $audience->country === 'ID' ? 'Rp' : 'USD' }}
-                            {{ number_format($audience->paid_fee, 0, ',', '.') }}</td>
-                          <td>
-                            @php
-                              $statusClass =
-                                  [
-                                      'pending_payment' => 'badge-warning badge-pending',
-                                      'paid' => 'badge-success badge-paid',
-                                      'cancelled' => 'badge-danger badge-cancelled',
-                                      'refunded' => 'badge-secondary badge-refunded',
-                                  ][$audience->payment_status] ?? 'badge-secondary';
-                            @endphp
-                            <span class="badge badge-status {{ $statusClass }}">
-                              {{ Str::headline(str_replace('_', ' ', $audience->payment_status)) }}
-                            </span>
+                            {{ number_format($audience->paid_fee, 0, ',', '.') }}
                           </td>
                           <td>
                             {{ $audience->paper_title ?? 'N/A' }}
@@ -152,10 +139,33 @@
                               -
                             @endif
                           </td>
-                          <td><input type="checkbox" {{ $audience->keynote ? 'checked' : '' }}/></td>
-                          <td><input type="checkbox"  {{ $audience->parallelSession ? 'checked' : '' }} /></td>
                           <td>
-                            @if (($audience->keynote && $audience->parallelSession) && $audience->conference->certificate_template_position)
+                            @php
+                              $statusClass =
+                                  [
+                                      'pending_payment' => 'badge-warning badge-pending',
+                                      'paid' => 'badge-success badge-paid',
+                                      'cancelled' => 'badge-danger badge-cancelled',
+                                      'refunded' => 'badge-secondary badge-refunded',
+                                  ][$audience->payment_status] ?? 'badge-secondary';
+                            @endphp
+                            <div class="row">
+                              <span class="badge badge-status {{ $statusClass }}">
+                                {{ Str::headline(str_replace('_', ' ', $audience->payment_status)) }}
+                              </span>
+                            </div>
+                            <div class="row mt-2">
+                              @if ($audience->payment_status === 'paid')
+                                <a class="btn btn-primary btn-sm" target="_blank"
+                                  href="{{ route('home.audience.download-receipt', $audience->public_id) }}">
+                                  <i class="fas fa-download"></i>Download</a>
+                              @endif
+                            </div>
+                          </td>
+                          <td><input type="checkbox" {{ $audience->keynote ? 'checked' : '' }} /></td>
+                          <td><input type="checkbox" {{ $audience->parallelSession ? 'checked' : '' }} /></td>
+                          <td>
+                            @if ($audience->keynote && $audience->parallelSession && $audience->conference->certificate_template_position)
                               <a class="btn btn-primary btn-sm" target="_blank"
                                 href="{{ route('home.audience.download', $audience->public_id) }}">
                                 <i class="fas fa-download"></i>Download</a>
@@ -190,179 +200,178 @@
         </section>
       </div>
     </div>
-</body>
-  @stop
+  </body>
+@stop
 
-  @section('css')
-    {{-- Add here extra stylesheets --}}
-    {{-- <link rel="stylesheet" href="/css/admin_custom.css"> --}}
-    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css" />
-    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.css">
-    <style>
-      .table img.cover-thumb {
-        max-width: 80px;
-        height: auto;
-        border-radius: 5px;
-        object-fit: cover;
-      }
+@section('css')
+  {{-- Add here extra stylesheets --}}
+  {{-- <link rel="stylesheet" href="/css/admin_custom.css"> --}}
+  <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.css">
+  <style>
+    .table img.cover-thumb {
+      max-width: 80px;
+      height: auto;
+      border-radius: 5px;
+      object-fit: cover;
+    }
 
-      .badge-status {
-        padding: 0.5em 0.75em;
-        border-radius: 0.25rem;
-        font-size: 0.75em;
-      }
+    .badge-status {
+      padding: 0.5em 0.75em;
+      border-radius: 0.25rem;
+      font-size: 0.75em;
+    }
 
-      .badge-pending {
-        background-color: #ffc107;
-        color: #333;
-      }
+    .badge-pending {
+      background-color: #ffc107;
+      color: #333;
+    }
 
-      /* warning */
-      .badge-paid {
-        background-color: #28a745;
-        color: #fff;
-      }
+    /* warning */
+    .badge-paid {
+      background-color: #28a745;
+      color: #fff;
+    }
 
-      /* success */
-      .badge-cancelled {
-        background-color: #dc3545;
-        color: #fff;
-      }
+    /* success */
+    .badge-cancelled {
+      background-color: #dc3545;
+      color: #fff;
+    }
 
-      /* danger */
-      .badge-refunded {
-        background-color: #6c757d;
-        color: #fff;
-      }
+    /* danger */
+    .badge-refunded {
+      background-color: #6c757d;
+      color: #fff;
+    }
 
-      /* secondary */
-    </style>
-  @stop
+    /* secondary */
+  </style>
+@stop
 
-  @section('js')
-    <script>
-      console.log("Hi, I'm using the Laravel-AdminLTE package!");
-    </script>
-    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js"></script>
-
-
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+@section('js')
+  <script>
+    console.log("Hi, I'm using the Laravel-AdminLTE package!");
+  </script>
+  <script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js"></script>
 
 
-    <!-- DataTables Buttons -->
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
 
-    <!-- Library untuk Excel -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script>
-      function regexEscape(text) {
-        return text.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-      }
-      $(document).ready(function() {
-        var table = $('#audiencesTable').DataTable({
-          "dom": 'Bfrtip',
-          "buttons": [
-            {
-              extend: 'excelHtml5',
-              text: '<i class="fas fa-file-excel"></i> Export to Excel',
-              className: 'btn btn-info mb-3',
-              title: 'Daftar Audience',
-              exportOptions: {
-                columns: ':not(:last-child)' // Exclude the last column (Aksi)
-              }
-            },
-            {
-              extend: 'csvHtml5',
-              text: '<i class="fas fa-file-csv"></i> Export to CSV',
-              className: 'btn btn-info mb-3',
-              title: 'Daftar Audience',
-              exportOptions: {
-                columns: ':not(:last-child)' // Exclude the last column (Aksi)
-              }
-            },
-            {
-              extend: 'print',
-              text: '<i class="fas fa-print"></i> Print',
-              className: 'btn btn-info mb-3',
-              title: 'Daftar Audience',
-              exportOptions: {
-                columns: ':not(:last-child)' // Exclude the last column (Aksi)
-              }
+
+  <!-- DataTables Buttons -->
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
+  <!-- Library untuk Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script>
+    function regexEscape(text) {
+      return text.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    }
+    $(document).ready(function() {
+      var table = $('#audiencesTable').DataTable({
+        "dom": 'Bfrtip',
+        "buttons": [{
+            extend: 'excelHtml5',
+            text: '<i class="fas fa-file-excel"></i> Export to Excel',
+            className: 'btn btn-info mb-3',
+            title: 'Daftar Audience',
+            exportOptions: {
+              columns: ':not(:last-child)' // Exclude the last column (Aksi)
             }
-          ],
-          "language": {
-            "url": "//cdn.datatables.net/plug-ins/2.0.8/i18n/id.json"
           },
-          "responsive": true,
-          "order": [
-            [0, "desc"]
-          ], // kolom pertama (ID) urut desc
-          "columnDefs": [{
-              "orderable": false,
-              "targets": [],
-            }, // Kolom Paper dan Aksi tidak bisa disort
-            {
-              "searchable": false,
-              "targets": []
-            } // Kolom Paper dan Aksi tidak bisa dicari
-          ]
-        });
-
-        updateSummary();
-
-        $('#filterConference').on('change', function() {
-          var val = $(this).val();
-          table.column(1).search(val ? '^' + regexEscape(val) + '$' : '', true, false).draw();
-        });
-
-        $('#filterPaymentMethod').on('change', function() {
-          var val = $(this).val();
-          table.column(7).search(val ? val : '', true, false).draw();
-        });
-
-        $('#filterPaymentStatus').on('change', function() {
-          var val = $(this).val();
-          table.column(9).search(val ? val : '', true, false).draw();
-        });
-
-        table.on('draw', function() {
-          updateSummary();
-        });
-
-        function updateSummary() {
-          var data = table.rows({
-            filter: 'applied'
-          }).data();
-          var transferCount = 0;
-          var gatewayCount = 0;
-          var cancelledCount = 0;
-          var refundedCount = 0;
-
-          data.each(function(row) {
-            // asumsi kolom payment_method di index 12
-            var payment = row[9];
-            if (payment.toLowerCase().includes('paid')) {
-              transferCount++;
-            } else if (payment.toLowerCase().includes('pending payment')) {
-              gatewayCount++;
-            } else if (payment.toLowerCase().includes('cancelled')) {
-              cancelledCount++;
-            } else if (payment.toLowerCase().includes('refunded')) {
-              refundedCount++;
+          {
+            extend: 'csvHtml5',
+            text: '<i class="fas fa-file-csv"></i> Export to CSV',
+            className: 'btn btn-info mb-3',
+            title: 'Daftar Audience',
+            exportOptions: {
+              columns: ':not(:last-child)' // Exclude the last column (Aksi)
             }
-          });
-
-          $('#summaryPaid').text('Paid: ' + transferCount);
-          $('#summaryPending').text('Pending: ' + gatewayCount);
-          $('#summaryCancelled').text('Cancelled/Refunded: ' + cancelledCount);
-          $('#summaryRefunded').text('Refunded: ' + refundedCount);
-        }
+          },
+          {
+            extend: 'print',
+            text: '<i class="fas fa-print"></i> Print',
+            className: 'btn btn-info mb-3',
+            title: 'Daftar Audience',
+            exportOptions: {
+              columns: ':not(:last-child)' // Exclude the last column (Aksi)
+            }
+          }
+        ],
+        "language": {
+          "url": "//cdn.datatables.net/plug-ins/2.0.8/i18n/id.json"
+        },
+        "responsive": true,
+        "order": [
+          [0, "desc"]
+        ], // kolom pertama (ID) urut desc
+        "columnDefs": [{
+            "orderable": false,
+            "targets": [],
+          }, // Kolom Paper dan Aksi tidak bisa disort
+          {
+            "searchable": false,
+            "targets": []
+          } // Kolom Paper dan Aksi tidak bisa dicari
+        ]
       });
-    </script>
+
+      updateSummary();
+
+      $('#filterConference').on('change', function() {
+        var val = $(this).val();
+        table.column(1).search(val ? '^' + regexEscape(val) + '$' : '', true, false).draw();
+      });
+
+      $('#filterPaymentMethod').on('change', function() {
+        var val = $(this).val();
+        table.column(7).search(val ? val : '', true, false).draw();
+      });
+
+      $('#filterPaymentStatus').on('change', function() {
+        var val = $(this).val();
+        table.column(10).search(val ? val : '', true, false).draw();
+      });
+
+      table.on('draw', function() {
+        updateSummary();
+      });
+
+      function updateSummary() {
+        var data = table.rows({
+          filter: 'applied'
+        }).data();
+        var transferCount = 0;
+        var gatewayCount = 0;
+        var cancelledCount = 0;
+        var refundedCount = 0;
+
+        data.each(function(row) {
+          // asumsi kolom payment_method di index 12
+          var payment = row[10];
+          if (payment.toLowerCase().includes('paid')) {
+            transferCount++;
+          } else if (payment.toLowerCase().includes('pending payment')) {
+            gatewayCount++;
+          } else if (payment.toLowerCase().includes('cancelled')) {
+            cancelledCount++;
+          } else if (payment.toLowerCase().includes('refunded')) {
+            refundedCount++;
+          }
+        });
+
+        $('#summaryPaid').text('Paid: ' + transferCount);
+        $('#summaryPending').text('Pending: ' + gatewayCount);
+        $('#summaryCancelled').text('Cancelled/Refunded: ' + cancelledCount);
+        $('#summaryRefunded').text('Refunded: ' + refundedCount);
+      }
+    });
+  </script>
 
 
-  @stop
+@stop

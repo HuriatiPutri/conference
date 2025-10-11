@@ -194,4 +194,45 @@ class AudienceController extends Controller
 
         return $pdf->stream("certificate-{$data['name']}.pdf");
     }
+
+    public function downloadReceiptPayment(Audience $audience)
+    {
+        $conference = Conference::find($audience->conference_id);
+
+        if (!$conference) {
+            return redirect()->back()->withInput()->withErrors(['conference_id' => 'Selected conference does not exist.']);
+        }
+
+        $audience = Audience::where('email', $audience->email)
+            ->where('conference_id', $conference->id)
+            ->first();
+
+        if (!$audience) {
+            return redirect()->back()->withInput()->withErrors(['email' => 'This email is not registered for the selected conference.']);
+        }
+
+        if ($audience->payment_status !== 'paid') {
+            return redirect()->back()->withInput()->withErrors(['email' => 'Payment has not been completed for this email.']);
+        }
+        // Jika validasi berhasil, arahkan ke rute untuk mengunduh sertifikat
+        $data = [
+            'name' => $audience->first_name.' '.$audience->last_name,
+            'address' => $audience->institution. ', '.$audience->country,
+            'paper_title' => $audience->paper_title ?? 'N/A',
+            'conference' => $conference->initial,
+            'conference_cover' => $conference->cover_poster_path ? storage_path('app/public/'.$conference->cover_poster_path) : null,
+            'date' => $conference->date,
+            'amount' => $audience->country === 'ID' ?  'Rp'.number_format($audience->paid_fee, 2) : '$'.number_format($audience->paid_fee, 2),
+            'payment_method' => $audience->payment_method,
+            'payment_date' => $audience->updated_at->format('d M Y H:i'),
+            'invoice_id' => 'Ref. No.'.$audience->id.'/PAID/SOTVIA/2025',
+            'signature' => storage_path('app/public/images/signature.png'),
+        ];
+
+        //margin [left, top, right, bottom]
+        $pdf = Pdf::loadView('home.audience.receipt', compact('data'))
+                  ->setPaper('A4', 'portrait', [30, 10, 30, 10]);
+
+        return $pdf->stream("receipt-{$data['name']}.pdf");
+    }
 }
