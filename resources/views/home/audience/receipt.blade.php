@@ -1,4 +1,5 @@
 <div>
+  <img src="{{ $data['conference_cover'] }}" alt="Conference Cover" style="width: 100%; max-width: 800px;" />
   <div style="margin-top: 20px; margin-bottom: 20px; text-align:right">
     <span>{{ $data['payment_date'] }}</span><br>
     <span>{{ $data['invoice_id'] }}</span>
