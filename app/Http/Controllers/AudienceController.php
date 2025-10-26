@@ -220,6 +220,7 @@ class AudienceController extends Controller
             'address' => $audience->institution. ', '.$audience->country,
             'paper_title' => $audience->paper_title ?? 'N/A',
             'conference' => $conference->initial,
+            'conference_name' => $conference->name,
             'conference_cover' => $conference->cover_poster_path ? storage_path('app/public/'.$conference->cover_poster_path) : null,
             'date' => $conference->date,
             'amount' => $audience->country === 'ID' ?  'Rp'.number_format($audience->paid_fee, 2) : '$'.number_format($audience->paid_fee, 2),
