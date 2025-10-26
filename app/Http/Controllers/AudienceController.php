@@ -225,7 +225,7 @@ class AudienceController extends Controller
             'amount' => $audience->country === 'ID' ?  'Rp'.number_format($audience->paid_fee, 2) : '$'.number_format($audience->paid_fee, 2),
             'payment_method' => $audience->payment_method,
             'payment_date' => $audience->updated_at->format('d M Y H:i'),
-            'invoice_id' => 'Ref. No.'.$audience->id.'/PAID/SOTVIA/2025',
+            'invoice_id' => 'Ref. No.' . strtoupper($audience->public_id) . '/PAID/' . strtoupper($conference->initial) . '/' . date('Y'),
             'signature' => storage_path('app/public/images/signature.png'),
         ];
 

@@ -1,11 +1,11 @@
 <div>
-  <img src="{{ $data['conference_cover'] }}" alt="Conference Cover" style="width: 100%; max-width: 800px;" />
   <div style="margin-top: 20px; margin-bottom: 20px; text-align:right">
     <span>{{ $data['payment_date'] }}</span><br>
     <span>{{ $data['invoice_id'] }}</span>
   </div>
   <h2 style="text-align: center">PAYMENT RECEIPT</h2>
-  <p>The organizing committee of <strong>SOTVIA 2025</strong> acknowledges the following payment for registration fee,
+  <p>The organizing committee of <strong>{{ $data['conference_name'] }}</strong> acknowledges the following payment for
+    registration fee,
   </p>
   <table style="width: 100%; border-collapse: collapse;">
     <tbody>
