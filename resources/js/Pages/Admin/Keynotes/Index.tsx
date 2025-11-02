@@ -1,13 +1,12 @@
-import { DataTable } from 'primereact/datatable';
+import { DataTable, DataTableStateEvent } from 'primereact/datatable';
 import MainLayout from '../../../Layout/MainLayout';
 import { Column } from 'primereact/column';
 import { usePage } from '@inertiajs/react';
 import React, { useState } from 'react';
 import { InputText } from 'primereact/inputtext';
-import { ActionIcon, Button, Flex, Text, Select, Box, Group, Badge } from '@mantine/core';
+import { ActionIcon, Button, Flex, Text, Select, Box, Group } from '@mantine/core';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
-import styles from './styles.module.css';
 
 interface KeyNote {
   id: number;
@@ -54,6 +53,19 @@ function KeynoteIndex() {
     window.location.href = `/keynotes?${params.toString()}`;
   };
 
+  const handlePageChange = (event: DataTableStateEvent) => {
+    if (event.page !== undefined) {
+      const params = new URLSearchParams(window.location.search);
+      params.set('page', (event.page + 1).toString());
+      if (event.rows && event.rows !== keynotes.per_page) {
+        params.set('per_page', event.rows.toString());
+      }
+      if (conferenceFilter) params.set('conference_id', conferenceFilter);
+
+      window.location.href = `/keynotes?${params.toString()}`;
+    }
+  };
+
   const clearFilters = () => {
     window.location.href = '/keynotes';
   };
@@ -92,7 +104,8 @@ function KeynoteIndex() {
       field: 'serial_number',
       label: 'No.',
       width: '10px',
-      renderCell: (_: KeyNote, { rowIndex }: { rowIndex: number }) => rowIndex + 1
+      renderCell: (_: KeyNote, { rowIndex }: { rowIndex: number }) =>
+        rowIndex + 1
     },
     {
       label: 'Conference',
@@ -146,10 +159,16 @@ function KeynoteIndex() {
   ];
 
   return (
-    <div className={styles.card}>
+    <div style={{ padding: '1rem', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
       {/* Filter Section */}
       <Box mb="lg">
         <Text size="lg" fw={600} mb="md">Filter Keynote Data</Text>
+
+        {/* Pagination Info */}
+        <Text size="sm" c="dimmed" mb="md">
+          Showing {((keynotes.current_page - 1) * keynotes.per_page) + 1} to {Math.min(keynotes.current_page * keynotes.per_page, keynotes.total)} of {keynotes.total} entries
+        </Text>
+
         <Group gap="md" mb="md">
           <Select
             placeholder="-- All Conferences --"
@@ -174,14 +193,21 @@ function KeynoteIndex() {
 
       <DataTable
         value={data}
+        lazy
         paginator
-        rows={15}
+        first={(keynotes.current_page - 1) * keynotes.per_page}
+        rows={keynotes.per_page}
+        totalRecords={keynotes.total}
+        onPage={handlePageChange}
+        rowsPerPageOptions={[15, 25, 50, 100]}
         header={renderHeader()}
         globalFilter={globalFilterValue}
         stripedRows
         showGridlines
         className="datatable-responsive"
         tableStyle={{ minWidth: '100rem', fontSize: '14px' }}
+        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
       >
         {columns.map(col => (
           <Column

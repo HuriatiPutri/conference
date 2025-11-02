@@ -19,6 +19,7 @@ class ParallelSessionManagementController extends Controller
     public function index(): Response
     {
         $filters = RequestFacade::only('conference_id');
+        $perPage = RequestFacade::input('per_page', 15); // Default 15, bisa diubah via parameter
         
         // Build query with filters
         $query = ParallelSession::query()
@@ -33,7 +34,7 @@ class ParallelSessionManagementController extends Controller
         }
 
         // Get parallel sessions with pagination
-        $parallelSessions = $query->orderBy('created_at', 'desc')->paginate(15)->appends(RequestFacade::all());
+        $parallelSessions = $query->orderBy('created_at', 'desc')->paginate($perPage)->appends(RequestFacade::all());
 
         // Get all conferences for filter dropdown
         $conferences = Conference::whereNull('deleted_at')

@@ -7,7 +7,7 @@ import MainLayout from '../../../Layout/MainLayout';
 import { Conference, PaginatedData } from '../../../types';
 import { formatCurrency } from '../../../utils';
 // import { Button } from 'primereact/button';
-import { ActionIcon, Container, Group, Stack, Text, Title } from '@mantine/core';
+import { ActionIcon, Container, Group, Pagination, Stack, Text, Title } from '@mantine/core';
 import { FilterMatchMode } from 'primereact/api';
 import { ColumnGroup } from 'primereact/columngroup';
 import { IconField } from 'primereact/iconfield';
@@ -15,6 +15,7 @@ import { InputIcon } from 'primereact/inputicon';
 import { InputText } from 'primereact/inputtext';
 import { Row } from 'primereact/row';
 import { ActionButtonExt, CopyButtonExt } from './ExtendComponent';
+import { route } from 'ziggy-js';
 
 interface ColumnType {
   label: string;
@@ -30,7 +31,7 @@ function Home() {
   }>().props;
 
   const baseUrl = window.location.origin;
-  const { data } = conferences;
+  const { data, meta } = conferences;
 
   const handleDelete = (id: number) => {
     if (!confirm('Delete this conference?')) return;
@@ -224,6 +225,14 @@ function Home() {
     );
   };
 
+  const handlePagination = (pageNumber: number) => {
+    console.log('Navigating to page:', pageNumber);
+    window.location.href = route('audiences', {
+      ...filters,
+      page: pageNumber,
+    });
+  }
+
   const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const _filters = { ...filters };
@@ -298,8 +307,7 @@ function Home() {
             showGridlines
             alwaysShowPaginator
             tableStyle={{ minWidth: '100rem', fontSize: '14px' }}
-            paginator
-            rows={10}
+            rows={meta.per_page}
           >
             {columns.map(col => (
               <Column
@@ -317,6 +325,7 @@ function Home() {
               />
             ))}
           </DataTable>
+          <Pagination total={meta.last_page} value={meta.current_page} onChange={handlePagination} mt="sm" />
         </div>
       </Stack>
     </Container>

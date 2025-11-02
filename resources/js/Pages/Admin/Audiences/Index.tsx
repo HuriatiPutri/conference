@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import { InputText } from 'primereact/inputtext';
 import { Audiences, PaginatedData } from '../../../types';
 import { formatCurrency } from '../../../utils';
-import { ActionIcon, Button, Checkbox, Flex, Stack, Text, Select, Box, Group, Badge, Grid, Divider } from '@mantine/core';
+import { ActionIcon, Button, Checkbox, Flex, Stack, Text, Select, Box, Group, Badge, Grid, Divider, Pagination } from '@mantine/core';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
 import { BadgeStatus } from './ExtendComponent';
@@ -31,9 +31,8 @@ function AudienceIndex() {
     conferences: Array<{ id: number; name: string }>;
   }>().props;
 
-  const { data } = audiences;
+  const { data, meta } = audiences;
 
-  console.log('Audiences data:', data);
   const [paymentModalOpened, setPaymentModalOpened] = useState(false);
   const [selectedAudience] = useState<Audiences | null>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -81,7 +80,7 @@ function AudienceIndex() {
       label: 'No.',
       style: { minWidth: '5rem' },
       sortable: false,
-      renderCell: (_: Audiences, { rowIndex }: { rowIndex: number }) => rowIndex + 1
+      renderCell: (_: Audiences, { rowIndex }: { rowIndex: number }) => rowIndex + 1 + (meta.current_page - 1) * meta.per_page,
     },
     {
       label: 'Conference',
@@ -295,6 +294,14 @@ function AudienceIndex() {
     );
   };
 
+  const handlePagination = (pageNumber: number) => {
+    console.log('Navigating to page:', pageNumber);
+    window.location.href = route('audiences', {
+      ...filters,
+      page: pageNumber,
+    });
+  }
+
   return (
     <div style={{ padding: '24px', backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e9ecef' }}>
       {/* Filter Section */}
@@ -372,8 +379,7 @@ function AudienceIndex() {
       <Divider mb="lg" />
       <DataTable
         value={data}
-        paginator
-        rows={10}
+        rows={meta.per_page}
         header={renderHeader()}
         globalFilter={globalFilterValue}
         stripedRows
@@ -397,7 +403,7 @@ function AudienceIndex() {
           />
         ))}
       </DataTable>
-
+      <Pagination total={meta.last_page} value={meta.current_page} onChange={handlePagination} mt="sm" />
       <PaymentStatusModal
         opened={paymentModalOpened}
         onClose={() => setPaymentModalOpened(false)}

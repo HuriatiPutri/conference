@@ -18,7 +18,8 @@ class KeynoteManagementController extends Controller
     public function index(): Response
     {
         $filters = RequestFacade::only('conference_id');
-        
+        $perPage = RequestFacade::input('per_page', 15); // Default 50, bisa diubah via parameter
+
         // Build query with filters
         $query = KeyNote::query()
             ->with(['audience.conference'])
@@ -32,7 +33,7 @@ class KeynoteManagementController extends Controller
         }
 
         // Get keynotes with pagination
-        $keynotes = $query->orderBy('created_at', 'desc')->paginate(15)->appends(RequestFacade::all());
+        $keynotes = $query->orderBy('created_at', 'desc')->paginate($perPage)->appends(RequestFacade::all());
 
         // Get all conferences for filter dropdown
         $conferences = Conference::whereNull('deleted_at')

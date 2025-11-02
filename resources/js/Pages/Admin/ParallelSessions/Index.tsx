@@ -1,13 +1,12 @@
-import { DataTable } from 'primereact/datatable';
+import { DataTable, DataTableStateEvent } from 'primereact/datatable';
 import MainLayout from '../../../Layout/MainLayout';
 import { Column } from 'primereact/column';
 import { usePage } from '@inertiajs/react';
 import React, { useState } from 'react';
 import { InputText } from 'primereact/inputtext';
-import { ActionIcon, Button, Flex, Text, Select, Box, Group, Badge } from '@mantine/core';
+import { ActionIcon, Button, Flex, Text, Select, Box, Group } from '@mantine/core';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
-import styles from './styles.module.css';
 
 interface ParallelSession {
   id: number;
@@ -58,6 +57,19 @@ function ParallelSessionIndex() {
     window.location.href = `/parallel-sessions?${params.toString()}`;
   };
 
+  const handlePageChange = (event: DataTableStateEvent) => {
+    if (event.page !== undefined) {
+      const params = new URLSearchParams(window.location.search);
+      params.set('page', (event.page + 1).toString());
+      if (event.rows && event.rows !== parallelSessions.per_page) {
+        params.set('per_page', event.rows.toString());
+      }
+      if (conferenceFilter) params.set('conference_id', conferenceFilter);
+
+      window.location.href = `/parallel-sessions?${params.toString()}`;
+    }
+  };
+
   const clearFilters = () => {
     window.location.href = '/parallel-sessions';
   };
@@ -97,7 +109,8 @@ function ParallelSessionIndex() {
       label: 'No.',
       width: '10px',
       style: { minWidth: '5rem' },
-      renderCell: (_: ParallelSession, { rowIndex }: { rowIndex: number }) => rowIndex + 1
+      renderCell: (_: ParallelSession, { rowIndex }: { rowIndex: number }) =>
+        rowIndex + 1
     },
     {
       label: 'Conference',
@@ -159,10 +172,16 @@ function ParallelSessionIndex() {
   ];
 
   return (
-    <div className={styles.card}>
+    <div style={{ padding: '1rem', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
       {/* Filter Section */}
       <Box mb="lg">
         <Text size="lg" fw={600} mb="md">Filter Parallel Session Data</Text>
+
+        {/* Pagination Info */}
+        <Text size="sm" c="dimmed" mb="md">
+          Showing {((parallelSessions.current_page - 1) * parallelSessions.per_page) + 1} to {Math.min(parallelSessions.current_page * parallelSessions.per_page, parallelSessions.total)} of {parallelSessions.total} entries
+        </Text>
+
         <Group gap="md" mb="md">
           <Select
             placeholder="-- All Conferences --"
@@ -187,14 +206,21 @@ function ParallelSessionIndex() {
 
       <DataTable
         value={data}
+        lazy
         paginator
-        rows={15}
+        first={(parallelSessions.current_page - 1) * parallelSessions.per_page}
+        rows={parallelSessions.per_page}
+        totalRecords={parallelSessions.total}
+        onPage={handlePageChange}
+        rowsPerPageOptions={[15, 25, 50, 100]}
         header={renderHeader()}
         globalFilter={globalFilterValue}
         stripedRows
         showGridlines
         className="datatable-responsive"
         tableStyle={{ minWidth: '100rem', fontSize: '14px' }}
+        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
       >
         {columns.map(col => (
           <Column

@@ -24,6 +24,7 @@ class AudiencesController extends Controller
     public function index(): Response
     {
         $filters = Request::only('conference_id', 'payment_method', 'payment_status');
+        $perPage = Request::input('per_page', 15); // Default 50, bisa diubah via parameter
         
         // Build query with filters
         $query = Audience::query()
@@ -44,7 +45,7 @@ class AudiencesController extends Controller
         }
 
         // Get filtered audiences for pagination
-        $audiences = $query->orderBy('id', 'desc')->paginate()->appends(Request::all());
+        $audiences = $query->orderBy('id', 'desc')->paginate($perPage)->appends(Request::all());
 
         // Get summary counts with same filters
         $summaryQuery = Audience::query()->whereHas('conference');

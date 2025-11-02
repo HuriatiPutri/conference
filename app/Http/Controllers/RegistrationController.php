@@ -618,9 +618,24 @@ class RegistrationController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
+
+            // Provide more specific error messages based on the error type
+            $errorMessage = 'Failed to process PayPal payment. Please try again.';
+            
+            if (strpos($e->getMessage(), 'credentials') !== false) {
+                $errorMessage = 'Payment service configuration error. Please contact support.';
+            } elseif (strpos($e->getMessage(), 'access token') !== false) {
+                $errorMessage = 'Unable to connect to payment service. Please try again later.';
+            } elseif (strpos($e->getMessage(), 'network') !== false || strpos($e->getMessage(), 'timeout') !== false) {
+                $errorMessage = 'Network error occurred. Please check your connection and try again.';
+            } elseif (strpos($e->getMessage(), 'PAYMENT_ALREADY_DONE') !== false) {
+                $errorMessage = 'This payment has already been processed.';
+            } elseif (strpos($e->getMessage(), 'INVALID_PAYMENT_ID') !== false) {
+                $errorMessage = 'Invalid payment reference. Please start a new payment.';
+            }
             
             return redirect()->route('registration.create', $conference->public_id)
-                ->with('error', 'Failed to process PayPal payment: ' . $e->getMessage());
+                ->with('error', $errorMessage);
         }
     }
 
@@ -713,10 +728,23 @@ class RegistrationController extends Controller
         } catch (\Exception $e) {
             \Log::error('Failed to save audience data for PayPal payment', [
                 'error' => $e->getMessage(),
-                'registration_data' => $registrationData
+                'registration_data' => $registrationData,
+                'trace' => $e->getTraceAsString()
             ]);
+
+            // Provide more specific error messages
+            $errorMessage = 'Failed to process registration. Please try again.';
+            
+            if (strpos($e->getMessage(), 'Duplicate') !== false || strpos($e->getMessage(), 'unique') !== false) {
+                $errorMessage = 'This email is already registered for this conference. Please check your registration status.';
+            } elseif (strpos($e->getMessage(), 'validation') !== false) {
+                $errorMessage = 'Please check your registration information and try again.';
+            } elseif (strpos($e->getMessage(), 'database') !== false || strpos($e->getMessage(), 'connection') !== false) {
+                $errorMessage = 'Database connection error. Please try again later.';
+            }
+
             return redirect()->back()->withErrors([
-                'payment_method' => 'Failed to process registration. Please try again.'
+                'payment_method' => $errorMessage
             ]);
         }
     }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { usePage } from '@inertiajs/react';
-import { DataTable } from 'primereact/datatable';
+import { DataTable, DataTableStateEvent } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import {
   Container,
@@ -19,7 +19,7 @@ import {
 } from '@mantine/core';
 import { IconDownload, IconFileText } from '@tabler/icons-react';
 import MainLayout from '../../../Layout/MainLayout';
-import { Audiences, PaginatedData, PageProps } from '../../../types';
+import { Audiences, PageProps } from '../../../types';
 import { route } from 'ziggy-js';
 import { PRESENTATION_TYPE } from '../../../Constants';
 
@@ -30,7 +30,13 @@ type AudienceWithLoA = Audiences & {
 };
 
 interface LettersOfApprovalPageProps extends PageProps {
-  audiences: PaginatedData<AudienceWithLoA>;
+  audiences: {
+    data: AudienceWithLoA[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
   conferences: Array<{ id: number; name: string; initial: string }>;
   filters: {
     conference_id?: string;
@@ -66,6 +72,20 @@ function LettersOfApprovalIndex() {
     window.location.href = '/letters-of-approval';
   };
 
+  const handlePageChange = (event: DataTableStateEvent) => {
+    if (event.page !== undefined) {
+      const params = new URLSearchParams(window.location.search);
+      params.set('page', (event.page + 1).toString());
+      if (event.rows && event.rows !== audiences.per_page) {
+        params.set('per_page', event.rows.toString());
+      }
+      if (conferenceFilter) params.set('conference_id', conferenceFilter);
+      if (searchTerm) params.set('search', searchTerm);
+
+      window.location.href = `/letters-of-approval?${params.toString()}`;
+    }
+  };
+
   const getLoAStatusBadge = (status: string) => {
     const statusMap = {
       pending: { color: 'yellow', label: 'Pending' },
@@ -82,7 +102,8 @@ function LettersOfApprovalIndex() {
       field: 'serial_number',
       header: 'No.',
       style: { minWidth: '5rem' },
-      body: (_: Audiences, { rowIndex }: { rowIndex: number }) => rowIndex + 1
+      body: (_: Audiences, { rowIndex }: { rowIndex: number }) =>
+        rowIndex + 1
     },
     {
       field: 'conference.name',
@@ -190,6 +211,7 @@ function LettersOfApprovalIndex() {
         {/* Filters */}
         <Card padding="lg" radius="md" withBorder>
           <Title order={4} mb="md">Filter Participants</Title>
+
           <Grid>
             <Grid.Col span={{ base: 12, md: 4 }}>
               <Select
@@ -231,18 +253,26 @@ function LettersOfApprovalIndex() {
 
         {/* Data Table */}
         <Card padding="lg" radius="md" withBorder>
+          {/* Pagination Info */}
+          <Text size="sm" c="dimmed" mb="md">
+            Showing {((audiences.current_page - 1) * audiences.per_page) + 1} to {Math.min(audiences.current_page * audiences.per_page, audiences.total)} of {audiences.total} entries
+          </Text>
           <DataTable
             value={data}
+            lazy
             paginator
-            rows={10}
-            // header={renderHeader()}
+            first={(audiences.current_page - 1) * audiences.per_page}
+            rows={audiences.per_page}
+            totalRecords={audiences.total}
+            onPage={handlePageChange}
+            rowsPerPageOptions={[15, 25, 50, 100]}
             globalFilter={globalFilterValue}
-            // selection={selectedAudiences}
-            // onSelectionChange={(e: { value: AudienceWithLoA[] }) => setSelectedAudiences(e.value)}
             dataKey="id"
             stripedRows
             showGridlines
             tableStyle={{ minWidth: '100rem' }}
+            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
           >
             {columns.map((col, index) => (
               <Column

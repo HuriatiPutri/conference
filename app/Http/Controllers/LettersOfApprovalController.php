@@ -16,6 +16,8 @@ class LettersOfApprovalController extends Controller
      */
     public function index(Request $request): Response
     {
+        $perPage = $request->input('per_page', 15); // Default 15, bisa diubah via parameter
+        
         $query = Audience::with(['conference'])
             ->where('payment_status', 'paid')
             ->whereNotNull('paper_title');
@@ -37,7 +39,7 @@ class LettersOfApprovalController extends Controller
             });
         }
 
-        $audiences = $query->latest()->paginate(10);
+        $audiences = $query->latest()->paginate($perPage)->appends($request->all());
         
         // Get conferences for filter dropdown
         $conferences = Conference::select('id', 'name', 'initial')
