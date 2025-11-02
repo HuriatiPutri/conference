@@ -91,15 +91,17 @@ function KeynoteIndex() {
     {
       field: 'serial_number',
       label: 'No.',
-      style: { minWidth: '5rem' },
+      width: '10px',
       renderCell: (_: KeyNote, { rowIndex }: { rowIndex: number }) => rowIndex + 1
     },
     {
       label: 'Conference',
       name: 'audience.conference.name',
       sortable: true,
+      width: '10%',
+      className: 'text-wrap w-40',
       renderCell: (row: KeyNote) => (
-        <Text size="sm" fw={500}>
+        <Text size="sm" fw={500} style={{ textWrap: 'wrap' }}>
           {row.audience.conference.name} ({row.audience.conference.initial})
         </Text>
       ),
@@ -191,7 +193,7 @@ function KeynoteIndex() {
             style={{
               alignItems: 'top',
               textAlign: 'left',
-              width: col.name === 'feedback' ? '300px' : 'auto',
+              width: col.width ? col.width : 'auto',
             }}
           />
         ))}

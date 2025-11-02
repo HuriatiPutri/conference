@@ -87,6 +87,9 @@ function AudienceIndex() {
       label: 'Conference',
       name: 'conference.name',
       className: 'text-wrap w-40',
+      renderCell: (row: Audiences) => (
+        <Text size='sm' style={{ textWrap: 'wrap' }}>{row.conference?.name}</Text>
+      ),
       sortable: true,
     },
     {
@@ -172,7 +175,7 @@ function AudienceIndex() {
       name: 'paper_title',
       renderCell: (row: Audiences) => (
         <Stack w={250}>
-          <span>{row.paper_title}</span>
+          <Text size='sm' style={{ textWrap: 'wrap' }}>{row.paper_title}</Text>
           {row.full_paper_path && (
             <Button
               color="blue"

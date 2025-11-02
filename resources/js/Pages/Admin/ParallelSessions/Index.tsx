@@ -95,6 +95,7 @@ function ParallelSessionIndex() {
     {
       field: 'serial_number',
       label: 'No.',
+      width: '10px',
       style: { minWidth: '5rem' },
       renderCell: (_: ParallelSession, { rowIndex }: { rowIndex: number }) => rowIndex + 1
     },
@@ -102,6 +103,7 @@ function ParallelSessionIndex() {
       label: 'Conference',
       name: 'audience.conference.name',
       sortable: true,
+      width: '10%',
       renderCell: (row: ParallelSession) => (
         <Text size="sm" fw={500}>
           {row.audience.conference.name} ({row.audience.conference.initial})
@@ -204,7 +206,7 @@ function ParallelSessionIndex() {
             style={{
               alignItems: 'top',
               textAlign: 'left',
-              width: col.name === 'paper_title' ? '300px' : 'auto',
+              width: col.width ? col.width : 'auto',
             }}
           />
         ))}

@@ -52,17 +52,17 @@ function Home() {
       label: 'Name',
       name: 'name',
       sortable: true,
-      className: 'text-wrap w-25',
+      className: 'text-wrap w-40',
       width: '10%',
       rowspan: 2,
       renderCell: (row: Conference) => (
-        <>
+        <Text size='sm' style={{ textWrap: 'wrap' }}>
           {row.name}
           {
             row.deleted_at && 'detelted'
             // <Trash2 size={16} className="ml-2 text-gray-400" />
           }
-        </>
+        </Text>
       ),
     },
     { label: 'Initial', name: 'initial', rowspan: 2 },
