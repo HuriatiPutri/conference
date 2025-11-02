@@ -18,7 +18,7 @@ class ConferenceStoreRequest extends FormRequest
 
         return [
             'name' => [$isUpdate ? 'sometimes' : 'required', 'string', 'max:255'],
-            'initial' => [$isUpdate ? 'sometimes' : 'required', 'string', 'max:10'],
+            'initial' => [$isUpdate ? 'sometimes' : 'required', 'string', 'max:225'],
             'cover_poster_path' => ['nullable', 'file', 'mimes:png,jpg,jpeg', 'max:2048'], // max dalam KB
             'date' => [$isUpdate ? 'sometimes' : 'required', 'date'],
             'city' => ['nullable', 'string', 'max:100'],
