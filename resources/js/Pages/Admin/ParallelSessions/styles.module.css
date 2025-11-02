@@ -1,0 +1,25 @@
+
+.card {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+}
+.searchInput {
+    font-size: 14px;
+    width: 250px;
+}
+
+.tableHeader {
+    display: flex;
+    justify-content: flex-end;
+}
+.btn {
+    font-size: 14px;
+}
+
+.datatableBody {
+    vertical-align: top !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
