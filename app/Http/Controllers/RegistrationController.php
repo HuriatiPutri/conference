@@ -843,8 +843,19 @@ class RegistrationController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
 
+            // Provide more specific error messages based on the error type
+            $errorMessage = 'Payment processing failed. Please try again.';
+            
+            if (strpos($e->getMessage(), 'credentials') !== false) {
+                $errorMessage = 'Payment service configuration error. Please contact support.';
+            } elseif (strpos($e->getMessage(), 'access token') !== false) {
+                $errorMessage = 'Unable to connect to payment service. Please try again later.';
+            } elseif (strpos($e->getMessage(), 'network') !== false || strpos($e->getMessage(), 'timeout') !== false) {
+                $errorMessage = 'Network error occurred. Please check your connection and try again.';
+            }
+
             return redirect()->back()->withErrors([
-                'payment_method' => 'Payment processing failed. Please try again.'
+                'payment_method' => $errorMessage
             ]);
         }
     }

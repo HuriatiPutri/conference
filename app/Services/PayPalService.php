@@ -18,6 +18,11 @@ class PayPalService
         $this->clientSecret = config('paypal.client_secret');
         $this->mode = config('paypal.mode');
         $this->baseUrl = $this->mode === 'live' ? config('paypal.live_url') : config('paypal.sandbox_url');
+        
+        // Validate required configuration
+        if (empty($this->clientId) || empty($this->clientSecret)) {
+            throw new \Exception('PayPal credentials not configured. Please check your .env file.');
+        }
     }
 
     /**
@@ -35,7 +40,15 @@ class PayPalService
             return $response->json()['access_token'];
         }
 
-        throw new \Exception('Failed to get PayPal access token');
+        // Log the error for debugging
+        Log::error('PayPal access token request failed', [
+            'status' => $response->status(),
+            'response' => $response->json(),
+            'mode' => $this->mode,
+            'base_url' => $this->baseUrl
+        ]);
+
+        throw new \Exception('Failed to get PayPal access token. Please check your PayPal credentials.');
     }
 
     /**
