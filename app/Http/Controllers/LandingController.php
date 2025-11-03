@@ -13,8 +13,7 @@ class LandingController extends Controller
     {
         // Get active conferences (currently open for registration)
         $conferences = Conference::whereNull('deleted_at')
-            ->where('registration_start_date', '<=', now())
-            ->where('registration_end_date', '>=', now())
+            ->where('date', '>=', now())
             ->orderBy('date', 'asc')
             ->limit(6)
             ->get();
