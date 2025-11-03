@@ -211,7 +211,6 @@ function LettersOfApprovalIndex() {
         {/* Filters */}
         <Card padding="lg" radius="md" withBorder>
           <Title order={4} mb="md">Filter Participants</Title>
-
           <Grid>
             <Grid.Col span={{ base: 12, md: 4 }}>
               <Select

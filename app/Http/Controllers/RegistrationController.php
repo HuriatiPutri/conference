@@ -19,6 +19,15 @@ class RegistrationController extends Controller
      */
     public function create(Conference $conference): Response
     {
+        $isConferenceOpen = now()->between($conference->registration_start_date, $conference->registration_end_date);
+        if(!$isConferenceOpen) {
+            return Inertia::render('Registration/Closed', [
+                'conference' => $conference->only([
+                    'id', 'public_id', 'name', 'initial', 'date', 'city', 'country',
+                    'registration_start_date', 'registration_end_date'
+                ])
+            ]);
+        }
         return Inertia::render('Registration/Create', [
             'conference' => $conference->only([
                 'id', 'public_id', 'name', 'initial', 'date', 'city', 'country',

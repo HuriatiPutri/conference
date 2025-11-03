@@ -65,6 +65,7 @@ export interface Conference {
   id: number;
   public_id: string;
   name: string;
+  decscription?: string;
   initial: string;
   cover_poster_path: string;
   date: string;

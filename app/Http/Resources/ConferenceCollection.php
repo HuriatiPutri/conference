@@ -16,7 +16,7 @@ class ConferenceCollection extends ResourceCollection
     public function toArray($request)
     {
         return $this->collection->map->only(
-            'id','public_id', 'name', 'initial', 'date', 'cover_poster_path', 'city', 'country', 'year', 'online_fee', 'online_fee_usd', 'onsite_fee', 'onsite_fee_usd', 'participant_fee', 'participant_fee_usd', 'deleted_at'
+            'id','public_id', 'name', 'description', 'initial', 'date', 'registration_start_date', 'registration_end_date', 'cover_poster_path', 'city', 'country', 'year', 'online_fee', 'online_fee_usd', 'onsite_fee', 'onsite_fee_usd', 'participant_fee', 'participant_fee_usd', 'deleted_at'
         );
     }
 }

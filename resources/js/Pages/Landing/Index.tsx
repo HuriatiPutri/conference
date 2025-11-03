@@ -14,6 +14,7 @@ import {
   Grid,
   Group,
   Image,
+  Overlay,
   SimpleGrid,
   Space,
   Stack,
@@ -46,7 +47,7 @@ function LandingPage() {
     <Box>
       {/* Hero Section */}
       <BackgroundImage
-        src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
+        src="/images/hero.png"
         h={{ base: 400, md: 500 }}
         w="100vw"
         style={{
@@ -54,7 +55,8 @@ function LandingPage() {
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
           width: '100%',
-          minHeight: '100vh'
+          minHeight: '100vh',
+
         }}
       >
         <Center h="100%">
@@ -227,7 +229,7 @@ function LandingPage() {
                     </Text>
                     <Button
                       component={Link}
-                      href={`/conferences/${conference.id}`}
+                      href={`/detail/${conference.public_id}`}
                       variant="outline"
                       color="green"
                       size="sm"

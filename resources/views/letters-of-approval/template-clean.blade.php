@@ -82,7 +82,7 @@
         }
 
         .signature-section {
-            margin-top: 60px;
+            margin-top: 30px;
         }
 
         .signature-left {
@@ -92,8 +92,8 @@
 
         .signature-right {
             float: right;
-            width: 45%;
-            text-align: center;
+            width: 50%;
+            text-align: right;
         }
 
         .signature-box {
@@ -163,11 +163,12 @@
     </div>
 
     <div class="date">
+        {{ $data['number_of_letter'] }}<br>
         {{ $data['issue_date'] }}
     </div>
 
     <div class="recipient">
-        Dear {{ $data['participant_name'] }}<br><br>
+        Dear {{ $data['participant_name'] }}<br>
         {{ $data['institution'] }}
     </div>
 
@@ -199,28 +200,12 @@
 
     <div class="signature-section clearfix">
         <div class="signature-left">
-            <p>Sincerely</p>
-            <img src="{{ $data['signature_path'] }}" alt="Editor Signature" style="width: 210px; margin-top: 20px;" />
+            <p style="margin: 0;">Sincerely</p>
+            <img src="{{ $data['signature_path'] }}" alt="Editor Signature" style="width: 220px; margin-top: 20px;" />
         </div>
 
         <div class="signature-right">
-            {{-- <div class="scopus-info">
-                <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
-                    <div style="font-size: 10pt; margin-bottom: 5px;">International Journal on</div>
-                    <div style="font-size: 10pt; font-weight: bold;">Informatics Visualization</div>
-                    <div class="scopus-badge">Q3</div>
-                    <div style="font-size: 8pt; color: #666;">Information<br>Systems and<br>Management<br>best quartile
-                    </div>
-                    <div style="font-size: 8pt; color: #666; margin-top: 10px;">SJR 2024</div>
-                    <div style="font-size: 12pt; font-weight: bold;">0.2</div>
-                    <div style="background-color: #ff6b35; height: 10px; width: 50%; margin: 5px auto;"></div>
-                    <div style="font-size: 8pt; color: #666;">powered by scimagojr.com</div>
-                </div>
-                <div class="citation-score">1.9</div>
-                <div style="font-size: 10pt; color: #666;">2024<br>CiteScore</div>
-                <div style="font-size: 8pt; color: #666; margin-top: 5px;">43rd percentile</div>
-                <div style="font-size: 8pt; color: #666;">Powered by <span style="color: #ff6b35;">Scopus</span></div>
-            </div> --}}
+            <img src="{{ $data['scopus_analitic_path'] }}" alt="Scopus Analytic" style="width: 180px;" />
         </div>
     </div>
 

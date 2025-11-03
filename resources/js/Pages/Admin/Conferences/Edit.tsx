@@ -1,5 +1,5 @@
 import { useForm, usePage } from '@inertiajs/react';
-import { ActionIcon, Button, Card, Container, Divider, Flex, Grid, Group, Image, Stack, Text, TextInput, Title } from '@mantine/core';
+import { ActionIcon, Button, Card, Container, Divider, Flex, Grid, Group, Image, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import React, { useState } from 'react';
 import { route } from 'ziggy-js';
@@ -9,9 +9,12 @@ import { IconArrowLeft } from '@tabler/icons-react';
 
 interface ConferenceFormData {
   name: string;
+  description: string;
   initial: string;
   cover_poster_path: File | null;
   date: string;
+  registration_start_date: string;
+  registration_end_date: string;
   year: number;
   city: string;
   country: string;
@@ -29,9 +32,12 @@ function ConferenceCreate() {
   const [rooms, setRooms] = useState<Partial<Room>[]>(conference.data.rooms || [{ room_name: '' }]);
   const { data, setData, errors, post, processing } = useForm<ConferenceFormData>({
     name: conference.data.name || '',
+    description: conference.data.description || '',
     initial: conference.data.initial || '',
     cover_poster_path: null as File | null,
     date: conference.data.date || '',
+    registration_start_date: conference.data.registration_start_date || '',
+    registration_end_date: conference.data.registration_end_date || '',
     year: conference.data.year || new Date().getFullYear(),
     city: conference.data.city || '',
     country: conference.data.country || '',
@@ -110,6 +116,16 @@ function ConferenceCreate() {
                 placeholder="Example: SAFE2024, ICOAS2025"
               />
 
+              <Textarea
+                label="Conference Description"
+                name="description"
+                minRows={4}
+                error={errors.description}
+                value={data.description}
+                onChange={e => setData('description', e.target.value)}
+                placeholder="Enter a brief description of the conference"
+              />
+
               <TextInput
                 label="Conference Date"
                 name="date"
@@ -119,6 +135,31 @@ function ConferenceCreate() {
                 value={data.date}
                 onChange={e => setData('date', e.target.value)}
               />
+
+              <Grid>
+                <Grid.Col span={6}>
+                  <TextInput
+                    label="Registration Start Date"
+                    name="registration_start_date"
+                    type="date"
+                    required
+                    error={errors.registration_start_date}
+                    value={data.registration_start_date}
+                    onChange={e => setData('registration_start_date', e.target.value)}
+                  />
+                </Grid.Col>
+                <Grid.Col span={6}>
+                  <TextInput
+                    label="Registration End Date"
+                    name="registration_end_date"
+                    type="date"
+                    required
+                    error={errors.registration_end_date}
+                    value={data.registration_end_date}
+                    onChange={e => setData('registration_end_date', e.target.value)}
+                  />
+                </Grid.Col>
+              </Grid>
 
               <TextInput
                 label="Conference Cover Poster"

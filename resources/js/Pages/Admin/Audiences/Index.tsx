@@ -1,18 +1,19 @@
-import { DataTable } from 'primereact/datatable';
-import MainLayout from '../../../Layout/MainLayout';
-import { Column } from 'primereact/column';
 import { usePage } from '@inertiajs/react';
-import React, { useState } from 'react';
-import { InputText } from 'primereact/inputtext';
-import { Audiences, PaginatedData } from '../../../types';
-import { formatCurrency } from '../../../utils';
-import { ActionIcon, Button, Checkbox, Flex, Stack, Text, Select, Box, Group, Badge, Grid, Divider, Pagination } from '@mantine/core';
+import { ActionIcon, Button, Card, Checkbox, Container, Divider, Flex, Grid, Group, Select, Stack, Text, Title } from '@mantine/core';
+import { IconCircleCheckFilled, IconCircleDashed, IconRestore, IconXboxXFilled } from '@tabler/icons-react';
+import { Column } from 'primereact/column';
+import { DataTable, DataTableStateEvent } from 'primereact/datatable';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
-import { BadgeStatus } from './ExtendComponent';
-import { PAYMENT_METHOD, PRESENTATION_TYPE } from '../../../Constants';
-import { PaymentStatusModal } from '../../../Components/Modals/PaymentStatusModal';
+import { InputText } from 'primereact/inputtext';
+import React, { useState } from 'react';
 import { route } from 'ziggy-js';
+import { PaymentStatusModal } from '../../../Components/Modals/PaymentStatusModal';
+import { PAYMENT_METHOD, PRESENTATION_TYPE } from '../../../Constants';
+import MainLayout from '../../../Layout/MainLayout';
+import { Audiences, PaginatedData } from '../../../types';
+import { formatCurrency } from '../../../utils';
+import { BadgeStatus } from './ExtendComponent';
 
 function AudienceIndex() {
   const { audiences, filters, summary, conferences } = usePage<{
@@ -80,7 +81,7 @@ function AudienceIndex() {
       label: 'No.',
       style: { minWidth: '5rem' },
       sortable: false,
-      renderCell: (_: Audiences, { rowIndex }: { rowIndex: number }) => rowIndex + 1 + (meta.current_page - 1) * meta.per_page,
+      renderCell: (_: Audiences, { rowIndex }: { rowIndex: number }) => rowIndex + 1,
     },
     {
       label: 'Conference',
@@ -294,125 +295,185 @@ function AudienceIndex() {
     );
   };
 
-  const handlePagination = (pageNumber: number) => {
-    console.log('Navigating to page:', pageNumber);
-    window.location.href = route('audiences', {
-      ...filters,
-      page: pageNumber,
-    });
+  const handlePagination = (event: DataTableStateEvent) => {
+    if (event.page !== undefined) {
+      const params = new URLSearchParams(window.location.search);
+      params.set('page', (event.page + 1).toString());
+      if (event.rows && event.rows !== audiences.per_page) {
+        params.set('per_page', event.rows.toString());
+      }
+      if (conferenceFilter) params.set('conference_id', conferenceFilter);
+      if (paymentMethodFilter) params.set('payment_method', paymentMethodFilter);
+      if (paymentStatusFilter) params.set('payment_status', paymentStatusFilter);
+
+      window.location.href = `/audiences?${params.toString()}`;
+    }
   }
 
   return (
-    <div style={{ padding: '24px', backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e9ecef' }}>
-      {/* Filter Section */}
-      <Box mb="lg">
-        <Text size="lg" fw={600} mb="md">Filter Audience Data</Text>
+    <Container fluid>
+      <Stack gap="lg">
+        {/* Header */}
+        <Group justify="space-between">
+          <div>
+            <Title order={2}>Audience Management</Title>
+            <Text c="dimmed">Manage audiences, settings, and configurations</Text>
+          </div>
+        </Group>
+        <Card padding="lg" radius="md" withBorder>
+          <Title order={4} mb="md">Filter Audience Data</Title>
+          <Grid>
+            <Grid.Col span={{ base: 12, md: 3 }}>
+              <Select
+                placeholder="-- All Conferences --"
+                data={[
+                  { value: '', label: '-- All Conferences --' },
+                  ...conferences.map(conf => ({ value: conf.id.toString(), label: conf.name }))
+                ]}
+                value={conferenceFilter}
+                onChange={(value) => setConferenceFilter(value || '')}
+                style={{ minWidth: 200 }}
+              />
+            </Grid.Col>
+
+            <Grid.Col span={{ base: 12, md: 3 }}>
+              <Select
+                placeholder="-- All Payment Methods --"
+                data={[
+                  { value: '', label: '-- All Payment Methods --' },
+                  { value: 'paypal', label: 'PayPal' },
+                  { value: 'transfer_bank', label: 'Bank Transfer' }
+                ]}
+                value={paymentMethodFilter}
+                onChange={(value) => setPaymentMethodFilter(value || '')}
+                style={{ minWidth: 200 }}
+              />
+            </Grid.Col>
+
+            <Grid.Col span={{ base: 12, md: 3 }}>
+              <Select
+                placeholder="-- All Payment Status --"
+                data={[
+                  { value: '', label: '-- All Payment Status --' },
+                  { value: 'paid', label: 'Paid' },
+                  { value: 'pending_payment', label: 'Pending' },
+                  { value: 'cancelled', label: 'Cancelled' },
+                  { value: 'refunded', label: 'Refunded' }
+                ]}
+                value={paymentStatusFilter}
+                onChange={(value) => setPaymentStatusFilter(value || '')}
+                style={{ minWidth: 200 }}
+              />
+            </Grid.Col>
+
+            <Grid.Col span={{ base: 12, md: 3 }}>
+              <Button onClick={handleFilterChange} variant="filled" mr={'sm'}>
+                Apply Filter
+              </Button>
+              <Button onClick={clearFilters} variant="outline" mr={'sm'}>
+                Clear Filter
+              </Button>
+            </Grid.Col>
+          </Grid>
+        </Card>
+        {/* Summary Payment Status */}
         <Grid>
           <Grid.Col span={{ base: 12, md: 3 }}>
-            <Select
-              placeholder="-- All Conferences --"
-              data={[
-                { value: '', label: '-- All Conferences --' },
-                ...conferences.map(conf => ({ value: conf.id.toString(), label: conf.name }))
-              ]}
-              value={conferenceFilter}
-              onChange={(value) => setConferenceFilter(value || '')}
-              style={{ minWidth: 200 }}
-            />
+            <Card padding="lg" radius="md" withBorder>
+              <Group justify="space-between">
+                <div>
+                  <Text c="dimmed" size="sm" fw={500}>Total Paid Participants</Text>
+                  <Text fw={700} size="xl">{summary.paid}</Text>
+                </div>
+                <IconCircleCheckFilled size={24} color="green" />
+              </Group>
+            </Card>
           </Grid.Col>
-
           <Grid.Col span={{ base: 12, md: 3 }}>
-            <Select
-              placeholder="-- All Payment Methods --"
-              data={[
-                { value: '', label: '-- All Payment Methods --' },
-                { value: 'paypal', label: 'PayPal' },
-                { value: 'transfer_bank', label: 'Bank Transfer' }
-              ]}
-              value={paymentMethodFilter}
-              onChange={(value) => setPaymentMethodFilter(value || '')}
-              style={{ minWidth: 200 }}
-            />
+            <Card padding="lg" radius="md" withBorder>
+              <Group justify="space-between">
+                <div>
+                  <Text c="dimmed" size="sm" fw={500}>Total Pending Participants</Text>
+                  <Text fw={700} size="xl">{summary.pending}</Text>
+                </div>
+                <IconCircleDashed size={24} color="orange" />
+              </Group>
+            </Card>
           </Grid.Col>
-
           <Grid.Col span={{ base: 12, md: 3 }}>
-            <Select
-              placeholder="-- All Payment Status --"
-              data={[
-                { value: '', label: '-- All Payment Status --' },
-                { value: 'paid', label: 'Paid' },
-                { value: 'pending_payment', label: 'Pending' },
-                { value: 'cancelled', label: 'Cancelled' },
-                { value: 'refunded', label: 'Refunded' }
-              ]}
-              value={paymentStatusFilter}
-              onChange={(value) => setPaymentStatusFilter(value || '')}
-              style={{ minWidth: 200 }}
-            />
+            <Card padding="lg" radius="md" withBorder>
+              <Group justify="space-between">
+                <div>
+                  <Text c="dimmed" size="sm" fw={500}>Total Cancelled Participants</Text>
+                  <Text fw={700} size="xl">{summary.cancelled}</Text>
+                </div>
+                <IconXboxXFilled size={24} color="red" />
+              </Group>
+            </Card>
           </Grid.Col>
-
           <Grid.Col span={{ base: 12, md: 3 }}>
-            <Button onClick={handleFilterChange} variant="filled" mr={'sm'}>
-              Apply Filter
-            </Button>
-            <Button onClick={clearFilters} variant="outline" mr={'sm'}>
-              Clear Filter
-            </Button>
+            <Card padding="lg" radius="md" withBorder>
+              <Group justify="space-between">
+                <div>
+                  <Text c="dimmed" size="sm" fw={500}>Total Refunded Participants</Text>
+                  <Text fw={700} size="xl">{summary.refunded}</Text>
+                </div>
+                <IconRestore size={24} color="gray" />
+              </Group>
+            </Card>
           </Grid.Col>
         </Grid>
-
-        <Group gap="sm" mt="md">
-          <Badge size="lg" color="green" variant="filled">
-            Paid: {summary.paid}
-          </Badge>
-          <Badge size="lg" color="yellow" variant="filled">
-            Pending: {summary.pending}
-          </Badge>
-          <Badge size="lg" color="red" variant="filled">
-            Cancelled/Refunded: {summary.cancelled + summary.refunded}
-          </Badge>
-          <Badge size="lg" color="gray" variant="filled">
-            Refunded: {summary.refunded}
-          </Badge>
-        </Group>
-      </Box>
-      <Divider mb="lg" />
-      <DataTable
-        value={data}
-        rows={meta.per_page}
-        header={renderHeader()}
-        globalFilter={globalFilterValue}
-        stripedRows
-        showGridlines
-        className="datatable-responsive"
-        tableStyle={{ minWidth: '100rem', fontSize: '14px' }}
-      >
-        {columns.map(col => (
-          <Column
-            key={col.name}
-            field={col.name}
-            body={col.renderCell}
-            header={col.label}
-            sortable={col.sortable}
-            style={{
-              alignItems: 'top',
-              textAlign: 'left',
-              textWrap: 'nowrap',
-              width: '250px',
-            }}
+        <Divider />
+        <Card mb="lg" padding="lg" radius="md" withBorder>
+          {/* Pagination Info */}
+          <Text size="sm" c="dimmed" mb="md">
+            Showing {meta.from} to {meta.to} of {meta.total} entries
+          </Text>
+          <DataTable
+            value={data}
+            header={renderHeader()}
+            globalFilter={globalFilterValue}
+            stripedRows
+            showGridlines
+            paginator
+            lazy
+            first={(meta.current_page - 1) * meta.per_page}
+            onPage={handlePagination}
+            className="datatable-responsive"
+            tableStyle={{ minWidth: '100rem', fontSize: '14px' }}
+            rows={meta.per_page}
+            totalRecords={meta.total}
+            rowsPerPageOptions={[15, 25, 50, 100]}
+            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+          >
+            {columns.map(col => (
+              <Column
+                key={col.name}
+                field={col.name}
+                body={col.renderCell}
+                header={col.label}
+                sortable={col.sortable}
+                style={{
+                  alignItems: 'top',
+                  textAlign: 'left',
+                  textWrap: 'nowrap',
+                  width: '250px',
+                }}
+              />
+            ))}
+          </DataTable>
+          <PaymentStatusModal
+            opened={paymentModalOpened}
+            onClose={() => setPaymentModalOpened(false)}
+            audience={selectedAudience}
           />
-        ))}
-      </DataTable>
-      <Pagination total={meta.last_page} value={meta.current_page} onChange={handlePagination} mt="sm" />
-      <PaymentStatusModal
-        opened={paymentModalOpened}
-        onClose={() => setPaymentModalOpened(false)}
-        audience={selectedAudience}
-      />
-    </div>
+        </Card>
+      </Stack>
+    </Container>
   );
 }
 
-AudienceIndex.layout = (page: React.ReactNode) => <MainLayout title="Participants">{page}</MainLayout>;
+AudienceIndex.layout = (page: React.ReactNode) => <MainLayout title="Audience Management">{page}</MainLayout>;
 
 export default AudienceIndex;

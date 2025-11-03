@@ -1,12 +1,12 @@
-import { DataTable, DataTableStateEvent } from 'primereact/datatable';
-import MainLayout from '../../../Layout/MainLayout';
-import { Column } from 'primereact/column';
 import { usePage } from '@inertiajs/react';
-import React, { useState } from 'react';
-import { InputText } from 'primereact/inputtext';
-import { ActionIcon, Button, Flex, Text, Select, Box, Group } from '@mantine/core';
+import { ActionIcon, Button, Card, Container, Flex, Group, Select, Stack, Text, Title } from '@mantine/core';
+import { Column } from 'primereact/column';
+import { DataTable, DataTableStateEvent } from 'primereact/datatable';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
+import { InputText } from 'primereact/inputtext';
+import React, { useState } from 'react';
+import MainLayout from '../../../Layout/MainLayout';
 
 interface ParallelSession {
   id: number;
@@ -172,72 +172,80 @@ function ParallelSessionIndex() {
   ];
 
   return (
-    <div style={{ padding: '1rem', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-      {/* Filter Section */}
-      <Box mb="lg">
-        <Text size="lg" fw={600} mb="md">Filter Parallel Session Data</Text>
-
-        {/* Pagination Info */}
-        <Text size="sm" c="dimmed" mb="md">
-          Showing {((parallelSessions.current_page - 1) * parallelSessions.per_page) + 1} to {Math.min(parallelSessions.current_page * parallelSessions.per_page, parallelSessions.total)} of {parallelSessions.total} entries
-        </Text>
-
-        <Group gap="md" mb="md">
-          <Select
-            placeholder="-- All Conferences --"
-            data={[
-              { value: '', label: '-- All Conferences --' },
-              ...conferences.map(conf => ({ value: conf.id.toString(), label: conf.name }))
-            ]}
-            value={conferenceFilter}
-            onChange={(value) => setConferenceFilter(value || '')}
-            style={{ minWidth: 300 }}
-          />
-
-          <Button onClick={handleFilterChange} variant="filled">
-            Filter
-          </Button>
-
-          <Button onClick={clearFilters} variant="outline">
-            Reset
-          </Button>
+    <Container fluid>
+      <Stack gap="lg">
+        {/* Header */}
+        <Group justify="space-between">
+          <div>
+            <Title order={2}>Parallel Session Management</Title>
+            <Text c="dimmed">Manage parallel sessions, settings, and configurations</Text>
+          </div>
         </Group>
-      </Box>
+        <Card mb="lg" padding="lg" radius="md" withBorder>
+          <Title order={4} mb="md">Filter Parallel Session Data</Title>
+          <Group gap="md">
+            <Select
+              placeholder="-- All Conferences --"
+              data={[
+                { value: '', label: '-- All Conferences --' },
+                ...conferences.map(conf => ({ value: conf.id.toString(), label: conf.name }))
+              ]}
+              value={conferenceFilter}
+              onChange={(value) => setConferenceFilter(value || '')}
+              style={{ minWidth: 300 }}
+            />
 
-      <DataTable
-        value={data}
-        lazy
-        paginator
-        first={(parallelSessions.current_page - 1) * parallelSessions.per_page}
-        rows={parallelSessions.per_page}
-        totalRecords={parallelSessions.total}
-        onPage={handlePageChange}
-        rowsPerPageOptions={[15, 25, 50, 100]}
-        header={renderHeader()}
-        globalFilter={globalFilterValue}
-        stripedRows
-        showGridlines
-        className="datatable-responsive"
-        tableStyle={{ minWidth: '100rem', fontSize: '14px' }}
-        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-      >
-        {columns.map(col => (
-          <Column
-            key={col.name}
-            field={col.name}
-            body={col.renderCell}
-            header={col.label}
-            sortable={col.sortable}
-            style={{
-              alignItems: 'top',
-              textAlign: 'left',
-              width: col.width ? col.width : 'auto',
-            }}
-          />
-        ))}
-      </DataTable>
-    </div>
+            <Button onClick={handleFilterChange} variant="filled">
+              Apply Filter
+            </Button>
+
+            <Button onClick={clearFilters} variant="outline">
+              Reset
+            </Button>
+          </Group>
+        </Card>
+
+        <Card mb="lg" padding="lg" radius="md" withBorder>
+          {/* Pagination Info */}
+          <Text size="sm" c="dimmed" mb="md">
+            Showing {((parallelSessions.current_page - 1) * parallelSessions.per_page) + 1} to {Math.min(parallelSessions.current_page * parallelSessions.per_page, parallelSessions.total)} of {parallelSessions.total} entries
+          </Text>
+          <DataTable
+            value={data}
+            lazy
+            paginator
+            first={(parallelSessions.current_page - 1) * parallelSessions.per_page}
+            rows={parallelSessions.per_page}
+            totalRecords={parallelSessions.total}
+            onPage={handlePageChange}
+            rowsPerPageOptions={[15, 25, 50, 100]}
+            header={renderHeader()}
+            globalFilter={globalFilterValue}
+            stripedRows
+            showGridlines
+            className="datatable-responsive"
+            tableStyle={{ minWidth: '100rem', fontSize: '14px' }}
+            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+          >
+            {columns.map(col => (
+              <Column
+                key={col.name}
+                field={col.name}
+                body={col.renderCell}
+                header={col.label}
+                sortable={col.sortable}
+                style={{
+                  alignItems: 'top',
+                  textAlign: 'left',
+                  width: col.width ? col.width : 'auto',
+                }}
+              />
+            ))}
+          </DataTable>
+        </Card>
+      </Stack>
+    </Container>
   );
 }
 

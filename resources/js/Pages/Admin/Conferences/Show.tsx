@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import { Button, Card, Container, Divider, Flex, Grid, Group, Image, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Button, Card, Container, Divider, Flex, Grid, Group, Image, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
 import React from 'react';
 import { CopyButtonExt } from './ExtendComponent';
 import { Conference, Room } from '../../../types';
@@ -45,6 +45,7 @@ export default function ConferenceShow() {
             <Stack gap="md" mb="md">
               <TextInput label="Conference Name" value={val(data.name)} readOnly />
               <TextInput label="Conference Initial" value={val(data.initial)} readOnly />
+              <Textarea label="Conference Description" value={val(data.description)} readOnly />
               {posterUrl && (
                 <div>
                   <Text fz="sm" fw={500} mb={4}>
@@ -61,6 +62,14 @@ export default function ConferenceShow() {
                 </div>
               )}
               <TextInput label="Conference Date" value={val(data.date)} readOnly />
+              <Grid>
+                <Grid.Col span={{ base: 12, sm: 6 }}>
+                  <TextInput label="Registration Start Date" value={val(data.registration_start_date)} readOnly />
+                </Grid.Col>
+                <Grid.Col span={{ base: 12, sm: 6 }}>
+                  <TextInput label="Registration End Date" value={val(data.registration_end_date)} readOnly />
+                </Grid.Col>
+              </Grid>
               <Grid>
                 <Grid.Col span={{ base: 12, sm: 6 }}>
                   <TextInput label="City" value={val(data.city)} readOnly />

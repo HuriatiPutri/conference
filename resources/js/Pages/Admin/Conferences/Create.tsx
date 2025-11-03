@@ -10,6 +10,7 @@ import {
   Group,
   Stack,
   Text,
+  Textarea,
   TextInput,
   Title
 } from '@mantine/core';
@@ -23,9 +24,12 @@ function ConferenceCreate() {
   const [rooms, setRooms] = useState([{ room_name: '' }]);
   const { data, setData, errors, post, processing } = useForm({
     name: '',
+    description: '',
     initial: '',
     cover_poster_path: null as File | null,
     date: '',
+    registration_start_date: '',
+    registration_end_date: '',
     year: new Date().getFullYear(),
     city: '',
     country: '',
@@ -97,6 +101,15 @@ function ConferenceCreate() {
                 placeholder="Example: SAFE2024, ICOAS2025"
               />
 
+              <Textarea
+                label="Conference Description"
+                name="description"
+                minRows={4}
+                error={errors.description}
+                value={data.description}
+                onChange={e => setData('description', e.target.value)}
+              />
+
               <TextInput
                 label="Conference Date"
                 name="date"
@@ -106,6 +119,30 @@ function ConferenceCreate() {
                 value={data.date}
                 onChange={e => setData('date', e.target.value)}
               />
+              <Grid>
+                <Grid.Col span={6}>
+                  <TextInput
+                    label="Registration End Date"
+                    name="registration_end_date"
+                    type="date"
+                    required
+                    error={errors.registration_end_date}
+                    value={data.registration_end_date}
+                    onChange={e => setData('registration_end_date', e.target.value)}
+                  />
+                </Grid.Col>
+                <Grid.Col span={6}>
+                  <TextInput
+                    label="Registration End Date"
+                    name="registration_end_date"
+                    type="date"
+                    required
+                    error={errors.registration_end_date}
+                    value={data.registration_end_date}
+                    onChange={e => setData('registration_end_date', e.target.value)}
+                  />
+                </Grid.Col>
+              </Grid>
 
               <TextInput
                 label="Conference Cover Poster"

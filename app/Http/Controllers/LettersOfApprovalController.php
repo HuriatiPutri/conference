@@ -155,10 +155,12 @@ class LettersOfApprovalController extends Controller
                 'conference_country' => $audience->conference->country ?? 'Country',
                 'presentation_type' => $audience->presentation_type ?? 'presentation',
                 'registration_number' => $audience->public_id ?? 'REG-' . $audience->id,
+                'number_of_letter' => 'No: SOTVI/LoA/' . date('Y').'/' . ($audience->public_id),
                 'issue_date' => $audience->loa_approved_at ? \Carbon\Carbon::parse($audience->loa_approved_at)->format('d F Y') : now()->format('d F Y'),
                 'signature_path' => storage_path('app/public/images/loa_signature.png'),
                 'joiv_logo_path' => storage_path('app/public/images/joiv_logo.png'),
                 'sotvi_logo_path' => storage_path('app/public/images/sotvi_logo.png'),
+                'scopus_analitic_path' => storage_path('app/public/images/scopus.png'),
             ];
 
             $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('letters-of-approval.template-clean', compact('data'))

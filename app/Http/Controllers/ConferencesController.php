@@ -18,13 +18,15 @@ class ConferencesController extends Controller
 {
     public function index(): Response
     {
+        $perPage = Request::input('per_page', 15); // Default 15, bisa diubah via parameter
+        
         return Inertia::render('Admin/Conferences/Index', [
             'filters' => Request::all('search', 'trashed'),
             'conferences' => new ConferenceCollection(
                 Conference::query()
                 ->orderBy('id', 'desc')
                 ->filter(Request::only('search', 'trashed'))
-                ->paginate()
+                ->paginate($perPage)
                 ->appends(Request::all())
             ),
         ]);

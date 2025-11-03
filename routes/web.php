@@ -17,6 +17,7 @@ use Inertia\Inertia;
 
 // Public routes
 Route::get('/', [LandingController::class, 'index'])->name('landing');
+Route::get('/detail/{conference:public_id}', [LandingController::class, 'detail'])->name('landing.detail');
 
 // Route::get('/', function () {
 //     return Inertia::render('Home', [

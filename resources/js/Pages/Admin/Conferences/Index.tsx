@@ -1,13 +1,13 @@
 import { router, usePage } from '@inertiajs/react';
 import dayjs from 'dayjs';
 import { Column } from 'primereact/column';
-import { DataTable } from 'primereact/datatable';
+import { DataTable, DataTableStateEvent } from 'primereact/datatable';
 import React, { useMemo, useState } from 'react';
 import MainLayout from '../../../Layout/MainLayout';
 import { Conference, PaginatedData } from '../../../types';
 import { formatCurrency } from '../../../utils';
 // import { Button } from 'primereact/button';
-import { ActionIcon, Container, Group, Pagination, Stack, Text, Title } from '@mantine/core';
+import { ActionIcon, Container, Group, Stack, Text, Title } from '@mantine/core';
 import { FilterMatchMode } from 'primereact/api';
 import { ColumnGroup } from 'primereact/columngroup';
 import { IconField } from 'primereact/iconfield';
@@ -15,7 +15,6 @@ import { InputIcon } from 'primereact/inputicon';
 import { InputText } from 'primereact/inputtext';
 import { Row } from 'primereact/row';
 import { ActionButtonExt, CopyButtonExt } from './ExtendComponent';
-import { route } from 'ziggy-js';
 
 interface ColumnType {
   label: string;
@@ -73,6 +72,14 @@ function Home() {
       sortable: true,
       rowspan: 2,
       renderCell: (row: Conference) => dayjs(row.date).format('DD MMM YYYY'),
+    },
+    {
+      label: 'Registation Date',
+      name: 'registration_date',
+      sortable: true,
+      rowspan: 2,
+      renderCell: (row: Conference) =>
+        `${dayjs(row.registration_start_date).format('DD MMM YYYY')} - ${dayjs(row.registration_end_date).format('DD MMM YYYY')}`,
     },
     {
       label: 'Location',
@@ -225,12 +232,19 @@ function Home() {
     );
   };
 
-  const handlePagination = (pageNumber: number) => {
-    console.log('Navigating to page:', pageNumber);
-    window.location.href = route('audiences', {
-      ...filters,
-      page: pageNumber,
-    });
+  const handlePageChange = (event: DataTableStateEvent) => {
+    if (event.page !== undefined) {
+      const params = new URLSearchParams(window.location.search);
+      params.set('page', (event.page + 1).toString());
+      if (event.rows && event.rows !== meta.per_page) {
+        params.set('per_page', event.rows.toString());
+      }
+      if (globalFilterValue) {
+        params.set('global', globalFilterValue);
+      }
+
+      window.location.href = `/conferences?${params.toString()}`;
+    }
   }
 
   const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -299,15 +313,23 @@ function Home() {
             value={data}
             size="small"
             stripedRows
+            lazy
+            onPage={handlePageChange}
+            first={(meta.current_page - 1) * meta.per_page}
             resizableColumns
             globalFilterFields={['name', 'initial', 'date', 'city', 'country', 'year']}
             header={header}
             filters={filters}
             headerColumnGroup={headerGroup}
             showGridlines
+            paginator
             alwaysShowPaginator
             tableStyle={{ minWidth: '100rem', fontSize: '14px' }}
             rows={meta.per_page}
+            totalRecords={meta.total}
+            rowsPerPageOptions={[15, 25, 50, 100]}
+            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
           >
             {columns.map(col => (
               <Column
@@ -325,7 +347,6 @@ function Home() {
               />
             ))}
           </DataTable>
-          <Pagination total={meta.last_page} value={meta.current_page} onChange={handlePagination} mt="sm" />
         </div>
       </Stack>
     </Container>
