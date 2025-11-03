@@ -47,7 +47,7 @@ function LandingPage() {
     <Box>
       {/* Hero Section */}
       <BackgroundImage
-        src="/images/hero.png"
+        src="/images/hero.webp"
         h={{ base: 400, md: 500 }}
         w="100vw"
         style={{
