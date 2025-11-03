@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Models\Conference;
 use App\Models\Audience;
 use Illuminate\Support\Facades\Auth;
@@ -19,7 +20,7 @@ class DashboardController extends Controller
             'recent_audiences' => Audience::whereHas('conference')->with('conference:id,name')->latest()->take(5)->get(['id', 'first_name', 'last_name', 'email', 'conference_id', 'created_at']),
         ];
 
-        return Inertia::render('Dashboard/Index', [
+        return Inertia::render('Admin/Dashboard/Index', [
             'stats' => $stats,
             'user' => Auth::user(),
         ]);

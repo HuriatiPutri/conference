@@ -181,7 +181,7 @@ function ParallelSessionIndex() {
             <Text c="dimmed">Manage parallel sessions, settings, and configurations</Text>
           </div>
         </Group>
-        <Card mb="lg" padding="lg" radius="md" withBorder>
+        <Card padding="lg" radius="md" withBorder>
           <Title order={4} mb="md">Filter Parallel Session Data</Title>
           <Group gap="md">
             <Select

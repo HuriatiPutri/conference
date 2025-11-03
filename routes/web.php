@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ConferencesController;
-use App\Http\Controllers\AudiencesController;
+use App\Http\Controllers\Admin\ConferencesController;
+use App\Http\Controllers\Admin\AudiencesController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\KeynoteController;
 use App\Http\Controllers\ParallelSessionController;
@@ -10,9 +10,9 @@ use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\Admin\KeynoteManagementController;
 use App\Http\Controllers\Admin\ParallelSessionManagementController;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LandingController;
-use App\Http\Controllers\LettersOfApprovalController;
+use App\Http\Controllers\Admin\LettersOfApprovalController;
+use App\Http\Controllers\Admin\DashboardController;
 use Inertia\Inertia;
 
 // Public routes

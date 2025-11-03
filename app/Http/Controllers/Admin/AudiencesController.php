@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\AudienceStoreRequest;
 use App\Http\Requests\AudienceUpdateRequest;
 use App\Http\Resources\AudienceCollection;
