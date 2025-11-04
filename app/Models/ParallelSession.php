@@ -13,6 +13,7 @@ class ParallelSession extends Model
         'audience_id',
         'first_name',
         'last_name',
+        'name_of_presenter',
         'room_id',
         'paper_title',
     ];
