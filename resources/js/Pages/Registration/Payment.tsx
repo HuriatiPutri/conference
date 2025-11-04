@@ -111,7 +111,7 @@ export default function RegistrationPayment({ conference, registrationData }: Re
                       withBorder
                       p="md"
                       style={{
-                        display: isIndonesia ? 'block' : 'none',
+                        display: 'block',
                         cursor: 'pointer',
                         borderColor: data.payment_method === 'transfer_bank' ? 'var(--mantine-color-blue-5)' : undefined
                       }}
