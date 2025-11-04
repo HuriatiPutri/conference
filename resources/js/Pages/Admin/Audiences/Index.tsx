@@ -14,6 +14,7 @@ import MainLayout from '../../../Layout/MainLayout';
 import { Audiences, PaginatedData } from '../../../types';
 import { formatCurrency } from '../../../utils';
 import { BadgeStatus } from './ExtendComponent';
+import { ActionButtonExt } from '../Conferences/ExtendComponent';
 
 function AudienceIndex() {
   const { audiences, filters, summary, conferences } = usePage<{
@@ -35,7 +36,7 @@ function AudienceIndex() {
   const { data, meta } = audiences;
 
   const [paymentModalOpened, setPaymentModalOpened] = useState(false);
-  const [selectedAudience] = useState<Audiences | null>(null);
+  const [selectedAudience, setSelectedAudience] = useState<Audiences | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
   // Filter states
@@ -73,6 +74,11 @@ function AudienceIndex() {
 
   const clearFilters = () => {
     window.location.href = '/audiences';
+  };
+
+  const handlePaymentStatusClick = (audience: Audiences) => {
+    setPaymentModalOpened(true);
+    setSelectedAudience(audience);
   };
 
   const columns = [
@@ -235,26 +241,26 @@ function AudienceIndex() {
         );
       },
     },
-    // {
-    //   label: 'Action',
-    //   name: 'action',
-    //   renderCell: (row: Audiences) => (
-    //     <Stack gap={'xs'} justify="center" align="center">
-    //       <ActionButtonExt
-    //         color="green"
-    //         handleClick={() => (window.location.href = `/audiences/${row.id}/show`)}
-    //         icon="pi pi-fw pi-eye"
-    //       />
-    //       {row.payment_method === 'transfer_bank' && (
-    //         <ActionButtonExt
-    //           color="blue"
-    //           handleClick={() => handlePaymentStatusClick(row)}
-    //           icon="pi pi-fw pi-credit-card"
-    //         />
-    //       )}
-    //     </Stack>
-    //   ),
-    // },
+    {
+      label: 'Action',
+      name: 'action',
+      renderCell: (row: Audiences) => (
+        <Stack gap={'xs'} justify="center" align="center">
+          {/* <ActionButtonExt
+            color="green"
+            handleClick={() => (window.location.href = `/audiences/${row.id}/show`)}
+            icon="pi pi-fw pi-eye"
+          /> */}
+          {row.payment_method === 'transfer_bank' && (
+            <ActionButtonExt
+              color="blue"
+              handleClick={() => handlePaymentStatusClick(row)}
+              icon="pi pi-fw pi-credit-card"
+            />
+          )}
+        </Stack>
+      ),
+    },
   ];
 
   const [globalFilterValue, setGlobalFilterValue] = useState('');
