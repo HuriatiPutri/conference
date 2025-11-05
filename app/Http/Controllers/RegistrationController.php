@@ -55,7 +55,7 @@ class RegistrationController extends Controller
                     return $query->where('conference_id', $conference->id)->whereNull('deleted_at');
                 }),
             ],
-            'phone_number' => 'required|string|max:20',
+            'phone_number' => 'required|string|max:20|regex:/^[0-9]+$/',
             'country' => 'required|string|max:2',
             'presentation_type' => 'required|in:online_author,onsite,participant_only',
         ];
@@ -71,6 +71,7 @@ class RegistrationController extends Controller
 
         $validatedData = $request->validate($rules, [
             'email.unique' => 'This email has already been registered for this conference.',
+            'phone_number.regex' => 'Phone number must contain only numbers without spaces or other characters.',
             'full_paper.required' => 'Full paper is required for authors and presenters.',
             'full_paper.mimes' => 'The full paper must be a file of type: pdf, doc, docx.',
             'full_paper.max' => 'The full paper may not be greater than 50MB.',

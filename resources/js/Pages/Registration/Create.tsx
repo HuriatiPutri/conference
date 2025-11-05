@@ -19,27 +19,11 @@ import { Conference } from '../../types';
 import { formatCurrency } from '../../utils';
 import AuthLayout from '../../Layout/AuthLayout';
 import dayjs from 'dayjs';
+import { COUNTRIES, PRESENTATION_TYPES } from '../../Constants';
 
 interface RegistrationCreateProps {
   conference: Conference;
 }
-
-const COUNTRIES = [
-  { value: 'ID', label: 'Indonesia' },
-  { value: 'US', label: 'United States' },
-  { value: 'MY', label: 'Malaysia' },
-  { value: 'SG', label: 'Singapore' },
-  { value: 'TH', label: 'Thailand' },
-  { value: 'VN', label: 'Vietnam' },
-  { value: 'PH', label: 'Philippines' },
-  { value: 'OTHER', label: 'Other' }
-];
-
-const PRESENTATION_TYPES = [
-  { value: 'online_author', label: 'Online Author' },
-  { value: 'onsite', label: 'Onsite' },
-  { value: 'participant_only', label: 'Participant Only' }
-];
 
 export default function RegistrationCreate({ conference }: RegistrationCreateProps) {
   const [selectedCountry, setSelectedCountry] = useState<string>('');
@@ -145,8 +129,19 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
                     label="Phone Number"
                     placeholder="Enter your phone number"
                     value={data.phone_number}
-                    onChange={(e) => setData('phone_number', e.currentTarget.value)}
+                    onChange={(e) => {
+                      // Only allow numbers
+                      const value = e.currentTarget.value.replace(/\D/g, '');
+                      setData('phone_number', value);
+                    }}
+                    onKeyPress={(e) => {
+                      // Prevent non-numeric characters
+                      if (!/\d/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab') {
+                        e.preventDefault();
+                      }
+                    }}
                     error={errors.phone_number}
+                    description={"Phone number should include country code, e.g., 6281234567890 (numbers only)"}
                     required
                   />
                   <TextInput

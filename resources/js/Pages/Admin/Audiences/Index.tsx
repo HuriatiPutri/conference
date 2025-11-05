@@ -81,6 +81,10 @@ function AudienceIndex() {
     setSelectedAudience(audience);
   };
 
+  const _handleRedirectWa = (row: Audiences) => {
+    window.open(`https://wa.me/${row.phone_number}`, '_blank');
+  }
+
   const columns = [
     {
       field: 'serial_number',
@@ -105,6 +109,13 @@ function AudienceIndex() {
     {
       label: 'Last Name',
       name: 'last_name',
+    },
+    {
+      label: 'Phone Number',
+      name: 'phone_number',
+      renderCell: (row: Audiences) => (
+        <Text component='a' c={'blue'} onClick={() => _handleRedirectWa(row)}>{row.phone_number}</Text>
+      ),
     },
     {
       label: 'Email',
