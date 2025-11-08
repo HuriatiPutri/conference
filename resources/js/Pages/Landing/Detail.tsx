@@ -293,51 +293,6 @@ export default function Detail() {
                 </Stack>
               </Card>
 
-              {/* Quick Actions */}
-              <Card padding="lg" radius="md" withBorder>
-                <Stack gap="md">
-                  <Title order={4} c="dark">Quick Actions</Title>
-
-                  <Button
-                    variant="outline"
-                    leftSection={<IconDownload size={16} />}
-                    fullWidth
-                    onClick={() => window.open(`/storage/${conference.cover_poster_path}`, '_blank')}
-                  >
-                    Download Poster
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    color="green"
-                    leftSection={<IconMail size={16} />}
-                    fullWidth
-                    onClick={() => window.location.href = 'mailto:info@conference.com'}
-                  >
-                    Contact Organizer
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    color="orange"
-                    leftSection={<IconCertificate size={16} />}
-                    fullWidth
-                    onClick={() => window.location.href = `/keynote/${conference.public_id}`}
-                  >
-                    Submit Keynote
-                  </Button>
-                  <Button
-                    variant="outline"
-                    color="black"
-                    leftSection={<IconCertificate size={16} />}
-                    fullWidth
-                    onClick={() => window.location.href = `/parallel-session/${conference.public_id}`}
-                  >
-                    Submit Parallel Session
-                  </Button>
-                </Stack>
-              </Card>
-
               {/* Conference Info */}
               <Card padding="lg" radius="md" withBorder>
                 <Stack gap="md">
