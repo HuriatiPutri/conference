@@ -5,7 +5,7 @@ import { DataTable, DataTableStateEvent } from 'primereact/datatable';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
 import { InputText } from 'primereact/inputtext';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import MainLayout from '../../../Layout/MainLayout';
 
 interface ParallelSession {
@@ -47,12 +47,41 @@ function ParallelSessionIndex() {
   const { parallelSessions, filters, conferences } = usePage<Props>().props;
   const { data } = parallelSessions;
 
-  const [globalFilterValue, setGlobalFilterValue] = useState('');
+  console.log('data:', data);
+  // Initialize search value from URL params
+  const [globalFilterValue, setGlobalFilterValue] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('search') || '';
+  });
   const [conferenceFilter, setConferenceFilter] = useState(filters?.conference_id || '');
+  const [searchTimeout, setSearchTimeout] = useState<number | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (globalFilterValue && searchInputRef.current) {
+      // Keep focus on search input after search
+      searchInputRef.current.focus();
+      // Maintain cursor at the end of the text
+      const length = globalFilterValue.length;
+      searchInputRef.current.setSelectionRange(length, length);
+    }
+  }, [globalFilterValue]);
+
+  // Auto-focus on component mount if there's a search value
+  useEffect(() => {
+    if (globalFilterValue && searchInputRef.current) {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+        const length = globalFilterValue.length;
+        searchInputRef.current?.setSelectionRange(length, length);
+      }, 100);
+    }
+  }, []);
 
   const handleFilterChange = () => {
     const params = new URLSearchParams();
     if (conferenceFilter) params.append('conference_id', conferenceFilter);
+    if (globalFilterValue.trim()) params.append('search', globalFilterValue.trim());
 
     window.location.href = `/parallel-sessions?${params.toString()}`;
   };
@@ -65,18 +94,39 @@ function ParallelSessionIndex() {
         params.set('per_page', event.rows.toString());
       }
       if (conferenceFilter) params.set('conference_id', conferenceFilter);
+      if (globalFilterValue.trim()) params.set('search', globalFilterValue.trim());
 
       window.location.href = `/parallel-sessions?${params.toString()}`;
     }
   };
 
   const clearFilters = () => {
+    setGlobalFilterValue('');
     window.location.href = '/parallel-sessions';
   };
 
   const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setGlobalFilterValue(value);
+
+    // Debounce search to avoid too many requests
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+
+    const timeout = setTimeout(() => {
+      handleSearch(value);
+    }, 500);
+
+    setSearchTimeout(timeout);
+  };
+
+  const handleSearch = (searchValue: string) => {
+    const params = new URLSearchParams();
+    if (conferenceFilter) params.append('conference_id', conferenceFilter);
+    if (searchValue.trim()) params.append('search', searchValue.trim());
+
+    window.location.href = `/parallel-sessions?${params.toString()}`;
   };
 
   const renderHeader = () => {
@@ -93,10 +143,12 @@ function ParallelSessionIndex() {
         <IconField iconPosition="left">
           <InputIcon className="pi pi-search" />
           <InputText
+            ref={searchInputRef}
             value={globalFilterValue}
             onChange={onGlobalFilterChange}
             size={'small'}
             placeholder="Keyword Search"
+            autoFocus={!!globalFilterValue}
           />
         </IconField>
       </Flex>

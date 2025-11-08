@@ -17,8 +17,8 @@ class KeynoteManagementController extends Controller
      */
     public function index(): Response
     {
-        $filters = RequestFacade::only('conference_id');
-        $perPage = RequestFacade::input('per_page', 15); // Default 50, bisa diubah via parameter
+        $filters = RequestFacade::only('conference_id', 'search');
+        $perPage = RequestFacade::input('per_page', 15); // Default 15, bisa diubah via parameter
 
         // Build query with filters
         $query = KeyNote::query()
@@ -32,6 +32,24 @@ class KeynoteManagementController extends Controller
             });
         }
 
+        // Apply search filter
+        if (!empty($filters['search'])) {
+            $searchTerm = $filters['search'];
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name_of_participant', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('feedback', 'LIKE', "%{$searchTerm}%")
+                  ->orWhereHas('audience', function($audienceQuery) use ($searchTerm) {
+                      $audienceQuery->where('email', 'LIKE', "%{$searchTerm}%")
+                                   ->orWhere('first_name', 'LIKE', "%{$searchTerm}%")
+                                   ->orWhere('last_name', 'LIKE', "%{$searchTerm}%");
+                  })
+                  ->orWhereHas('audience.conference', function($confQuery) use ($searchTerm) {
+                      $confQuery->where('name', 'LIKE', "%{$searchTerm}%")
+                               ->orWhere('initial', 'LIKE', "%{$searchTerm}%");
+                  });
+            });
+        }
+
         // Get keynotes with pagination
         $keynotes = $query->orderBy('created_at', 'desc')->paginate($perPage)->appends(RequestFacade::all());
 
@@ -40,25 +58,10 @@ class KeynoteManagementController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        // Get summary counts
-        $summaryQuery = KeyNote::query()->whereHas('audience.conference');
-        
-        if (!empty($filters['conference_id'])) {
-            $summaryQuery->whereHas('audience', function ($q) use ($filters) {
-                $q->where('conference_id', $filters['conference_id']);
-            });
-        }
-
-        $summary = [
-            'total' => $summaryQuery->count(),
-            'this_month' => (clone $summaryQuery)->whereMonth('created_at', now()->month)->count(),
-        ];
-
         return Inertia::render('Admin/Keynotes/Index', [
             'filters' => $filters,
             'keynotes' => $keynotes,
             'conferences' => $conferences,
-            'summary' => $summary,
         ]);
     }
 

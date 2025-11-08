@@ -18,13 +18,30 @@ class ParallelSessionManagementController extends Controller
      */
     public function index(): Response
     {
-        $filters = RequestFacade::only('conference_id');
+        $filters = RequestFacade::only('conference_id', 'search');
         $perPage = RequestFacade::input('per_page', 15); // Default 15, bisa diubah via parameter
+        $search = RequestFacade::input('search', '');
         
         // Build query with filters
         $query = ParallelSession::query()
             ->with(['audience.conference', 'room'])
             ->whereHas('audience.conference');
+
+        // Apply search filter across multiple fields
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name_of_presenter', 'LIKE', "%{$search}%")
+                  ->orWhere('paper_title', 'LIKE', "%{$search}%")
+                  ->orWhereHas('audience', function ($subQ) use ($search) {
+                      $subQ->whereHas('conference', function ($confQ) use ($search) {
+                          $confQ->where('name', 'LIKE', "%{$search}%");
+                      });
+                  })
+                  ->orWhereHas('room', function ($roomQ) use ($search) {
+                      $roomQ->where('room_name', 'LIKE', "%{$search}%");
+                  });
+            });
+        }
 
         // Apply conference filter
         if (!empty($filters['conference_id'])) {
@@ -41,26 +58,11 @@ class ParallelSessionManagementController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        // Get summary counts
-        $summaryQuery = ParallelSession::query()->whereHas('audience.conference');
-        
-        if (!empty($filters['conference_id'])) {
-            $summaryQuery->whereHas('audience', function ($q) use ($filters) {
-                $q->where('conference_id', $filters['conference_id']);
-            });
-        }
-
-        $summary = [
-            'total' => $summaryQuery->count(),
-            'this_month' => (clone $summaryQuery)->whereMonth('created_at', now()->month)->count(),
-            'by_room' => $summaryQuery->with('room')->get()->groupBy('room.room_name')->map->count(),
-        ];
-
         return Inertia::render('Admin/ParallelSessions/Index', [
             'filters' => $filters,
             'parallelSessions' => $parallelSessions,
             'conferences' => $conferences,
-            'summary' => $summary,
+            'search' => $search,
         ]);
     }
 
