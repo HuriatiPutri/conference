@@ -139,7 +139,6 @@ class CertificateController extends Controller
                 ->withInput($request->only(['conference_id', 'email']));
         }
         
-        dd($audience->parallel_sessions->first()->name_of_presenter);
         // Certificate data
         $certificateData = [
             'participant_name' => $audience->parallel_sessions->first()->name_of_presenter,
