@@ -122,7 +122,7 @@ export default function ConferenceSetting() {
           <Button
             variant="subtle"
             leftSection={<IconArrowLeft size={16} />}
-            onClick={() => window.history.back()}
+            onClick={() => router.visit('/conferences')}
           >
             Back
           </Button>

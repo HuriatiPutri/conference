@@ -1,4 +1,4 @@
-import { useForm, usePage } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 import { ActionIcon, Button, Card, Container, Divider, Flex, Grid, Group, Image, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import React, { useState } from 'react';
@@ -89,7 +89,7 @@ function ConferenceCreate() {
           <Button
             variant="subtle"
             leftSection={<IconArrowLeft size={16} />}
-            onClick={() => window.history.back()}
+            onClick={() => router.visit('/conferences')}
           >
             Back
           </Button>

@@ -1,4 +1,4 @@
-import { useForm } from '@inertiajs/react';
+import { router, useForm } from '@inertiajs/react';
 import {
   ActionIcon,
   Button,
@@ -74,7 +74,7 @@ function ConferenceCreate() {
           <Button
             variant="subtle"
             leftSection={<IconArrowLeft size={16} />}
-            onClick={() => window.history.back()}
+            onClick={() => router.visit('/conferences')}
           >
             Back
           </Button>

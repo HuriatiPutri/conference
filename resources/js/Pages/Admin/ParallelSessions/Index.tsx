@@ -1,4 +1,4 @@
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { ActionIcon, Button, Card, Container, Flex, Group, Select, Stack, Text, Title } from '@mantine/core';
 import { Column } from 'primereact/column';
 import { DataTable, DataTableStateEvent } from 'primereact/datatable';
@@ -83,7 +83,7 @@ function ParallelSessionIndex() {
     if (conferenceFilter) params.append('conference_id', conferenceFilter);
     if (globalFilterValue.trim()) params.append('search', globalFilterValue.trim());
 
-    window.location.href = `/parallel-sessions?${params.toString()}`;
+    router.visit(`/parallel-sessions?${params.toString()}`);
   };
 
   const handlePageChange = (event: DataTableStateEvent) => {
@@ -96,13 +96,13 @@ function ParallelSessionIndex() {
       if (conferenceFilter) params.set('conference_id', conferenceFilter);
       if (globalFilterValue.trim()) params.set('search', globalFilterValue.trim());
 
-      window.location.href = `/parallel-sessions?${params.toString()}`;
+      router.visit(`/parallel-sessions?${params.toString()}`);
     }
   };
 
   const clearFilters = () => {
     setGlobalFilterValue('');
-    window.location.href = '/parallel-sessions';
+    router.visit('/parallel-sessions');
   };
 
   const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -126,7 +126,7 @@ function ParallelSessionIndex() {
     if (conferenceFilter) params.append('conference_id', conferenceFilter);
     if (searchValue.trim()) params.append('search', searchValue.trim());
 
-    window.location.href = `/parallel-sessions?${params.toString()}`;
+    router.visit(`/parallel-sessions?${params.toString()}`);
   };
 
   const renderHeader = () => {

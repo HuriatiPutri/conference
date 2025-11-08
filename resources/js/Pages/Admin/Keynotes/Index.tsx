@@ -1,4 +1,4 @@
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { ActionIcon, Button, Card, Container, Flex, Group, Select, Stack, Text, Title } from '@mantine/core';
 import { Column } from 'primereact/column';
 import { DataTable, DataTableStateEvent } from 'primereact/datatable';
@@ -78,7 +78,7 @@ function KeynoteIndex() {
     if (conferenceFilter) params.append('conference_id', conferenceFilter);
     if (globalFilterValue.trim()) params.append('search', globalFilterValue.trim());
 
-    window.location.href = `/keynotes?${params.toString()}`;
+    router.visit(`/keynotes?${params.toString()}`);
   };
 
   const handlePageChange = (event: DataTableStateEvent) => {
@@ -91,13 +91,13 @@ function KeynoteIndex() {
       if (conferenceFilter) params.set('conference_id', conferenceFilter);
       if (globalFilterValue.trim()) params.set('search', globalFilterValue.trim());
 
-      window.location.href = `/keynotes?${params.toString()}`;
+      router.visit(`/keynotes?${params.toString()}`);
     }
   };
 
   const clearFilters = () => {
     setGlobalFilterValue('');
-    window.location.href = '/keynotes';
+    '/keynotes';
   };
 
   const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,7 +121,7 @@ function KeynoteIndex() {
     if (conferenceFilter) params.append('conference_id', conferenceFilter);
     if (searchValue.trim()) params.append('search', searchValue.trim());
 
-    window.location.href = `/keynotes?${params.toString()}`;
+    router.visit(`/keynotes?${params.toString()}`);
   };
 
   const renderHeader = () => {

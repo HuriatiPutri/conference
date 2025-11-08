@@ -1,4 +1,4 @@
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { ActionIcon, Button, Card, Checkbox, Container, Divider, Flex, Grid, Group, Select, Stack, Text, Title } from '@mantine/core';
 import { IconCircleCheckFilled, IconCircleDashed, IconRestore, IconXboxXFilled } from '@tabler/icons-react';
 import { Column } from 'primereact/column';
@@ -100,12 +100,12 @@ function AudienceIndex() {
     if (paymentStatusFilter) params.append('payment_status', paymentStatusFilter);
     if (globalFilterValue.trim()) params.append('search', globalFilterValue.trim());
 
-    window.location.href = `/audiences?${params.toString()}`;
+    router.visit(`/audiences?${params.toString()}`);
   };
 
   const clearFilters = () => {
     setGlobalFilterValue('');
-    window.location.href = '/audiences';
+    router.visit('/audiences');
   };
 
   const handlePaymentStatusClick = (audience: Audiences) => {
@@ -331,7 +331,7 @@ function AudienceIndex() {
     if (paymentStatusFilter) params.append('payment_status', paymentStatusFilter);
     if (searchValue.trim()) params.append('search', searchValue.trim());
 
-    window.location.href = `/audiences?${params.toString()}`;
+    router.visit(`/audiences?${params.toString()}`);
   };
 
   const renderHeader = () => {
@@ -379,7 +379,7 @@ function AudienceIndex() {
       if (paymentStatusFilter) params.set('payment_status', paymentStatusFilter);
       if (globalFilterValue.trim()) params.set('search', globalFilterValue.trim());
 
-      window.location.href = `/audiences?${params.toString()}`;
+      router.visit(`/audiences?${params.toString()}`);
     }
   }
 

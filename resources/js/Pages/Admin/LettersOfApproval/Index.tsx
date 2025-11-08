@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { DataTable, DataTableStateEvent } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import {
@@ -65,11 +65,11 @@ function LettersOfApprovalIndex() {
     if (conferenceFilter) params.append('conference_id', conferenceFilter);
     if (searchTerm) params.append('search', searchTerm);
 
-    window.location.href = `/letters-of-approval?${params.toString()}`;
+    router.visit(`/letters-of-approval?${params.toString()}`);
   };
 
   const clearFilters = () => {
-    window.location.href = '/letters-of-approval';
+    router.visit('/letters-of-approval');
   };
 
   const handlePageChange = (event: DataTableStateEvent) => {
@@ -82,7 +82,7 @@ function LettersOfApprovalIndex() {
       if (conferenceFilter) params.set('conference_id', conferenceFilter);
       if (searchTerm) params.set('search', searchTerm);
 
-      window.location.href = `/letters-of-approval?${params.toString()}`;
+      router.visit(`/letters-of-approval?${params.toString()}`);
     }
   };
 

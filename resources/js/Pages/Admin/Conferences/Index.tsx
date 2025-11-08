@@ -175,17 +175,17 @@ function Home() {
         <Stack gap={'xs'} justify="center" align="center">
           <ActionButtonExt
             color="blue"
-            handleClick={() => (window.location.href = `/conferences/${row.id}/edit`)}
+            handleClick={() => (router.visit(`/conferences/${row.id}/edit`))}
             icon="pi pi-fw pi-pencil"
           />
           <ActionButtonExt
             color="green"
-            handleClick={() => (window.location.href = `/conferences/${row.id}/show`)}
+            handleClick={() => (router.visit(`/conferences/${row.id}/show`))}
             icon="pi pi-fw pi-eye"
           />
           <ActionButtonExt
             color="yellow"
-            handleClick={() => (window.location.href = `/conferences/${row.id}/setting`)}
+            handleClick={() => (router.visit(`/conferences/${row.id}/setting`))}
             icon="pi pi-fw pi-cog"
           />
           <ActionButtonExt
@@ -211,7 +211,7 @@ function Home() {
     return (
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem' }}>
         <ActionIcon
-          onClick={() => (window.location.href = '/conferences/create')}
+          onClick={() => (router.visit('/conferences/create'))}
           color="blue"
           variant="filled"
           size="lg"
@@ -228,7 +228,7 @@ function Home() {
             placeholder="Keyword Search"
           />
         </IconField>
-      </div>
+      </div >
     );
   };
 
@@ -243,7 +243,7 @@ function Home() {
         params.set('global', globalFilterValue);
       }
 
-      window.location.href = `/conferences?${params.toString()}`;
+      router.visit(`/conferences?${params.toString()}`);
     }
   }
 

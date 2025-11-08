@@ -1,10 +1,11 @@
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { Button, Card, Container, Divider, Flex, Grid, Group, Image, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
 import React from 'react';
 import { CopyButtonExt } from './ExtendComponent';
 import { Conference, Room } from '../../../types';
 import MainLayout from '../../../Layout/MainLayout';
 import { IconArrowLeft } from '@tabler/icons-react';
+import { route } from 'ziggy-js';
 
 export default function ConferenceShow() {
   const { conference } = usePage<{ conference: Conference }>().props;
@@ -35,7 +36,7 @@ export default function ConferenceShow() {
           <Button
             variant="subtle"
             leftSection={<IconArrowLeft size={16} />}
-            onClick={() => window.history.back()}
+            onClick={() => router.visit('/conferences')}
           >
             Back
           </Button>

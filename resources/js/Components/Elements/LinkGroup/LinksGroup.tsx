@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { IconCalendarStats, IconChevronRight } from '@tabler/icons-react';
 import { Box, Collapse, Group, Text, ThemeIcon, UnstyledButton } from '@mantine/core';
 import classes from './NavbarLinksGroup.module.css';
+import { router } from '@inertiajs/react';
 
 interface LinksGroupProps {
   icon: React.FC<any>;
@@ -29,7 +30,7 @@ export function LinksGroup({ icon: Icon, label, link, initiallyOpened, links, ac
 
   const handleMenu = () => {
     if (link) {
-      window.location.href = link;
+      router.visit(link);
     } else {
       if (hasLinks) {
         setOpened(o => !o);

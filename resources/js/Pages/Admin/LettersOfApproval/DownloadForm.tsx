@@ -1,5 +1,5 @@
 import React from 'react';
-import { useForm } from '@inertiajs/react';
+import { router, useForm } from '@inertiajs/react';
 import {
   Container,
   Title,
@@ -78,7 +78,7 @@ function LettersOfApprovalDownloadForm({ audience }: DownloadFormProps) {
           <Button
             variant="subtle"
             leftSection={<IconArrowLeft size={16} />}
-            onClick={() => window.history.back()}
+            onClick={() => router.visit('/letters-of-approval')}
           >
             Back
           </Button>
