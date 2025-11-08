@@ -88,10 +88,8 @@ class ParallelSessionController extends Controller
         try {
             if ($existingSession) {
                 // Update existing parallel session
-                $existingSession->update([
-                    'name_of_presenter' => $validatedData['first_name'] . ' ' . $validatedData['last_name'],
-                    'room_id' => $validatedData['room_id'],
-                    'paper_title' => $validatedData['paper_title'],
+                return redirect()->back()->withErrors([
+                    'error' => 'You have already submitted a parallel session.'
                 ]);
             } else {
                 // Create new parallel session

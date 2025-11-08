@@ -63,11 +63,9 @@ class KeynoteController extends Controller
 
         if ($existingKeynote) {
             // Update existing keynote feedback
-            $existingKeynote->update([
-                'name_of_participant' => $validatedData['first_name'] . ' ' . $validatedData['last_name'],
-                'feedback' => $validatedData['feedback'],
+            return redirect()->back()->withErrors([
+                'error' => 'You have already submitted keynote feedback'
             ]);
-            return redirect()->route('keynote.success', ['conference' => $conference->public_id]);
         } else {
             KeyNote::create([
                 'audience_id' => $audience->id,
