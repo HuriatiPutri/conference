@@ -39,6 +39,22 @@ class AudienceExport implements FromQuery, WithHeadings, WithMapping, WithColumn
             $query->where('payment_status', $this->filters['payment_status']);
         }
 
+        // Apply search filter
+        if (!empty($this->filters['search'])) {
+            $searchTerm = $this->filters['search'];
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('first_name', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('last_name', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('email', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('phone_number', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('institution', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('paper_title', 'LIKE', "%{$searchTerm}%")
+                  ->orWhereHas('conference', function($confQuery) use ($searchTerm) {
+                      $confQuery->where('name', 'LIKE', "%{$searchTerm}%");
+                  });
+            });
+        }
+
         return $query->orderBy('id', 'desc');
     }
 

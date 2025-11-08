@@ -6,7 +6,7 @@ import { DataTable, DataTableStateEvent } from 'primereact/datatable';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
 import { InputText } from 'primereact/inputtext';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { route } from 'ziggy-js';
 import { PaymentStatusModal } from '../../../Components/Modals/PaymentStatusModal';
 import { PAYMENT_METHOD, PRESENTATION_TYPE } from '../../../Constants';
@@ -44,12 +44,42 @@ function AudienceIndex() {
   const [paymentMethodFilter, setPaymentMethodFilter] = useState(filters?.payment_method || '');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState(filters?.payment_status || '');
 
+  // Initialize search value from URL params
+  const [globalFilterValue, setGlobalFilterValue] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('search') || '';
+  });
+
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (globalFilterValue && searchInputRef.current) {
+      // Keep focus on search input after search
+      searchInputRef.current.focus();
+      // Maintain cursor at the end of the text
+      const length = globalFilterValue.length;
+      searchInputRef.current.setSelectionRange(length, length);
+    }
+  }, [globalFilterValue]);
+
+  // Auto-focus on component mount if there's a search value
+  useEffect(() => {
+    if (globalFilterValue && searchInputRef.current) {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+        const length = globalFilterValue.length;
+        searchInputRef.current?.setSelectionRange(length, length);
+      }, 100);
+    }
+  }, []);
+
   const handleExportExcel = () => {
     setIsExporting(true);
     const params = new URLSearchParams();
     if (conferenceFilter) params.append('conference_id', conferenceFilter);
     if (paymentMethodFilter) params.append('payment_method', paymentMethodFilter);
     if (paymentStatusFilter) params.append('payment_status', paymentStatusFilter);
+    if (globalFilterValue.trim()) params.append('search', globalFilterValue.trim());
 
     // Create a temporary link to trigger download
     const link = document.createElement('a');
@@ -68,11 +98,13 @@ function AudienceIndex() {
     if (conferenceFilter) params.append('conference_id', conferenceFilter);
     if (paymentMethodFilter) params.append('payment_method', paymentMethodFilter);
     if (paymentStatusFilter) params.append('payment_status', paymentStatusFilter);
+    if (globalFilterValue.trim()) params.append('search', globalFilterValue.trim());
 
     window.location.href = `/audiences?${params.toString()}`;
   };
 
   const clearFilters = () => {
+    setGlobalFilterValue('');
     window.location.href = '/audiences';
   };
 
@@ -274,11 +306,32 @@ function AudienceIndex() {
     },
   ];
 
-  const [globalFilterValue, setGlobalFilterValue] = useState('');
+  const [searchTimeout, setSearchTimeout] = useState<number | null>(null);
 
   const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setGlobalFilterValue(value);
+
+    // Debounce search to avoid too many requests
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+
+    const timeout = setTimeout(() => {
+      handleSearch(value);
+    }, 500);
+
+    setSearchTimeout(timeout);
+  };
+
+  const handleSearch = (searchValue: string) => {
+    const params = new URLSearchParams();
+    if (conferenceFilter) params.append('conference_id', conferenceFilter);
+    if (paymentMethodFilter) params.append('payment_method', paymentMethodFilter);
+    if (paymentStatusFilter) params.append('payment_status', paymentStatusFilter);
+    if (searchValue.trim()) params.append('search', searchValue.trim());
+
+    window.location.href = `/audiences?${params.toString()}`;
   };
 
   const renderHeader = () => {
@@ -301,11 +354,13 @@ function AudienceIndex() {
         <IconField iconPosition="left">
           <InputIcon className="pi pi-search" />
           <InputText
+            ref={searchInputRef}
             value={globalFilterValue}
             style={{ width: '300px' }}
             onChange={onGlobalFilterChange}
             size={'small'}
             placeholder="Keyword Search"
+            autoFocus={!!globalFilterValue}
           />
         </IconField>
       </Flex>
@@ -316,12 +371,13 @@ function AudienceIndex() {
     if (event.page !== undefined) {
       const params = new URLSearchParams(window.location.search);
       params.set('page', (event.page + 1).toString());
-      if (event.rows && event.rows !== audiences.per_page) {
+      if (event.rows && event.rows !== meta.per_page) {
         params.set('per_page', event.rows.toString());
       }
       if (conferenceFilter) params.set('conference_id', conferenceFilter);
       if (paymentMethodFilter) params.set('payment_method', paymentMethodFilter);
       if (paymentStatusFilter) params.set('payment_status', paymentStatusFilter);
+      if (globalFilterValue.trim()) params.set('search', globalFilterValue.trim());
 
       window.location.href = `/audiences?${params.toString()}`;
     }

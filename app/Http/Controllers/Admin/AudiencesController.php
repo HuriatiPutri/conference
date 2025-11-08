@@ -24,8 +24,8 @@ class AudiencesController extends Controller
 {
     public function index(): Response
     {
-        $filters = Request::only('conference_id', 'payment_method', 'payment_status');
-        $perPage = Request::input('per_page', 15); // Default 50, bisa diubah via parameter
+        $filters = Request::only('conference_id', 'payment_method', 'payment_status', 'search');
+        $perPage = Request::input('per_page', 15); // Default 15, bisa diubah via parameter
         
         // Build query with filters
         $query = Audience::query()
@@ -43,6 +43,22 @@ class AudiencesController extends Controller
 
         if (!empty($filters['payment_status'])) {
             $query->where('payment_status', $filters['payment_status']);
+        }
+
+        // Apply search filter
+        if (!empty($filters['search'])) {
+            $searchTerm = $filters['search'];
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('first_name', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('last_name', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('email', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('phone_number', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('institution', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('paper_title', 'LIKE', "%{$searchTerm}%")
+                  ->orWhereHas('conference', function($confQuery) use ($searchTerm) {
+                      $confQuery->where('name', 'LIKE', "%{$searchTerm}%");
+                  });
+            });
         }
 
         // Get filtered audiences for pagination
@@ -81,7 +97,7 @@ class AudiencesController extends Controller
 
     public function export()
     {
-        $filters = Request::only('conference_id', 'payment_method', 'payment_status');
+        $filters = Request::only('conference_id', 'payment_method', 'payment_status', 'search');
         
         // Generate filename with current date and filters
         $filename = 'audiences_export_' . now()->format('Y-m-d_H-i-s');
