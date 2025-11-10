@@ -100,7 +100,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('audiences/{audience}/restore', [AudiencesController::class, 'restore'])
         ->name('audiences.restore');
     
-    Route::get('audiences/download/{audience}', [AudiencesController::class, 'download'])
+    Route::get('audiences/download/{audience:public_id}', [AudiencesController::class, 'download'])
         ->name('audiences.download');
     
     Route::patch('audiences/{audience}/payment-status', [AudiencesController::class, 'updatePaymentStatus'])

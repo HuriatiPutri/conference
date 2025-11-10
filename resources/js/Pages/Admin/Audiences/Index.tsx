@@ -263,12 +263,12 @@ function AudienceIndex() {
               color="green"
               size="xs"
               component="a"
-              href={route('audiences.download', row.id)}
+              href={route('audiences.download', row.public_id)}
               target="_blank"
               variant="light"
               leftSection={<i className="pi pi-download" />}
             >
-              Download {row.key_notes.length}
+              Download
             </Button>
           );
         }
