@@ -35,7 +35,7 @@ class Audience extends Model
         'loa_notes',
         'loa_approved_at',
         'loa_authors',
-        'loa_joiv_volume',
+        'loa_volume_id',
     ];
 
     public function resolveRouteBinding($value, $field = null)
@@ -61,6 +61,11 @@ class Audience extends Model
     public function invoice_histories(): HasMany
     {
         return $this->hasMany(InvoiceHistory::class);
+    }
+
+    public function loaVolume()
+    {
+        return $this->belongsTo(LoaVolume::class, 'loa_volume_id');
     }
 
     public function getPaymentMethodText()

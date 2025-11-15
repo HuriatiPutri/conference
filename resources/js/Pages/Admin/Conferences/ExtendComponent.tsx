@@ -8,6 +8,8 @@ interface CopyButtonExtProps {
 
 interface ActionButtonExtProps {
   children?: React.ReactNode;
+  handleClick?: (row: any) => void;
+  icon?: string;
   [key: string]: unknown;
 }
 

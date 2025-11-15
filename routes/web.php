@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\ParallelSessionManagementController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Admin\LettersOfApprovalController;
+use App\Http\Controllers\Admin\LoaVolumeManagementController;
 use App\Http\Controllers\Admin\DashboardController;
 use Inertia\Inertia;
 
@@ -117,15 +118,18 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('parallel-sessions/{parallelSession}', [ParallelSessionManagementController::class, 'destroy'])->name('parallel-sessions.destroy');
 
     // Letters of Approval routes
-    Route::get('letters-of-approval', [LettersOfApprovalController::class, 'index'])->name('letters-of-approval.index');
+    // Route::get('letters-of-approval', [LettersOfApprovalController::class, 'index'])->name('letters-of-approval.index');
     Route::get('letters-of-approval/{audience:id}', [LettersOfApprovalController::class, 'show'])->name('letters-of-approval.show');
     Route::get('letters-of-approval/{audience:id}/download-form', [LettersOfApprovalController::class, 'downloadForm'])->name('letters-of-approval.download-form');
     Route::post('letters-of-approval/{audience:id}/update-info', [LettersOfApprovalController::class, 'updateLoaInfo'])->name('letters-of-approval.update-info');
     Route::get('letters-of-approval/{audience:id}/download', [LettersOfApprovalController::class, 'download'])->name('letters-of-approval.download');
     Route::post('letters-of-approval/bulk-download', [LettersOfApprovalController::class, 'bulkDownload'])->name('letters-of-approval.bulk-download');
     Route::patch('letters-of-approval/{audience:id}/status', [LettersOfApprovalController::class, 'updateStatus'])->name('letters-of-approval.update-status');
-    Route::get('test-pdf', [LettersOfApprovalController::class, 'testPdf'])->name('test-pdf');
-    Route::get('debug-pdf/{audience:id}', [LettersOfApprovalController::class, 'debugPdf'])->name('debug-pdf');
+
+    // LoA - LoA Volume Management
+    Route::prefix('loa')->name('loa.')->group(function () {
+        Route::resource('loa-volumes', LoaVolumeManagementController::class);
+    });
 });
 
 // Registration - Public Access (No Auth Middleware)

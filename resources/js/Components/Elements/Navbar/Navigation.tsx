@@ -11,7 +11,12 @@ const mockdata = [
   { label: 'Audience', icon: IconUsersGroup, link: '/audiences' },
   { label: 'Keynote', icon: IconMicrophone, link: '/keynotes' },
   { label: 'Parallel Session', icon: IconUsers, link: '/parallel-sessions' },
-  { label: 'LoA', icon: IconRubberStamp, link: '/letters-of-approval' },
+  {
+    label: 'Letter Of Approval', icon: IconRubberStamp, links: [
+      { label: 'LoA Approval', link: '/loa/letters-of-approval' },
+      { label: 'LoA Volume', link: '/loa/loa-volumes' },
+    ]
+  }
 ];
 
 export function Navigation() {

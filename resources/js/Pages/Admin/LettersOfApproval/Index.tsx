@@ -27,6 +27,10 @@ type AudienceWithLoA = Audiences & {
   loa_status?: string;
   loa_notes?: string;
   loa_approved_at?: string;
+  loa_volume?: {
+    id: number;
+    volume: string;
+  };
 };
 
 interface LettersOfApprovalPageProps extends PageProps {
@@ -38,8 +42,10 @@ interface LettersOfApprovalPageProps extends PageProps {
     total: number;
   };
   conferences: Array<{ id: number; name: string; initial: string }>;
+  loaVolumes: Array<{ id: number; volume: string }>;
   filters: {
     conference_id?: string;
+    loa_volume_id?: string;
     search?: string;
   };
   summary: {
@@ -50,11 +56,12 @@ interface LettersOfApprovalPageProps extends PageProps {
 }
 
 function LettersOfApprovalIndex() {
-  const { audiences, conferences, filters, summary } = usePage<LettersOfApprovalPageProps>().props;
+  const { audiences, conferences, loaVolumes, filters, summary } = usePage<LettersOfApprovalPageProps>().props;
   const { data } = audiences;
 
   // Filter states
   const [conferenceFilter, setConferenceFilter] = useState(filters?.conference_id || '');
+  const [loaVolumeFilter, setLoaVolumeFilter] = useState(filters?.loa_volume_id || '');
   const [searchTerm, setSearchTerm] = useState(filters?.search || '');
 
   // Global filter for DataTable
@@ -63,6 +70,7 @@ function LettersOfApprovalIndex() {
   const handleFilterChange = () => {
     const params = new URLSearchParams();
     if (conferenceFilter) params.append('conference_id', conferenceFilter);
+    if (loaVolumeFilter) params.append('loa_volume_id', loaVolumeFilter);
     if (searchTerm) params.append('search', searchTerm);
 
     router.visit(`/letters-of-approval?${params.toString()}`);
@@ -80,6 +88,7 @@ function LettersOfApprovalIndex() {
         params.set('per_page', event.rows.toString());
       }
       if (conferenceFilter) params.set('conference_id', conferenceFilter);
+      if (loaVolumeFilter) params.set('loa_volume_id', loaVolumeFilter);
       if (searchTerm) params.set('search', searchTerm);
 
       router.visit(`/letters-of-approval?${params.toString()}`);
@@ -128,6 +137,22 @@ function LettersOfApprovalIndex() {
         <Text lineClamp={2} size="sm">
           {row.paper_title}
         </Text>
+      )
+    },
+    {
+      field: 'loa_volume',
+      header: 'LoA Volume',
+      style: { minWidth: '200px' },
+      body: (row: AudienceWithLoA) => (
+        row.loa_volume ? (
+          <Badge color="blue" variant="outline">
+            {row.loa_volume.volume}
+          </Badge>
+        ) : (
+          <Text size="sm" c="dimmed" fs="italic">
+            Not assigned
+          </Text>
+        )
       )
     },
     {
@@ -212,9 +237,8 @@ function LettersOfApprovalIndex() {
         <Card padding="lg" radius="md" withBorder>
           <Title order={4} mb="md">Filter Participants</Title>
           <Grid>
-            <Grid.Col span={{ base: 12, md: 4 }}>
+            <Grid.Col span={{ base: 12, md: 3 }}>
               <Select
-                // label="Conference"
                 placeholder="-- All Conferences --"
                 data={[
                   { value: '', label: '-- All Conferences --' },
@@ -227,7 +251,21 @@ function LettersOfApprovalIndex() {
                 onChange={(value) => setConferenceFilter(value || '')}
               />
             </Grid.Col>
-            <Grid.Col span={{ base: 12, md: 4 }}>
+            <Grid.Col span={{ base: 12, md: 3 }}>
+              <Select
+                placeholder="-- All LoA Volumes --"
+                data={[
+                  { value: '', label: '-- All LoA Volumes --' },
+                  ...loaVolumes.map(volume => ({
+                    value: volume.id.toString(),
+                    label: volume.volume
+                  }))
+                ]}
+                value={loaVolumeFilter}
+                onChange={(value) => setLoaVolumeFilter(value || '')}
+              />
+            </Grid.Col>
+            <Grid.Col span={{ base: 12, md: 3 }}>
               <TextInput
                 placeholder="Search by name, email, institution..."
                 value={searchTerm}
@@ -235,12 +273,12 @@ function LettersOfApprovalIndex() {
                 style={{ width: '100%' }}
               />
             </Grid.Col>
-            <Grid.Col span={{ base: 12, md: 4 }}>
+            <Grid.Col span={{ base: 12, md: 3 }}>
               <Group>
-                <Button onClick={handleFilterChange} variant="filled">
+                <Button onClick={handleFilterChange} variant="filled" size="sm">
                   Apply Filter
                 </Button>
-                <Button onClick={clearFilters} variant="outline">
+                <Button onClick={clearFilters} variant="outline" size="sm">
                   Clear
                 </Button>
               </Group>

@@ -8,26 +8,35 @@ import {
   Text,
   Stack,
   Card,
-  TextInput,
   Textarea,
   Divider,
-  Alert
+  Alert,
+  Select
 } from '@mantine/core';
 import { IconInfoCircle, IconDownload, IconArrowLeft, IconAlertCircle } from '@tabler/icons-react';
 import MainLayout from '../../../Layout/MainLayout';
 import { Audiences } from '../../../types';
-import { route } from 'ziggy-js'; interface DownloadFormProps {
-  audience: Audiences & {
-    loa_authors?: string;
-    loa_joiv_volume?: string;
-    loa_status?: string;
-  };
+import { route } from 'ziggy-js';
+
+interface LoaVolume {
+  id: number;
+  volume: string;
 }
 
-function LettersOfApprovalDownloadForm({ audience }: DownloadFormProps) {
+interface DownloadFormProps {
+  audience: Audiences & {
+    loa_authors?: string;
+    loa_volume_id?: number;
+    loa_status?: string;
+    loa_volume?: LoaVolume;
+  };
+  loaVolumes: LoaVolume[];
+}
+
+function LettersOfApprovalDownloadForm({ audience, loaVolumes }: DownloadFormProps) {
   const { data, setData, post, processing, errors } = useForm({
     authors: audience.loa_authors || `${audience.first_name} ${audience.last_name}`,
-    joiv_volume: audience.loa_joiv_volume || '',
+    loa_volume_id: audience.loa_volume_id ? audience.loa_volume_id.toString() : '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -36,7 +45,7 @@ function LettersOfApprovalDownloadForm({ audience }: DownloadFormProps) {
   };
 
   // Check if data is already saved
-  const isDataSaved = audience.loa_authors && audience.loa_joiv_volume;
+  const isDataSaved = audience.loa_authors && audience.loa_volume_id;
 
   // Check for general errors
   const hasGeneralError = errors && typeof errors === 'object' && 'error' in errors;
@@ -108,7 +117,7 @@ function LettersOfApprovalDownloadForm({ audience }: DownloadFormProps) {
           <Title order={4} mb="md">JOIV Publication Details</Title>
 
           <Alert icon={<IconInfoCircle size={16} />} color="blue" mb="md">
-            Please provide the authors list and JOIV volume information as they should appear in the acceptance letter.
+            Please provide the authors list and select the appropriate LoA volume as they should appear in the acceptance letter.
           </Alert>
 
           <form onSubmit={handleSubmit}>
@@ -124,14 +133,20 @@ function LettersOfApprovalDownloadForm({ audience }: DownloadFormProps) {
                 rows={3}
               />
 
-              <TextInput
-                label="JOIV Volume & Issue"
-                description="Enter the volume and issue information (e.g., Vol.10 No.6 November 2026)"
-                placeholder="Vol.10 No.6 November 2026"
-                value={data.joiv_volume}
-                onChange={(e) => setData('joiv_volume', e.target.value)}
-                error={errors.joiv_volume}
+              <Select
+                label="LoA Volume"
+                description="Select the volume for this Letter of Approval"
+                placeholder="Select volume"
+                value={data.loa_volume_id}
+                onChange={(value) => setData('loa_volume_id', value || '')}
+                error={errors.loa_volume_id}
+                data={loaVolumes.map(volume => ({
+                  value: volume.id.toString(),
+                  label: volume.volume
+                }))}
                 required
+                searchable
+                clearable
               />
 
               <Divider />

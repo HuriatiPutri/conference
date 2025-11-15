@@ -19,13 +19,22 @@ class LettersOfApprovalController extends Controller
     {
         $perPage = $request->input('per_page', 15); // Default 15, bisa diubah via parameter
         
-        $query = Audience::with(['conference'])
+        $query = Audience::with(['conference', 'loaVolume'])
             ->where('payment_status', 'paid')
             ->whereNotNull('paper_title');
 
         // Filter by conference if specified
         if ($request->filled('conference_id')) {
             $query->where('conference_id', $request->conference_id);
+        }
+
+        // Filter by LoA Volume if specified
+        if ($request->filled('loa_volume_id')) {
+            if ($request->loa_volume_id === 'unassigned') {
+                $query->whereNull('loa_volume_id');
+            } else {
+                $query->where('loa_volume_id', $request->loa_volume_id);
+            }
         }
 
         // Filter by search term
@@ -48,6 +57,11 @@ class LettersOfApprovalController extends Controller
             ->orderBy('name')
             ->get();
 
+        // Get LoA Volumes for filter dropdown
+        $loaVolumes = \App\Models\LoaVolume::select('id', 'volume')
+            ->orderBy('volume')
+            ->get();
+
         // Summary statistics
         $summary = [
             'total_participants' => Audience::where('payment_status', 'paid')->count(),
@@ -58,7 +72,8 @@ class LettersOfApprovalController extends Controller
         return Inertia::render('Admin/LettersOfApproval/Index', [
             'audiences' => $audiences,
             'conferences' => $conferences,
-            'filters' => $request->only(['conference_id', 'search']),
+            'loaVolumes' => $loaVolumes,
+            'filters' => $request->only(['conference_id', 'loa_volume_id', 'search']),
             'summary' => $summary,
         ]);
     }
@@ -68,7 +83,7 @@ class LettersOfApprovalController extends Controller
      */
     public function show(Audience $audience): Response
     {
-        $audience->load(['conference', 'key_notes', 'parallel_sessions']);
+        $audience->load(['conference', 'key_notes', 'parallel_sessions', 'loaVolume']);
 
         // Check if participant is eligible for LoA
         if ($audience->payment_status !== 'paid') {
@@ -90,22 +105,28 @@ class LettersOfApprovalController extends Controller
             abort(404, 'Participant not eligible for Letter of Approval');
         }
 
-        $audience->load('conference');
+        $audience->load(['conference', 'loaVolume']);
+
+        // Get all available LoA Volumes
+        $loaVolumes = \App\Models\LoaVolume::select('id', 'volume')
+            ->orderBy('volume')
+            ->get();
 
         return Inertia::render('Admin/LettersOfApproval/DownloadForm', [
-            'audience' => $audience->load('conference')->toArray(),
+            'audience' => $audience->toArray(),
+            'loaVolumes' => $loaVolumes,
         ]);
     }
 
     /**
-     * Update LoA authors and JOIV volume information.
+     * Update LoA authors and volume information.
      */
     public function updateLoaInfo(Request $request, Audience $audience)
     {
         // Validate input
         $request->validate([
             'authors' => 'required|string|max:500',
-            'joiv_volume' => 'required|string|max:100',
+            'loa_volume_id' => 'required|exists:loa_volume,id',
         ]);
 
         // Check if participant is eligible
@@ -116,7 +137,7 @@ class LettersOfApprovalController extends Controller
         // Update LoA information
         $audience->update([
             'loa_authors' => $request->authors,
-            'loa_joiv_volume' => $request->joiv_volume,
+            'loa_volume_id' => $request->loa_volume_id,
             'loa_status' => 'approved', // Auto approve when info is complete
             'loa_approved_at' => now(),
         ]);
@@ -135,20 +156,20 @@ class LettersOfApprovalController extends Controller
         }
 
         // Check if LoA info is complete
-        if (!$audience->loa_authors || !$audience->loa_joiv_volume) {
+        if (!$audience->loa_authors || !$audience->loa_volume_id) {
             return redirect()->route('letters-of-approval.download-form', $audience->id)
-                           ->withErrors(['error' => 'Please fill in the authors and JOIV volume information first.']);
+                           ->withErrors(['error' => 'Please fill in the authors and volume information first.']);
         }
 
         try {
-            $audience->load('conference');
+            $audience->load(['conference', 'loaVolume']);
             
             $data = [
                 'participant_name' => $audience->first_name . ' ' . $audience->last_name,
                 'institution' => $audience->institution ?? 'Unknown Institution',
                 'paper_title' => $audience->paper_title ?? 'Untitled Paper',
                 'authors' => $audience->loa_authors,
-                'joiv_volume' => $audience->loa_joiv_volume,
+                'joiv_volume' => $audience->loaVolume->volume ?? 'Volume Not Set',
                 'conference_name' => $audience->conference->name ?? 'Conference',
                 'conference_initial' => $audience->conference->initial ?? 'CONF',
                 'conference_date' => $audience->conference->date ?? now(),

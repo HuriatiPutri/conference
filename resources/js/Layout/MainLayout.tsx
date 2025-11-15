@@ -36,7 +36,7 @@ export default function MainLayout({ title, children }: MainLayoutProps) {
 
   return (
     <>
-      <Head title={title ? title : 'Laravel + Inertia + React'} />
+      <Head title={title ? title : 'Sotvi.org'} />
       <MantineProvider>
         <Notifications position='top-center' />
         <PrimeReactProvider>

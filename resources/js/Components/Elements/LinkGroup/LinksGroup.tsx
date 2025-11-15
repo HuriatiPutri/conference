@@ -22,7 +22,10 @@ export function LinksGroup({ icon: Icon, label, link, initiallyOpened, links, ac
       className={classes.link}
       href={link.link}
       key={link.label}
-      onClick={event => event.preventDefault()}
+      onClick={event => {
+        event.preventDefault();
+        router.visit(link.link);
+      }}
     >
       {link.label}
     </Text>

@@ -14,7 +14,7 @@ interface AuthLayoutProps {
 export default function AuthLayout({ title, children }: AuthLayoutProps) {
   return (
     <>
-      <Head title={title ? title : 'Laravel + Inertia + React'} />
+      <Head title={title ? title : 'Sotvi.org'} />
       <MantineProvider>
         <Notifications position='top-center' />
         <section className={styles.root}>
