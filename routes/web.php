@@ -118,7 +118,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('parallel-sessions/{parallelSession}', [ParallelSessionManagementController::class, 'destroy'])->name('parallel-sessions.destroy');
 
     // Letters of Approval routes
-    // Route::get('letters-of-approval', [LettersOfApprovalController::class, 'index'])->name('letters-of-approval.index');
+    Route::get('letters-of-approval', [LettersOfApprovalController::class, 'index'])->name('letters-of-approval.index');
     Route::get('letters-of-approval/{audience:id}', [LettersOfApprovalController::class, 'show'])->name('letters-of-approval.show');
     Route::get('letters-of-approval/{audience:id}/download-form', [LettersOfApprovalController::class, 'downloadForm'])->name('letters-of-approval.download-form');
     Route::post('letters-of-approval/{audience:id}/update-info', [LettersOfApprovalController::class, 'updateLoaInfo'])->name('letters-of-approval.update-info');
