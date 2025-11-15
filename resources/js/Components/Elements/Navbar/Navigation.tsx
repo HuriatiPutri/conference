@@ -13,7 +13,7 @@ const mockdata = [
   { label: 'Parallel Session', icon: IconUsers, link: '/parallel-sessions' },
   {
     label: 'Letter Of Approval', icon: IconRubberStamp, links: [
-      { label: 'LoA Approval', link: '/loa/letters-of-approval' },
+      { label: 'LoA Approval', link: '/letters-of-approval' },
       { label: 'LoA Volume', link: '/loa/loa-volumes' },
     ]
   }
