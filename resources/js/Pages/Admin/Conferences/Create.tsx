@@ -122,13 +122,13 @@ function ConferenceCreate() {
               <Grid>
                 <Grid.Col span={6}>
                   <TextInput
-                    label="Registration End Date"
-                    name="registration_end_date"
+                    label="Registration Start Date"
+                    name="registration_start_date"
                     type="date"
                     required
-                    error={errors.registration_end_date}
-                    value={data.registration_end_date}
-                    onChange={e => setData('registration_end_date', e.target.value)}
+                    error={errors.registration_start_date}
+                    value={data.registration_start_date}
+                    onChange={e => setData('registration_start_date', e.target.value)}
                   />
                 </Grid.Col>
                 <Grid.Col span={6}>

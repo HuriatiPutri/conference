@@ -25,10 +25,14 @@ interface RegistrationCreateProps {
   conference: Conference;
 }
 
+const DEFAULT_PRESENTATION_TYPE = 'online_author';
+
 export default function RegistrationCreate({ conference }: RegistrationCreateProps) {
   const [selectedCountry, setSelectedCountry] = useState<string>('');
-  const [selectedType, setSelectedType] = useState<string>('');
-
+  
+  const [selectedType, setSelectedType] = useState<string>(DEFAULT_PRESENTATION_TYPE);
+  const isJOIV = conference.name === 'JOIV : International Journal on Informatics Visualization';
+    
   const { data, setData, post, processing, errors } = useForm({
     first_name: '',
     last_name: '',
@@ -37,7 +41,7 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
     email: '',
     phone_number: '',
     country: '',
-    presentation_type: '',
+	presentation_type: DEFAULT_PRESENTATION_TYPE,
     full_paper: null as File | null,
   });
 
@@ -76,17 +80,22 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
         <Card shadow="md" padding="xl" radius="md">
           <Stack gap="lg">
             <div>
-              <Title order={2} ta="center" mb="xs">
-                Conference Registration
-              </Title>
+              {conference.name !== 'JOIV : International Journal on Informatics Visualization' && (
+        		<Title order={2} ta="center" mb="xs">
+		          Conference Registration
+        		</Title>
+		      )}
+              
               <Text ta="center" c="dimmed" size="lg">
                 {conference.name}
               </Text>
+              {conference.name !== 'JOIV : International Journal on Informatics Visualization' && (
               <Group justify="center" mt="sm">
                 <Badge variant="light" size="lg">
                   {dayjs(conference.date).format('MMMM D, YYYY')} • {conference.city}
                 </Badge>
               </Group>
+              )}
             </div>
 
             <Divider />
@@ -167,18 +176,20 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
                     error={errors.country}
                     required
                   />
-                  <Select
-                    label="Presentation Type"
-                    placeholder="Select presentation type"
-                    data={PRESENTATION_TYPES}
-                    value={data.presentation_type}
-                    onChange={(value) => {
-                      setData('presentation_type', value || '');
-                      setSelectedType(value || '');
-                    }}
-                    error={errors.presentation_type}
-                    required
-                  />
+                  {!isJOIV && (
+                    <Select
+                      label="Presentation Type"
+                      placeholder="Select presentation type"
+                      data={PRESENTATION_TYPES}
+                      value={data.presentation_type}
+                      onChange={(value) => {
+                        setData('presentation_type', value || '');
+                        setSelectedType(value || '');
+                      }}
+                      error={errors.presentation_type}
+                      required
+                    />
+                  )}
                 </Group>
 
                 <TextInput
