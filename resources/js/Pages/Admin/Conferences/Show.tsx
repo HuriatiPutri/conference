@@ -5,7 +5,6 @@ import { CopyButtonExt } from './ExtendComponent';
 import { Conference, Room } from '../../../types';
 import MainLayout from '../../../Layout/MainLayout';
 import { IconArrowLeft } from '@tabler/icons-react';
-import { route } from 'ziggy-js';
 
 export default function ConferenceShow() {
   const { conference } = usePage<{ conference: Conference }>().props;

@@ -19,6 +19,7 @@ class InvoiceHistory extends Model
     protected $fillable = [
         'public_id',
         'audience_id',
+        'joiv_registration_id',
         'conference_id',
         'payment_gateway',
         'payment_method',
@@ -35,6 +36,8 @@ class InvoiceHistory extends Model
         'cancel_url',
         'payment_initiated_at',
         'payment_completed_at',
+        'paid_at',
+        'notes',
     ];
 
     protected $casts = [
@@ -87,6 +90,14 @@ class InvoiceHistory extends Model
     public function conference(): BelongsTo
     {
         return $this->belongsTo(Conference::class);
+    }
+
+    /**
+     * Relationship with JoivRegistration
+     */
+    public function joivRegistration(): BelongsTo
+    {
+        return $this->belongsTo(JoivRegistration::class);
     }
 
     /**
