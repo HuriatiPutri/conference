@@ -2,33 +2,47 @@ import React from 'react';
 import { Modal, Button, Select, Stack, Text, Group } from '@mantine/core';
 import { useForm } from '@inertiajs/react';
 import { notifications } from '@mantine/notifications';
-import { Audiences } from '../../types';
-import { PAYMENT_STATUS } from '../../Constants';
 
-interface PaymentStatusModalProps {
+interface JoivRegistration {
+  id: number;
+  public_id: string;
+  first_name: string;
+  last_name: string;
+  email_address: string;
+  payment_status: string;
+  payment_method: string | null;
+}
+
+interface JoivPaymentStatusModalProps {
   opened: boolean;
   onClose: () => void;
-  audience: Audiences | null;
+  registration: JoivRegistration | null;
 }
 
 const PAYMENT_STATUS_OPTIONS = [
-  { value: PAYMENT_STATUS.PENDING_PAYMENT, label: 'Pending' },
-  { value: PAYMENT_STATUS.PAID, label: 'Paid' },
-  { value: PAYMENT_STATUS.REFUNED, label: 'Refund' },
-  { value: PAYMENT_STATUS.CANCELLED, label: 'Cancelled' },
+  { value: 'pending_payment', label: 'Pending' },
+  { value: 'paid', label: 'Paid' },
+  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'refunded', label: 'Refunded' },
 ];
 
-export function PaymentStatusModal({ opened, onClose, audience }: PaymentStatusModalProps) {
-  const { data, setData, patch, processing, errors } = useForm({
-    payment_status: audience?.payment_status || 'pending',
+export function JoivPaymentStatusModal({ opened, onClose, registration }: JoivPaymentStatusModalProps) {
+  const { data, setData, patch, processing, errors, reset } = useForm({
+    payment_status: registration?.payment_status || 'pending_payment',
   });
+
+  React.useEffect(() => {
+    if (registration) {
+      setData('payment_status', registration.payment_status);
+    }
+  }, [registration]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!audience) return;
+    if (!registration) return;
 
-    patch(`/audiences/${audience.id}/payment-status`, {
+    patch(`/joiv-articles/${registration.id}/payment-status`, {
       onSuccess: () => {
         notifications.show({
           title: 'Success',
@@ -36,6 +50,7 @@ export function PaymentStatusModal({ opened, onClose, audience }: PaymentStatusM
           color: 'green',
         });
         onClose();
+        reset();
       },
       onError: () => {
         notifications.show({
@@ -47,7 +62,12 @@ export function PaymentStatusModal({ opened, onClose, audience }: PaymentStatusM
     });
   };
 
-  if (!audience) return null;
+  const getPaymentMethodText = (method: string | null) => {
+    if (!method) return '-';
+    return method === 'transfer_bank' ? 'Bank Transfer' : 'PayPal';
+  };
+
+  if (!registration) return null;
 
   return (
     <Modal
@@ -59,18 +79,18 @@ export function PaymentStatusModal({ opened, onClose, audience }: PaymentStatusM
       <form onSubmit={handleSubmit}>
         <Stack gap="md">
           <div>
-            <Text size="sm" fw={500} mb="xs">Audience:</Text>
-            <Text size="sm">{audience.first_name} {audience.last_name}</Text>
+            <Text size="sm" fw={500} mb="xs">Registrant:</Text>
+            <Text size="sm">{registration.first_name} {registration.last_name}</Text>
           </div>
 
           <div>
             <Text size="sm" fw={500} mb="xs">Email:</Text>
-            <Text size="sm">{audience.email}</Text>
+            <Text size="sm">{registration.email_address}</Text>
           </div>
 
           <div>
             <Text size="sm" fw={500} mb="xs">Payment Method:</Text>
-            <Text size="sm">Bank Transfer</Text>
+            <Text size="sm">{getPaymentMethodText(registration.payment_method)}</Text>
           </div>
 
           <Select
@@ -78,7 +98,7 @@ export function PaymentStatusModal({ opened, onClose, audience }: PaymentStatusM
             placeholder="Select payment status"
             data={PAYMENT_STATUS_OPTIONS}
             value={data.payment_status}
-            onChange={(value) => setData('payment_status', value || 'pending')}
+            onChange={(value) => setData('payment_status', value || 'pending_payment')}
             error={errors.payment_status}
             required
           />

@@ -130,6 +130,21 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('loa')->name('loa.')->group(function () {
         Route::resource('loa-volumes', LoaVolumeManagementController::class);
     });
+
+    // JOIV Article Management - Admin Routes
+    Route::prefix('joiv-articles')->name('joiv-articles.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\JoivArticleController::class, 'index'])->name('index');
+        Route::get('/fee-settings', [\App\Http\Controllers\Admin\JoivArticleController::class, 'feeSettings'])->name('fee-settings');
+        Route::post('/fee-settings', [\App\Http\Controllers\Admin\JoivArticleController::class, 'updateFee'])->name('fee-settings.update');
+        Route::get('/{joivArticle}', [\App\Http\Controllers\Admin\JoivArticleController::class, 'show'])->name('show');
+        Route::patch('/{joivArticle}/payment-status', [\App\Http\Controllers\Admin\JoivArticleController::class, 'updatePaymentStatus'])->name('updatePaymentStatus');
+        Route::get('/{joivArticle}/download-paper', [\App\Http\Controllers\Admin\JoivArticleController::class, 'downloadPaper'])->name('downloadPaper');
+        Route::get('/{joivArticle}/download-payment-proof', [\App\Http\Controllers\Admin\JoivArticleController::class, 'downloadPaymentProof'])->name('downloadPaymentProof');
+        Route::get('/{joivArticle}/download-receipt', [\App\Http\Controllers\Admin\JoivArticleController::class, 'downloadReceipt'])->name('downloadReceipt');
+        Route::get('/export/excel', [\App\Http\Controllers\Admin\JoivArticleController::class, 'export'])->name('export');
+        Route::delete('/{joivArticle}', [\App\Http\Controllers\Admin\JoivArticleController::class, 'destroy'])->name('destroy');
+        Route::put('/{joivArticle}/restore', [\App\Http\Controllers\Admin\JoivArticleController::class, 'restore'])->name('restore');
+    });
 });
 
 // Registration - Public Access (No Auth Middleware)
@@ -156,3 +171,13 @@ Route::get('/parallel-session/{conference:public_id}/success', [ParallelSessionC
 // Certificate Download - Public Access (No Auth Middleware)
 Route::get('/certificate/download', [CertificateController::class, 'downloadOrShow'])->name('certificate.download');
 Route::post('/certificate/download', [CertificateController::class, 'download'])->name('certificate.download.post');
+
+// JOIV Registration - Public Access (No Auth Middleware)
+Route::get('/joiv/registration', [\App\Http\Controllers\JoivRegistrationController::class, 'index'])->name('joiv.registration');
+Route::post('/joiv/registration', [\App\Http\Controllers\JoivRegistrationController::class, 'store'])->name('joiv.registration.store');
+Route::get('/joiv/registration/{registration:public_id}/detail', [\App\Http\Controllers\JoivRegistrationController::class, 'details'])->name('joiv.registration.details');
+Route::get('/joiv/registration/{registration:public_id}/payment', [\App\Http\Controllers\JoivRegistrationController::class, 'payment'])->name('joiv.payment');
+Route::post('/joiv/registration/{registration:public_id}/payment', [\App\Http\Controllers\JoivRegistrationController::class, 'processPayment'])->name('joiv.payment.process');
+Route::get('/joiv/registration/{registration:public_id}/payment/complete', [\App\Http\Controllers\JoivRegistrationController::class, 'paymentComplete'])->name('joiv.payment.complete');
+Route::get('/joiv/registration/{registration:public_id}/paypal/success', [\App\Http\Controllers\JoivRegistrationController::class, 'paypalSuccess'])->name('joiv.paypal.success');
+Route::get('/joiv/registration/{registration:public_id}/paypal/cancel', [\App\Http\Controllers\JoivRegistrationController::class, 'paypalCancel'])->name('joiv.paypal.cancel');

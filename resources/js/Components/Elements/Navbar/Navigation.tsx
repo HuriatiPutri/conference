@@ -1,5 +1,5 @@
 import { Code, Group, ScrollArea, Text, Button } from '@mantine/core';
-import { IconGauge, IconPodium, IconUsersGroup, IconLogout, IconMicrophone, IconUsers, IconRubberStamp } from '@tabler/icons-react';
+import { IconGauge, IconPodium, IconUsersGroup, IconLogout, IconMicrophone, IconUsers, IconRubberStamp, IconArticle } from '@tabler/icons-react';
 import React from 'react';
 import { router } from '@inertiajs/react';
 import { LinksGroup } from '../LinkGroup/LinksGroup';
@@ -11,6 +11,7 @@ const mockdata = [
   { label: 'Audience', icon: IconUsersGroup, link: '/audiences' },
   { label: 'Keynote', icon: IconMicrophone, link: '/keynotes' },
   { label: 'Parallel Session', icon: IconUsers, link: '/parallel-sessions' },
+  { label: 'Joiv Article', icon: IconArticle, link: '/joiv-articles' },
   {
     label: 'Letter Of Approval', icon: IconRubberStamp, links: [
       { label: 'LoA Approval', link: '/letters-of-approval' },

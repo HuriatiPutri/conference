@@ -61,7 +61,7 @@ export interface Room {
 }
 
 export interface Conference {
-  data: any;
+  data: unknown;
   id: number;
   public_id: string;
   name: string;
@@ -152,6 +152,27 @@ export interface Audiences {
   deleted_at: string;
 }
 
+export interface JoivRegistration {
+  id: number;
+  public_id: string;
+  first_name: string;
+  last_name: string;
+  email_address: string;
+  phone_number: string;
+  institution: string;
+  country: string;
+  paper_id: string | null;
+  paper_title: string;
+  full_paper_path: string | null;
+  payment_status: string;
+  payment_method: string | null;
+  payment_proof_path: string | null;
+  paid_fee: number;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
 export type PaginatedData<T> = {
   data: T[];
   links: {
@@ -160,7 +181,13 @@ export type PaginatedData<T> = {
     prev: string | null;
     next: string | null;
   };
-
+  current_page: number;
+    from: number;
+    last_page: number;
+    path: string;
+    per_page: number;
+    to: number;
+    total: number;
   meta: {
     current_page: number;
     from: number;
@@ -190,3 +217,15 @@ export type PageProps<
   };
   ziggy: Config & { location: string };
 };
+
+export interface JoivRegistrationFee {
+  id: number;
+  usd_amount: string;
+  idr_amount: string;
+  notes: string | null;
+  creator: {
+    id: number;
+    full_name: string;
+  };
+  created_at: string;
+}
