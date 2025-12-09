@@ -35,7 +35,7 @@ class JoivRegistrationController extends Controller
         $validatedData = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email_address' => 'required|email|max:255|unique:joiv_registrations,email_address',
+            'email_address' => 'required|email|max:255',
             'phone_number' => 'required|string|max:20|regex:/^[0-9]+$/',
             'institution' => 'required|string|max:255',
             'country' => 'required|string|max:2',
