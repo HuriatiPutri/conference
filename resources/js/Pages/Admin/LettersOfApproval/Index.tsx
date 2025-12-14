@@ -1,37 +1,21 @@
-import React, { useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
-import { DataTable, DataTableStateEvent } from 'primereact/datatable';
-import { Column } from 'primereact/column';
 import {
-  Container,
-  Title,
-  Button,
-  Group,
-  Text,
-  Badge,
-  Stack,
-  Select,
-  Grid,
   Card,
+  Container,
   Divider,
-  ActionIcon,
-  TextInput
+  Group,
+  Stack,
+  Text,
+  Title
 } from '@mantine/core';
-import { IconDownload, IconFileText } from '@tabler/icons-react';
+import { Column } from 'primereact/column';
+import { DataTable, DataTableStateEvent } from 'primereact/datatable';
+import React, { useState } from 'react';
 import MainLayout from '../../../Layout/MainLayout';
-import { Audiences, PageProps } from '../../../types';
-import { route } from 'ziggy-js';
-import { PRESENTATION_TYPE } from '../../../Constants';
-
-type AudienceWithLoA = Audiences & {
-  loa_status?: string;
-  loa_notes?: string;
-  loa_approved_at?: string;
-  loa_volume?: {
-    id: number;
-    volume: string;
-  };
-};
+import SummaryLoaModule from '../../../Modules/SummaryLoaModule';
+import { AudienceWithLoA, PageProps } from '../../../types';
+import FilterData from './FilterData';
+import { TableData } from './TableData';
 
 interface LettersOfApprovalPageProps extends PageProps {
   audiences: {
@@ -95,96 +79,6 @@ function LettersOfApprovalIndex() {
     }
   };
 
-  const getLoAStatusBadge = (status: string) => {
-    const statusMap = {
-      pending: { color: 'yellow', label: 'Pending' },
-      approved: { color: 'green', label: 'Approved' },
-      rejected: { color: 'red', label: 'Rejected' }
-    };
-
-    const config = statusMap[status as keyof typeof statusMap] || statusMap.pending;
-    return <Badge color={config.color} variant="filled" style={{ textWrap: 'nowrap' }}>{config.label}</Badge>;
-  };
-
-  const columns = [
-    {
-      field: 'serial_number',
-      header: 'No.',
-      style: { minWidth: '5rem' },
-      body: (_: Audiences, { rowIndex }: { rowIndex: number }) =>
-        rowIndex + 1
-    },
-    {
-      field: 'conference.name',
-      header: 'Conference',
-      style: { minWidth: '200px' }
-    },
-    {
-      field: 'participant_name',
-      header: 'Participant',
-      body: (row: AudienceWithLoA) => `${row.first_name} ${row.last_name}`
-    },
-    {
-      field: 'institution',
-      header: 'Institution',
-      style: { minWidth: '200px' }
-    },
-    {
-      field: 'paper_title',
-      header: 'Paper Title',
-      style: { minWidth: '300px' },
-      body: (row: AudienceWithLoA) => (
-        <Text lineClamp={2} size="sm">
-          {row.paper_title}
-        </Text>
-      )
-    },
-    {
-      field: 'loa_volume',
-      header: 'LoA Volume',
-      style: { minWidth: '200px' },
-      body: (row: AudienceWithLoA) => (
-        row.loa_volume ? (
-          <Badge color="blue" variant="outline">
-            {row.loa_volume.volume}
-          </Badge>
-        ) : (
-          <Text size="sm" c="dimmed" fs="italic">
-            Not assigned
-          </Text>
-        )
-      )
-    },
-    {
-      field: 'presentation_type',
-      header: 'Type',
-      body: (row: AudienceWithLoA) => PRESENTATION_TYPE[row.presentation_type as keyof typeof PRESENTATION_TYPE],
-    },
-    {
-      field: 'loa_status',
-      header: 'LoA Status',
-      style: { minWidth: '150px' },
-      body: (row: AudienceWithLoA) => getLoAStatusBadge(row.loa_status || 'pending')
-    },
-    {
-      field: 'actions',
-      header: 'Action',
-      body: (row: AudienceWithLoA) => (
-        <Group gap="xs">
-          <ActionIcon
-            variant="light"
-            color="green"
-            component="a"
-            href={route('letters-of-approval.download-form', row.id)}
-            title="Download LoA"
-          >
-            <IconDownload size={16} />
-          </ActionIcon>
-        </Group>
-      )
-    }
-  ];
-
   return (
     <Container fluid>
       <Stack gap="lg">
@@ -197,94 +91,21 @@ function LettersOfApprovalIndex() {
         </Group>
 
         {/* Summary Cards */}
-        <Grid>
-          <Grid.Col span={{ base: 12, md: 4 }}>
-            <Card padding="lg" radius="md" withBorder>
-              <Group justify="space-between">
-                <div>
-                  <Text c="dimmed" size="sm" fw={500}>Total Participants</Text>
-                  <Text fw={700} size="xl">{summary.total_participants}</Text>
-                </div>
-                <IconFileText size={24} color="blue" />
-              </Group>
-            </Card>
-          </Grid.Col>
-          <Grid.Col span={{ base: 12, md: 4 }}>
-            <Card padding="lg" radius="md" withBorder>
-              <Group justify="space-between">
-                <div>
-                  <Text c="dimmed" size="sm" fw={500}>Papers Submitted</Text>
-                  <Text fw={700} size="xl">{summary.total_papers}</Text>
-                </div>
-                <IconFileText size={24} color="green" />
-              </Group>
-            </Card>
-          </Grid.Col>
-          <Grid.Col span={{ base: 12, md: 4 }}>
-            <Card padding="lg" radius="md" withBorder>
-              <Group justify="space-between">
-                <div>
-                  <Text c="dimmed" size="sm" fw={500}>Active Conferences</Text>
-                  <Text fw={700} size="xl">{summary.total_conferences}</Text>
-                </div>
-                <IconFileText size={24} color="orange" />
-              </Group>
-            </Card>
-          </Grid.Col>
-        </Grid>
+        <SummaryLoaModule data={summary} />
 
         {/* Filters */}
-        <Card padding="lg" radius="md" withBorder>
-          <Title order={4} mb="md">Filter Participants</Title>
-          <Grid>
-            <Grid.Col span={{ base: 12, md: 3 }}>
-              <Select
-                placeholder="-- All Conferences --"
-                data={[
-                  { value: '', label: '-- All Conferences --' },
-                  ...conferences.map(conf => ({
-                    value: conf.id.toString(),
-                    label: `${conf.name} (${conf.initial})`
-                  }))
-                ]}
-                value={conferenceFilter}
-                onChange={(value) => setConferenceFilter(value || '')}
-              />
-            </Grid.Col>
-            <Grid.Col span={{ base: 12, md: 3 }}>
-              <Select
-                placeholder="-- All LoA Volumes --"
-                data={[
-                  { value: '', label: '-- All LoA Volumes --' },
-                  ...loaVolumes.map(volume => ({
-                    value: volume.id.toString(),
-                    label: volume.volume
-                  }))
-                ]}
-                value={loaVolumeFilter}
-                onChange={(value) => setLoaVolumeFilter(value || '')}
-              />
-            </Grid.Col>
-            <Grid.Col span={{ base: 12, md: 3 }}>
-              <TextInput
-                placeholder="Search by name, email, institution..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ width: '100%' }}
-              />
-            </Grid.Col>
-            <Grid.Col span={{ base: 12, md: 3 }}>
-              <Group>
-                <Button onClick={handleFilterChange} variant="filled" size="sm">
-                  Apply Filter
-                </Button>
-                <Button onClick={clearFilters} variant="outline" size="sm">
-                  Clear
-                </Button>
-              </Group>
-            </Grid.Col>
-          </Grid>
-        </Card>
+        <FilterData
+          conferences={conferences}
+          loaVolumes={loaVolumes}
+          conferenceFilter={conferenceFilter}
+          setConferenceFilter={setConferenceFilter}
+          loaVolumeFilter={loaVolumeFilter}
+          setLoaVolumeFilter={setLoaVolumeFilter}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          handleFilterChange={handleFilterChange}
+          clearFilters={clearFilters}
+        />
 
         <Divider />
 
@@ -311,7 +132,7 @@ function LettersOfApprovalIndex() {
             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
           >
-            {columns.map((col, index) => (
+            {TableData().map((col, index) => (
               <Column
                 key={index}
                 field={col.field}

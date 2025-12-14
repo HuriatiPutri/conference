@@ -17,6 +17,7 @@ interface LoaVolume {
   created_at: string;
   updated_at: string;
   audiences_count: number;
+  joiv_registrations_count: number;
   creator?: {
     id: number;
     name: string;
@@ -169,11 +170,19 @@ function LoaVolumeIndex() {
     {
       label: 'Articles Assigned',
       field: 'audiences_count',
-      renderCell: (row: LoaVolume) => (
-        <Text size="sm">
-          {row.audiences_count}
-        </Text>
-      ),
+      renderCell: (row: LoaVolume) => {
+        const totalCount = (row.audiences_count || 0) + (row.joiv_registrations_count || 0);
+        return (
+          <Stack gap={4}>
+            <Text size="sm" fw={600}>
+              {totalCount}
+            </Text>
+            <Text size="xs" c="dimmed">
+              ({row.audiences_count || 0} conf + {row.joiv_registrations_count || 0} JOIV)
+            </Text>
+          </Stack>
+        );
+      },
     },
     {
       label: 'Created By',

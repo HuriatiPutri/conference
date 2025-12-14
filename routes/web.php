@@ -136,11 +136,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\JoivArticleController::class, 'index'])->name('index');
         Route::get('/fee-settings', [\App\Http\Controllers\Admin\JoivArticleController::class, 'feeSettings'])->name('fee-settings');
         Route::post('/fee-settings', [\App\Http\Controllers\Admin\JoivArticleController::class, 'updateFee'])->name('fee-settings.update');
+        Route::delete('/fee-settings/{fee}', [\App\Http\Controllers\Admin\JoivArticleController::class, 'deleteFee'])->name('fee-settings.delete');
+        Route::get('/{joivArticle}/assign-volume', [\App\Http\Controllers\Admin\JoivArticleController::class, 'assignVolumeForm'])->name('assign-volume');
+        Route::post('/{joivArticle}/update-loa-info', [\App\Http\Controllers\Admin\JoivArticleController::class, 'updateLoaInfo'])->name('update-loa-info');
         Route::get('/{joivArticle}', [\App\Http\Controllers\Admin\JoivArticleController::class, 'show'])->name('show');
         Route::patch('/{joivArticle}/payment-status', [\App\Http\Controllers\Admin\JoivArticleController::class, 'updatePaymentStatus'])->name('updatePaymentStatus');
         Route::get('/{joivArticle}/download-paper', [\App\Http\Controllers\Admin\JoivArticleController::class, 'downloadPaper'])->name('downloadPaper');
         Route::get('/{joivArticle}/download-payment-proof', [\App\Http\Controllers\Admin\JoivArticleController::class, 'downloadPaymentProof'])->name('downloadPaymentProof');
         Route::get('/{joivArticle}/download-receipt', [\App\Http\Controllers\Admin\JoivArticleController::class, 'downloadReceipt'])->name('downloadReceipt');
+        Route::get('/{joivArticle}/download-loa', [\App\Http\Controllers\Admin\JoivArticleController::class, 'downloadLoa'])->name('downloadLoa');
         Route::get('/export/excel', [\App\Http\Controllers\Admin\JoivArticleController::class, 'export'])->name('export');
         Route::delete('/{joivArticle}', [\App\Http\Controllers\Admin\JoivArticleController::class, 'destroy'])->name('destroy');
         Route::put('/{joivArticle}/restore', [\App\Http\Controllers\Admin\JoivArticleController::class, 'restore'])->name('restore');

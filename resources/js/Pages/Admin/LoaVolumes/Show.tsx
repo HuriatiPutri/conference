@@ -31,6 +31,16 @@ interface Audience {
   };
 }
 
+interface JoivRegistration {
+  id: number;
+  first_name: string;
+  last_name: string;
+  paper_title: string;
+  loa_authors: string;
+  institution: string;
+  full_paper_path?: string;
+}
+
 interface LoaVolume {
   id: number;
   volume: string;
@@ -45,6 +55,7 @@ interface LoaVolume {
     name: string;
   };
   audiences?: Audience[];
+  joiv_registrations?: JoivRegistration[];
 }
 
 function LoaVolumeShow() {
@@ -99,7 +110,8 @@ function LoaVolumeShow() {
                   >
                     Edit
                   </Button>
-                  {loaVolume.audiences && loaVolume.audiences.length === 0 && (
+                  {loaVolume.audiences && loaVolume.audiences.length === 0 && 
+                   loaVolume.joiv_registrations && loaVolume.joiv_registrations.length === 0 && (
                     <Button
                       size="sm"
                       color="red"
@@ -142,11 +154,11 @@ function LoaVolumeShow() {
             </Stack>
           </Card>
 
-          {/* Audiences Section */}
+          {/* Conference Audiences Section */}
           <Card withBorder>
             <Stack gap="md">
               <Group justify="space-between">
-                <Title order={3}>Assigned Audiences ({loaVolume.audiences?.length || 0})</Title>
+                <Title order={3}>Conference Audiences ({loaVolume.audiences?.length || 0})</Title>
               </Group>
 
               <Divider />
@@ -204,7 +216,75 @@ function LoaVolumeShow() {
                 </Stack>
               ) : (
                 <Alert icon={<IconInfoCircle size={16} />} color="blue">
-                  No audiences have been assigned to this volume yet.
+                  No conference audiences have been assigned to this volume yet.
+                </Alert>
+              )}
+            </Stack>
+          </Card>
+
+          {/* JOIV Registrations Section */}
+          <Card withBorder>
+            <Stack gap="md">
+              <Group justify="space-between">
+                <Title order={3}>JOIV Article Registrations ({loaVolume.joiv_registrations?.length || 0})</Title>
+              </Group>
+
+              <Divider />
+
+              {loaVolume.joiv_registrations && loaVolume.joiv_registrations.length > 0 ? (
+                <Stack gap="md">
+                  {loaVolume.joiv_registrations.map((registration) => (
+                    <Card key={registration.id} withBorder padding="md" bg="gray.0">
+                      <Stack gap="sm">
+                        <Group justify="space-between">
+                          <div>
+                            <Text fw={600} size="md">
+                              {registration.first_name} {registration.last_name}
+                            </Text>
+                            <Text size="sm" c="dimmed">
+                              {registration.institution}
+                            </Text>
+                          </div>
+                          {registration.full_paper_path && (
+                            <Button
+                              size="xs"
+                              variant="outline"
+                              leftSection={<IconDownload size={14} />}
+                              component="a"
+                              href={`/storage/${registration.full_paper_path}`}
+                              target="_blank"
+                            >
+                              Paper
+                            </Button>
+                          )}
+                        </Group>
+
+                        <div>
+                          <Text fw={500} size="sm" mb={4}>
+                            Paper Title:
+                          </Text>
+                          <Text size="sm" style={{ fontStyle: 'italic' }}>
+                            &ldquo;{registration.paper_title}&rdquo;
+                          </Text>
+                        </div>
+
+                        {registration.loa_authors && (
+                          <div>
+                            <Text fw={500} size="sm" mb={4}>
+                              Authors:
+                            </Text>
+                            <Text size="sm">
+                              {registration.loa_authors}
+                            </Text>
+                          </div>
+                        )}
+                      </Stack>
+                    </Card>
+                  ))}
+                </Stack>
+              ) : (
+                <Alert icon={<IconInfoCircle size={16} />} color="blue">
+                  No JOIV articles have been assigned to this volume yet.
                 </Alert>
               )}
             </Stack>

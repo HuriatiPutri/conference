@@ -1,10 +1,11 @@
 import { router, useForm, usePage } from '@inertiajs/react';
-import { Button, Card, Container, Divider, Group, Stack, Text, Title, Badge, Grid, Select } from '@mantine/core';
+import { Button, Card, Container, Divider, Group, Stack, Text, Title, Grid, Select } from '@mantine/core';
 import { IconDownload, IconFileText, IconReceipt } from '@tabler/icons-react';
 import React, { useState } from 'react';
 import { route } from 'ziggy-js';
 import MainLayout from '../../../Layout/MainLayout';
 import { formatCurrency } from '../../../utils';
+import { getStatusBadge } from '../../../Components/BadgeStatus';
 
 interface JoivRegistration {
   id: number;
@@ -59,18 +60,6 @@ function JoivArticleShow() {
 
   const handleDownloadReceipt = () => {
     window.location.href = route('joiv-articles.downloadReceipt', registration.id);
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { color: string; label: string }> = {
-      paid: { color: 'green', label: 'Paid' },
-      pending_payment: { color: 'yellow', label: 'Pending' },
-      cancelled: { color: 'red', label: 'Cancelled' },
-      refunded: { color: 'gray', label: 'Refunded' },
-    };
-
-    const statusInfo = statusMap[status] || { color: 'gray', label: status };
-    return <Badge color={statusInfo.color} size="lg">{statusInfo.label}</Badge>;
   };
 
   const getPaymentMethodText = (method: string | null) => {

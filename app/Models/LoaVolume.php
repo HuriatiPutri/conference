@@ -45,4 +45,12 @@ class LoaVolume extends Model
     {
         return $this->hasMany(Audience::class, 'loa_volume_id');
     }
+
+    /**
+     * Get all JOIV registrations that use this LoA Volume
+     */
+    public function joivRegistrations()
+    {
+        return $this->hasMany(JoivRegistration::class, 'loa_volume_id');
+    }
 }

@@ -152,6 +152,7 @@ export default function FeeSettings({ currentFee, feeHistory }: Readonly<FeeSett
                   <Table.Th>IDR Amount</Table.Th>
                   <Table.Th>Changed By</Table.Th>
                   <Table.Th>Notes</Table.Th>
+                  <Table.Th>Actions</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
@@ -172,6 +173,40 @@ export default function FeeSettings({ currentFee, feeHistory }: Readonly<FeeSett
                       <Table.Td>{fee.creator.full_name}</Table.Td>
                       <Table.Td>
                         {fee.notes || <Text c="dimmed">-</Text>}
+                      </Table.Td>
+                      <Table.Td>
+                        <Button
+                          color="red"
+                          variant="outline"
+                          size="xs"
+                          onClick={() => {
+                            if (confirm('Are you sure you want to delete this fee record?')) {
+                              router.delete(
+                                route('joiv-articles.fee-settings.delete', fee.id),
+                                {
+                                  onSuccess: () => {
+                                    notifications.show({
+                                      title: 'Deleted',
+                                      message: 'Fee record has been deleted',
+                                      color: 'green',
+                                      icon: <IconCheck size={18} />,
+                                    });
+                                  },
+                                  onError: () => {
+                                    notifications.show({
+                                      title: 'Error',
+                                      message: 'Failed to delete fee record',
+                                      color: 'red',
+                                      icon: <IconX size={18} />,
+                                    });
+                                  },
+                                }
+                              );
+                            }
+                          }}
+                        >
+                          Delete
+                        </Button>
                       </Table.Td>
                     </Table.Tr>
                   ))

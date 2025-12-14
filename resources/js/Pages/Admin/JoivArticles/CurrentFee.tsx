@@ -23,7 +23,7 @@ interface CurrentFeeProps {
 
 export default function CurrentFee({ currentFee, isShowEdit }: CurrentFeeProps) {
   return (
-    <Card shadow="sm" padding="lg" radius="md" withBorder>
+    <Card padding="lg" radius="md" withBorder>
       <Flex justify="space-between" align="center" mb="md">
         <Title order={4} mb="md">Current Registration Fee</Title>
         {isShowEdit && (

@@ -55,7 +55,8 @@ class JoivArticleController extends Controller
             });
         }
 
-        $registrations = $query->orderBy('created_at', 'desc')
+        $registrations = $query->with('loaVolume')
+            ->orderBy('created_at', 'desc')
             ->paginate($perPage)
             ->appends(Request::all());
 
@@ -102,6 +103,56 @@ class JoivArticleController extends Controller
         return Inertia::render('Admin/JoivArticles/Show', [
             'registration' => $joivArticle,
         ]);
+    }
+
+    /**
+     * Show form to assign volume and authors before download LOA.
+     */
+    public function assignVolumeForm(JoivRegistration $joivArticle): Response
+    {
+        // Check if participant is eligible
+        if ($joivArticle->payment_status !== 'paid') {
+            abort(404, 'Participant not eligible for Letter of Approval');
+        }
+
+        $joivArticle->load(['loaVolume']);
+
+        // Get all available LoA Volumes
+        $loaVolumes = \App\Models\LoaVolume::select('id', 'volume')
+            ->orderBy('volume')
+            ->get();
+
+        return Inertia::render('Admin/JoivArticles/AssignVolume', [
+            'registration' => $joivArticle->toArray(),
+            'loaVolumes' => $loaVolumes,
+        ]);
+    }
+
+    /**
+     * Update LoA authors and volume information.
+     */
+    public function updateLoaInfo(JoivRegistration $joivArticle, \Illuminate\Http\Request $request): RedirectResponse
+    {
+        // Validate input
+        $request->validate([
+            'authors' => 'required|string|max:500',
+            'loa_volume_id' => 'required|exists:loa_volume,id',
+        ]);
+
+        // Check if participant is eligible
+        if ($joivArticle->payment_status !== 'paid') {
+            abort(404, 'Participant not eligible for Letter of Approval');
+        }
+
+        // Update LoA information
+        $joivArticle->update([
+            'loa_authors' => $request->authors,
+            'loa_volume_id' => $request->loa_volume_id,
+            'loa_approved_at' => now(),
+            'updated_by' => Auth::id(),
+        ]);
+
+        return redirect()->back()->with('success', 'LoA information updated successfully. You can now download the letter.');
     }
 
     /**
@@ -169,14 +220,64 @@ class JoivArticleController extends Controller
     public function downloadReceipt(JoivRegistration $joivArticle)
     {
         if ($joivArticle->payment_status !== 'paid') {
-            return redirect()->back()->with('error', 'Receipt only available for paid registrations.');
+            abort(404, 'Receipt only available for paid registrations');
         }
 
-        $pdf = PDF::loadView('joiv.receipt', [
+        $pdf = Pdf::loadView('joiv.receipt', [
             'registration' => $joivArticle,
         ]);
 
         return $pdf->download('JOIV_Receipt_' . $joivArticle->public_id . '.pdf');
+    }
+
+    /**
+     * Download Letter of Approval for JOIV article
+     */
+    public function downloadLoa(JoivRegistration $joivArticle)
+    {
+        // Check if participant is eligible
+        if ($joivArticle->payment_status !== 'paid') {
+            abort(404, 'Participant not eligible for Letter of Approval');
+        }
+
+        // Check if LoA info is complete
+        if (!$joivArticle->loa_authors || !$joivArticle->loa_volume_id) {
+            return redirect()->back()->withErrors(['error' => 'Please fill in the authors and volume information first.']);
+        }
+
+        try {
+            $joivArticle->load(['loaVolume']);
+            
+            $data = [
+                'participant_name' => $joivArticle->first_name . ' ' . $joivArticle->last_name,
+                'institution' => $joivArticle->institution ?? 'Unknown Institution',
+                'paper_title' => $joivArticle->paper_title ?? 'Untitled Paper',
+                'authors' => $joivArticle->loa_authors,
+                'joiv_volume' => $joivArticle->loaVolume->volume ?? 'Volume Not Set',
+                'conference_name' => 'Journal on Informatics Visualization',
+                'conference_initial' => 'JOIV',
+                'conference_date' => now(),
+                'conference_city' => 'Online',
+                'conference_country' => 'International',
+                'presentation_type' => 'journal article',
+                'registration_number' => $joivArticle->public_id ?? 'REG-' . $joivArticle->id,
+                'number_of_letter' => 'No: SOTVI/LoA/' . date('Y').'/' . ($joivArticle->public_id),
+                'issue_date' => $joivArticle->loa_approved_at ? \Carbon\Carbon::parse($joivArticle->loa_approved_at)->format('d F Y') : now()->format('d F Y'),
+                'signature_path' => storage_path('app/public/images/loa_signature.png'),
+                'joiv_logo_path' => storage_path('app/public/images/joiv_logo.png'),
+                'sotvi_logo_path' => storage_path('app/public/images/sotvi_logo.png'),
+                'scopus_analitic_path' => storage_path('app/public/images/scopus.png'),
+            ];
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('letters-of-approval.template-clean', compact('data'))
+                      ->setPaper('A4', 'portrait');
+
+            $filename = "JOIV-Acceptance-Letter-{$joivArticle->first_name}-{$joivArticle->last_name}.pdf";
+
+            return $pdf->stream($filename);
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Failed to generate PDF: ' . $e->getMessage()]);
+        }
     }
 
     /**
@@ -234,5 +335,11 @@ class JoivArticleController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Registration fee updated successfully.');
+    }
+
+    public function deleteFee(JoivRegistrationFee $fee): RedirectResponse
+    {
+        $fee->delete();
+        return redirect()->back()->with('success', 'Registration fee record deleted successfully.');
     }
 }

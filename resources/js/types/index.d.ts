@@ -61,7 +61,7 @@ export interface Room {
 }
 
 export interface Conference {
-  data: unknown;
+  data: Conference;
   id: number;
   public_id: string;
   name: string;
@@ -96,6 +96,7 @@ export interface KeyNote {
   audience_id: number;
   first_name: string;
   last_name: string;
+  name_of_participant: string;
   feedback: string;
   created_at: string;
   updated_at: string;
@@ -111,6 +112,7 @@ export interface ParallelSession {
   audience_id: number;
   first_name: string;
   last_name: string;
+  name_of_presenter: string;
   room_id: number;
   paper_title: string;
   created_at: string;
@@ -152,6 +154,16 @@ export interface Audiences {
   deleted_at: string;
 }
 
+export type AudienceWithLoA = Audiences & {
+  loa_status?: string;
+  loa_notes?: string;
+  loa_approved_at?: string;
+  loa_volume?: {
+    id: number;
+    volume: string;
+  };
+};
+
 export interface JoivRegistration {
   id: number;
   public_id: string;
@@ -163,6 +175,13 @@ export interface JoivRegistration {
   country: string;
   paper_id: string | null;
   paper_title: string;
+  loa_authors: string | null;
+  loa_volume_id: number | null;
+  loa_approved_at: string | null;
+  loa_volume?: {
+    id: number;
+    volume: string;
+  };
   full_paper_path: string | null;
   payment_status: string;
   payment_method: string | null;
