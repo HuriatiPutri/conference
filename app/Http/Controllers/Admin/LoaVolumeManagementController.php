@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\LoaVolume;
+use App\Exports\LoaVolumeArticlesExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request as RequestFacade;
+use Maatwebsite\Excel\Facades\Excel;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -175,5 +177,16 @@ class LoaVolumeManagementController extends Controller
         $loaVolume->delete();
         
         return redirect()->back()->with('success', 'LoA Volume deleted successfully.');
+    }
+
+    /**
+     * Export articles in this volume to Excel
+     */
+    public function exportArticles(LoaVolume $loaVolume)
+    {
+        // Generate filename
+        $filename = 'LoA_Volume_' . str_replace([' ', '/', '\\'], '_', $loaVolume->volume) . '_Articles_' . now()->format('Y-m-d') . '.xlsx';
+        
+        return Excel::download(new LoaVolumeArticlesExport($loaVolume), $filename);
     }
 }

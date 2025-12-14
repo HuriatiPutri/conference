@@ -155,6 +155,7 @@ export const TableData = ({ handleUpdateStatus, handleView }: DataProps) => [
           color="green"
           handleClick={() => handleView(row)}
           icon="pi pi-fw pi-eye"
+          title="View Details"
         />
         {row.payment_status === 'paid' && (
           <ActionButtonExt
@@ -169,6 +170,7 @@ export const TableData = ({ handleUpdateStatus, handleView }: DataProps) => [
             color="blue"
             handleClick={() => handleUpdateStatus(row)}
             icon="pi pi-fw pi-credit-card"
+            title="Update Payment Status"
           />
         )}
       </Flex>

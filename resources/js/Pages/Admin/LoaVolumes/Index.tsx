@@ -1,5 +1,5 @@
 import { router, usePage } from '@inertiajs/react';
-import { ActionIcon, Button, Card, Container, Flex, Grid, Group, Stack, Text, Title } from '@mantine/core';
+import { ActionIcon, Card, Container, Grid, Group, Stack, Text, Title } from '@mantine/core';
 import { IconPlus } from '@tabler/icons-react';
 import { Column } from 'primereact/column';
 import { DataTable, DataTableStateEvent } from 'primereact/datatable';
@@ -9,7 +9,7 @@ import { InputText } from 'primereact/inputtext';
 import React, { useEffect, useRef, useState } from 'react';
 import { route } from 'ziggy-js';
 import MainLayout from '../../../Layout/MainLayout';
-import { ActionButtonExt } from '../Conferences/ExtendComponent';
+import { TableData } from './TableData';
 
 interface LoaVolume {
   id: number;
@@ -152,83 +152,6 @@ function LoaVolumeIndex() {
     );
   };
 
-  const columns = [
-    {
-      field: 'serial_number',
-      label: 'No.',
-      width: '10px',
-      renderCell: (_: LoaVolume, { rowIndex }: { rowIndex: number }) =>
-        rowIndex + 1
-    },
-    {
-      label: 'Volume',
-      field: 'volume',
-      sortable: true,
-      width: '10%',
-      className: 'text-wrap w-40',
-    },
-    {
-      label: 'Articles Assigned',
-      field: 'audiences_count',
-      renderCell: (row: LoaVolume) => {
-        const totalCount = (row.audiences_count || 0) + (row.joiv_registrations_count || 0);
-        return (
-          <Stack gap={4}>
-            <Text size="sm" fw={600}>
-              {totalCount}
-            </Text>
-            <Text size="xs" c="dimmed">
-              ({row.audiences_count || 0} conf + {row.joiv_registrations_count || 0} JOIV)
-            </Text>
-          </Stack>
-        );
-      },
-    },
-    {
-      label: 'Created By',
-      field: 'creator.name',
-      renderCell: (row: LoaVolume) => (
-        <Text size="sm">
-          {row.creator?.name || 'System'}
-        </Text>
-      ),
-    },
-    {
-      label: 'Created At',
-      field: 'created_at',
-      renderCell: (row: LoaVolume) => (
-        <Text size="sm" c="blue" style={{ cursor: 'pointer' }}>
-          {new Date(row.created_at).toLocaleDateString('id-ID')}
-        </Text>
-      ),
-    },
-    {
-      label: 'Actions',
-      renderCell: (row: LoaVolume) => (
-        <Flex gap={'xs'} justify="center" align="center">
-          <ActionButtonExt
-            color="blue"
-            handleClick={() => router.get(route('loa.loa-volumes.edit', row.id))}
-            icon="pi pi-fw pi-pencil"
-          />
-          <ActionButtonExt
-            color="green"
-            handleClick={() => router.get(route('loa.loa-volumes.show', row.id))}
-            icon="pi pi-fw pi-eye"
-          />
-          {row.audiences_count === 0 && (
-            <ActionButtonExt
-              color="red"
-              handleClick={() => handleDelete(row)}
-              icon="pi pi-fw pi-trash"
-            />
-          )}
-        </Flex>
-      ),
-      style: { width: '10rem' }
-    }
-  ];
-
   return (
     <MainLayout title='Volume'>
       <Container size="xl">
@@ -291,7 +214,7 @@ function LoaVolumeIndex() {
               currentPageReportTemplate="{first} to {last} of {totalRecords}"
               rowsPerPageOptions={[15, 25, 50]}
             >
-              {columns.map((col, index) => (
+              {TableData({ handleDelete }).map((col, index) => (
                 <Column
                   key={index}
                   field={col.field}

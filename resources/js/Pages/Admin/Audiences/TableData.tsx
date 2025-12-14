@@ -183,16 +183,12 @@ export const TableData = ({ _handleRedirectWa, handlePaymentStatusClick }: DataP
     name: 'action',
     renderCell: (row: Audiences) => (
       <Stack gap={'xs'} justify="center" align="center">
-        {/* <ActionButtonExt
-            color="green"
-            handleClick={() => (window.location.href = `/audiences/${row.id}/show`)}
-            icon="pi pi-fw pi-eye"
-          /> */}
         {row.payment_method === 'transfer_bank' && (
           <ActionButtonExt
             color="blue"
             handleClick={() => handlePaymentStatusClick(row)}
             icon="pi pi-fw pi-credit-card"
+            title="Update Payment Status"
           />
         )}
       </Stack>
