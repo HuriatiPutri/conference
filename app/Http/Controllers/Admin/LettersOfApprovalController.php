@@ -98,7 +98,7 @@ class LettersOfApprovalController extends Controller
     /**
      * Show form to input authors and JOIV details before download.
      */
-    public function downloadForm(Audience $audience): Response
+    public function assignVolumeForm(Audience $audience): Response
     {
         // Check if participant is eligible
         if ($audience->payment_status !== 'paid') {
@@ -112,7 +112,7 @@ class LettersOfApprovalController extends Controller
             ->orderBy('volume')
             ->get();
 
-        return Inertia::render('Admin/LettersOfApproval/DownloadForm', [
+        return Inertia::render('Admin/LettersOfApproval/AssignVolume', [
             'audience' => $audience->toArray(),
             'loaVolumes' => $loaVolumes,
         ]);

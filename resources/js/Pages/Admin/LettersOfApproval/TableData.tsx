@@ -96,7 +96,7 @@ export const TableData = () => [
       <Group gap="xs">
         <ActionButtonExt
             color="violet"
-            handleClick={() => window.location.href = route('letters-of-approval.download', row.id)}
+            handleClick={() => window.location.href = route('letters-of-approval.assign-volume', row.id)}
             icon="pi pi-fw pi-book"
             title="Assign Volume"
           />
