@@ -219,15 +219,36 @@ class JoivArticleController extends Controller
      */
     public function downloadReceipt(JoivRegistration $joivArticle)
     {
+        // Check if payment is completed
         if ($joivArticle->payment_status !== 'paid') {
-            abort(404, 'Receipt only available for paid registrations');
+            return redirect()->back()->withErrors(['error' => 'Receipt can only be downloaded for paid registrations']);
         }
 
-        $pdf = Pdf::loadView('joiv.receipt', [
-            'registration' => $joivArticle,
-        ]);
+        // Prepare data for receipt (same format as audience receipt)
+        $data = [
+            'name' => $joivArticle->first_name . ' ' . $joivArticle->last_name,
+            'address' => $joivArticle->institution . ', ' . $joivArticle->country,
+            'paper_title' => $joivArticle->paper_title ?? 'N/A',
+            'conference' => 'JOIV',
+            'conference_name' => 'JOIV: International Journal on Informatics Visualization',
+            'conference_cover' => null,
+            'date' => now()->format('Y'),
+            'amount' => $joivArticle->country === 'ID' ? 'Rp' . number_format($joivArticle->paid_fee, 0, ',', '.') : '$' . number_format($joivArticle->paid_fee, 2),
+            'payment_method' => $joivArticle->payment_method === 'transfer_bank' ? 'Bank Transfer' : 'Payment Gateway',
+            'payment_date' => $joivArticle->updated_at->format('d M Y H:i'),
+            'invoice_id' => 'Ref. No.' . strtoupper($joivArticle->public_id) . '/PAID/JOIV/' . now()->format('Y'),
+            'signature' => storage_path('app/public/images/signature.png'),
+        ];
 
-        return $pdf->download('JOIV_Receipt_' . $joivArticle->public_id . '.pdf');
+        try {
+            // Generate PDF using the same template as audience receipt
+            $pdf = Pdf::loadView('receipt.joiv', compact('data'))
+                      ->setPaper('A4', 'portrait');
+
+            return $pdf->stream("receipt-{$data['name']}.pdf");
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Failed to generate receipt: ' . $e->getMessage()]);
+        }
     }
 
     /**

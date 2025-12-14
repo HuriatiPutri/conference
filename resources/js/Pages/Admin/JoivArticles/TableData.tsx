@@ -122,12 +122,29 @@ export const TableData = ({ handleUpdateStatus, handleView }: DataProps) => [
   {
     label: 'Payment Status',
     name: 'payment_status',
-    renderCell: (row: JoivRegistration) => getStatusBadge(row.payment_status),
+    renderCell: (row: JoivRegistration) => (
+      <Stack>
+        {getStatusBadge(row.payment_status)}
+        {row.payment_status === 'paid' && (
+          <Button
+            component="a"
+            size="xs"
+            variant="light"
+            leftSection={<i className="pi pi-download" />}
+            href={route('joiv-articles.downloadReceipt', row.id)}
+            target="_blank"
+          >
+            Download Receipt
+          </Button>
+        )}
+      </Stack>
+    )
+      
   },
   {
     label: 'paid_fee',
     name: 'paid_fee',
-    renderCell: (row: JoivRegistration) => formatCurrency(row.paid_fee, 'idr'),
+    renderCell: (row: JoivRegistration) => formatCurrency(row.paid_fee, row.country === 'ID' ? 'idr' : 'usd'),
   },
   {
     label: 'Actions',
