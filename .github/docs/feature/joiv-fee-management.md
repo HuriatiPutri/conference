@@ -18,15 +18,15 @@ The JOIV Registration Fee Management system allows administrators to dynamically
 
 ### `joiv_registration_fees` Table
 
-| Column       | Type            | Description                                                       |
-| ------------ | --------------- | ----------------------------------------------------------------- |
-| `id`         | bigint          | Primary key                                                       |
-| `usd_amount` | decimal(10,2)   | Registration fee amount in USD for international participants     |
-| `idr_amount` | decimal(15,2)   | Registration fee amount in IDR for Indonesian participants        |
-| `notes`      | text (nullable) | Notes about the fee change                                        |
-| `created_by` | bigint          | Foreign key to users table (who created this fee)                 |
-| `created_at` | timestamp       | When this fee was created                                         |
-| `updated_at` | timestamp       | Last update timestamp                                             |
+| Column       | Type            | Description                                                   |
+| ------------ | --------------- | ------------------------------------------------------------- |
+| `id`         | bigint          | Primary key                                                   |
+| `usd_amount` | decimal(10,2)   | Registration fee amount in USD for international participants |
+| `idr_amount` | decimal(15,2)   | Registration fee amount in IDR for Indonesian participants    |
+| `notes`      | text (nullable) | Notes about the fee change                                    |
+| `created_by` | bigint          | Foreign key to users table (who created this fee)             |
+| `created_at` | timestamp       | When this fee was created                                     |
+| `updated_at` | timestamp       | Last update timestamp                                         |
 
 **Indexes:**
 

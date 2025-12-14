@@ -1,5 +1,5 @@
 import { router, usePage } from '@inertiajs/react';
-import { ActionIcon, Button, Card, Container, Flex, Group, Select, Stack, Text, Title } from '@mantine/core';
+import { ActionIcon, Card, Container, Flex, Group, Stack, Text, Title } from '@mantine/core';
 import { Column } from 'primereact/column';
 import { DataTable, DataTableStateEvent } from 'primereact/datatable';
 import { IconField } from 'primereact/iconfield';
@@ -7,6 +7,8 @@ import { InputIcon } from 'primereact/inputicon';
 import { InputText } from 'primereact/inputtext';
 import React, { useEffect, useRef, useState } from 'react';
 import MainLayout from '../../../Layout/MainLayout';
+import FilterData from './FilterData';
+import { TableData } from './TableData';
 
 interface KeyNote {
   id: number;
@@ -97,7 +99,7 @@ function KeynoteIndex() {
 
   const clearFilters = () => {
     setGlobalFilterValue('');
-    '/keynotes';
+    router.visit('/keynotes');
   };
 
   const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,64 +152,6 @@ function KeynoteIndex() {
     );
   };
 
-  const columns = [
-    {
-      field: 'serial_number',
-      label: 'No.',
-      width: '10px',
-      renderCell: (_: KeyNote, { rowIndex }: { rowIndex: number }) =>
-        rowIndex + 1
-    },
-    {
-      label: 'Conference',
-      name: 'audience.conference.name',
-      sortable: true,
-      width: '10%',
-      className: 'text-wrap w-40',
-      renderCell: (row: KeyNote) => (
-        <Text size="sm" fw={500} style={{ textWrap: 'wrap' }}>
-          {row.audience.conference.name} ({row.audience.conference.initial})
-        </Text>
-      ),
-    },
-    {
-      label: 'Presenter Name',
-      name: 'name_of_participant',
-      renderCell: (row: KeyNote) => (
-        <Text size="sm">
-          {row.name_of_participant}
-        </Text>
-      ),
-    },
-    {
-      label: 'Email',
-      name: 'audience.email',
-      renderCell: (row: KeyNote) => (
-        <Text size="sm" c="blue" style={{ cursor: 'pointer' }}>
-          {row.audience.email}
-        </Text>
-      ),
-    },
-    {
-      label: 'Feedback',
-      name: 'feedback',
-      renderCell: (row: KeyNote) => (
-        <Text size="sm" lineClamp={2} style={{ maxWidth: 300 }}>
-          {row.feedback}
-        </Text>
-      ),
-    },
-    {
-      label: 'Submitted Date',
-      name: 'created_at',
-      sortable: true,
-      renderCell: (row: KeyNote) => (
-        <Text size="sm">
-          {new Date(row.created_at).toLocaleDateString('id-ID')}
-        </Text>
-      ),
-    },
-  ];
 
   return (
     <Container fluid>
@@ -219,29 +163,13 @@ function KeynoteIndex() {
             <Text c="dimmed">Manage keynotes, settings, and configurations</Text>
           </div>
         </Group>
-        <Card padding="lg" radius="md" withBorder>
-          <Title order={4} mb="md">Filter Keynote Data</Title>
-          <Group gap="md">
-            <Select
-              placeholder="-- All Conferences --"
-              data={[
-                { value: '', label: '-- All Conferences --' },
-                ...conferences.map(conf => ({ value: conf.id.toString(), label: conf.name }))
-              ]}
-              value={conferenceFilter}
-              onChange={(value) => setConferenceFilter(value || '')}
-              style={{ minWidth: 300 }}
-            />
-
-            <Button onClick={handleFilterChange} variant="filled">
-              Apply Filter
-            </Button>
-
-            <Button onClick={clearFilters} variant="outline">
-              Reset
-            </Button>
-          </Group>
-        </Card>
+        <FilterData
+          conferences={conferences}
+          conferenceFilter={conferenceFilter}
+          setConferenceFilter={setConferenceFilter}
+          handleFilterChange={handleFilterChange}
+          clearFilters={clearFilters}
+        />
         <Card padding="lg" radius="md" withBorder>
           {/* Pagination Info */}
           <Text size="sm" c="dimmed" mb="md">
@@ -265,7 +193,7 @@ function KeynoteIndex() {
             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
           >
-            {columns.map(col => (
+            {TableData().map(col => (
               <Column
                 key={col.name}
                 field={col.name}

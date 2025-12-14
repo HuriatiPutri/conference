@@ -21,10 +21,13 @@ class LoaVolumeManagementController extends Controller
         $perPage = RequestFacade::input('per_page', 15);
         $search = RequestFacade::input('search', '');
         
-        // Build query with filters and audience count
+        // Build query with filters and audience count (including JOIV registrations)
         $query = LoaVolume::query()
             ->with(['creator', 'updater'])
-            ->withCount('audiences');
+            ->withCount([
+                'audiences',
+                'joivRegistrations'
+            ]);
 
         // Apply search filter
         if (!empty($search)) {
@@ -106,6 +109,12 @@ class LoaVolumeManagementController extends Controller
                       ->where('payment_status', 'paid')
                       ->whereNotNull('paper_title')
                       ->select('id', 'first_name', 'last_name', 'paper_title', 'loa_authors', 'institution', 'conference_id', 'loa_volume_id', 'full_paper_path')
+                      ->orderBy('first_name');
+            },
+            'joivRegistrations' => function($query) {
+                $query->where('payment_status', 'paid')
+                      ->whereNotNull('paper_title')
+                      ->select('id', 'first_name', 'last_name', 'paper_title', 'loa_authors', 'institution', 'loa_volume_id', 'full_paper_path')
                       ->orderBy('first_name');
             }
         ]);

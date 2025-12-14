@@ -21,6 +21,9 @@ class JoivRegistration extends Model
         'country',
         'paper_id',
         'paper_title',
+        'loa_authors',
+        'loa_volume_id',
+        'loa_approved_at',
         'full_paper_path',
         'payment_status',
         'payment_method',
@@ -32,7 +35,7 @@ class JoivRegistration extends Model
         'updated_by',
     ];
 
-    protected $dates = ['deleted_at'];
+    protected $dates = ['deleted_at', 'loa_approved_at'];
 
     public function resolveRouteBinding($value, $field = null)
     {
@@ -53,6 +56,11 @@ class JoivRegistration extends Model
     public function invoiceHistories(): HasMany
     {
         return $this->hasMany(InvoiceHistory::class, 'joiv_registration_id');
+    }
+
+    public function loaVolume(): BelongsTo
+    {
+        return $this->belongsTo(LoaVolume::class, 'loa_volume_id');
     }
 
     // Helper methods

@@ -1,6 +1,5 @@
 import { router, usePage } from '@inertiajs/react';
-import { Button, Card, Container, Grid, Group, Select, Stack, Text, Title, Badge, ActionIcon, Flex } from '@mantine/core';
-import { IconCircleCheckFilled, IconCircleDashed, IconRestore, IconXboxXFilled } from '@tabler/icons-react';
+import { ActionIcon, Card, Container, Flex, Stack, Text, Title } from '@mantine/core';
 import { Column } from 'primereact/column';
 import { DataTable, DataTableStateEvent } from 'primereact/datatable';
 import { IconField } from 'primereact/iconfield';
@@ -8,13 +7,13 @@ import { InputIcon } from 'primereact/inputicon';
 import { InputText } from 'primereact/inputtext';
 import React, { useEffect, useRef, useState } from 'react';
 import { route } from 'ziggy-js';
-import MainLayout from '../../../Layout/MainLayout';
-import { JoivRegistrationFee, PaginatedData } from '../../../types';
-import { formatCurrency } from '../../../utils';
-import { ActionButtonExt } from '../Conferences/ExtendComponent';
-import { PAYMENT_METHOD } from '../../../Constants';
 import { JoivPaymentStatusModal } from '../../../Components/Modals/JoivPaymentStatusModal';
+import MainLayout from '../../../Layout/MainLayout';
+import SummaryModule from '../../../Modules/SummaryModule';
+import { JoivRegistrationFee, PaginatedData } from '../../../types';
 import CurrentFee from './CurrentFee';
+import { FilterData } from './FilterData';
+import { TableData } from './TableData';
 
 interface JoivRegistration {
   id: number;
@@ -27,6 +26,13 @@ interface JoivRegistration {
   country: string;
   paper_id: string | null;
   paper_title: string;
+  loa_authors: string | null;
+  loa_volume_id: number | null;
+  loa_approved_at: string | null;
+  loa_volume?: {
+    id: number;
+    volume: string;
+  };
   full_paper_path: string | null;
   payment_status: string;
   payment_method: string | null;
@@ -148,18 +154,6 @@ function JoivArticleIndex() {
     setModalOpened(true);
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { color: string; label: string }> = {
-      paid: { color: 'green', label: 'Paid' },
-      pending_payment: { color: 'yellow', label: 'Pending' },
-      cancelled: { color: 'red', label: 'Cancelled' },
-      refunded: { color: 'gray', label: 'Refunded' },
-    };
-
-    const statusInfo = statusMap[status] || { color: 'gray', label: status };
-    return <Badge color={statusInfo.color}>{statusInfo.label}</Badge>;
-  };
-
   const renderHeader = () => {
     return (
       <Flex justify={'space-between'} direction={{ base: 'column', sm: 'row' }} gap={'md'}>
@@ -210,103 +204,6 @@ function JoivArticleIndex() {
     }
   }
 
-  const renderSummaryCards = (summary: {
-    paid: number;
-    pending: number;
-    cancelled: number;
-    refunded: number;
-  }) => {
-    return (
-      <Grid>
-        <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-          <Card padding="lg" radius="md" withBorder>
-            <Group justify="space-between">
-              <div>
-                <Text c="dimmed" size="sm" fw={500}>Total Paid Participants</Text>
-                <Text fw={700} size="xl">{summary.paid}</Text>
-              </div>
-              <IconCircleCheckFilled size={24} color="green" />
-            </Group>
-          </Card>
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-          <Card padding="lg" radius="md" withBorder>
-            <Group justify="space-between">
-              <div>
-                <Text c="dimmed" size="sm" fw={500}>Total Pending Participants</Text>
-                <Text fw={700} size="xl">{summary.pending}</Text>
-              </div>
-              <IconCircleDashed size={24} color="orange" />
-            </Group>
-          </Card>
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-          <Card padding="lg" radius="md" withBorder>
-            <Group justify="space-between">
-              <div>
-                <Text c="dimmed" size="sm" fw={500}>Total Cancelled Participants</Text>
-                <Text fw={700} size="xl">{summary.cancelled}</Text>
-              </div>
-              <IconXboxXFilled size={24} color="red" />
-            </Group>
-          </Card>
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-          <Card padding="lg" radius="md" withBorder>
-            <Group justify="space-between">
-              <div>
-                <Text c="dimmed" size="sm" fw={500}>Total Refunded Participants</Text>
-                <Text fw={700} size="xl">{summary.refunded}</Text>
-              </div>
-              <IconRestore size={24} color="gray" />
-            </Group>
-          </Card>
-        </Grid.Col>
-      </Grid>
-    )
-  };
-
-  const renderFilterCards = () => {
-    return (
-      <Card padding="lg" radius="md" withBorder>
-        <Title order={4} mb="md">Filter Audience Data</Title>
-        <Grid>
-          <Grid.Col span={{ base: 12, md: 4 }}>
-            <Select
-              placeholder="Filter by Country"
-              data={[
-                { value: '', label: '-- All Countries --' },
-                ...countries.map(c => ({ value: c, label: c }))
-              ]}
-              value={countryFilter}
-              onChange={(value) => setCountryFilter(value || '')}
-              clearable
-            />
-          </Grid.Col>
-          <Grid.Col span={{ base: 12, md: 4 }}>
-            <Select
-              placeholder="Filter by Status"
-              data={[
-                { value: '', label: '-- All Payment Status --' },
-                { value: 'paid', label: 'Paid' },
-                { value: 'pending_payment', label: 'Pending' },
-                { value: 'cancelled', label: 'Cancelled' },
-                { value: 'refunded', label: 'Refunded' },
-              ]}
-              value={paymentStatusFilter}
-              onChange={(value) => setPaymentStatusFilter(value || '')}
-              clearable
-            />
-          </Grid.Col>
-          <Grid.Col span={{ base: 12, md: 3 }}>
-            <Button onClick={() => handleFilterChange()} mr={'sm'}>Apply Filters</Button>
-            <Button variant="outline" onClick={clearFilters}>Clear Filter</Button>
-          </Grid.Col>
-        </Grid>
-      </Card>
-    )
-  }
-
   return (
     <MainLayout title='JOIV Article Management'>
       <Container size="xl">
@@ -314,10 +211,16 @@ function JoivArticleIndex() {
           <Title order={2}>JOIV Article Management</Title>
           <CurrentFee currentFee={currentFee} isShowEdit={true} />
 
-          {renderFilterCards()}
-
-          {renderSummaryCards(summary)}
-
+          <FilterData
+            countries={countries}
+            countryFilter={countryFilter}
+            setCountryFilter={setCountryFilter}
+            paymentStatusFilter={paymentStatusFilter}
+            setPaymentStatusFilter={setPaymentStatusFilter}
+            handleFilterChange={handleFilterChange}
+            clearFilters={clearFilters}
+          />
+          <SummaryModule data={summary} />
           <Card withBorder padding="lg" radius="md">
             <Text size="sm" c="dimmed" mb="md">
               Showing {registrations.from} to {registrations.to} of {registrations.total} entries
@@ -340,90 +243,15 @@ function JoivArticleIndex() {
               paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
               currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
             >
-              <Column
-                header="No"
-                body={(_, { rowIndex }) => (registrations.current_page - 1) * registrations.per_page + rowIndex + 1}
-                style={{ width: '5rem' }}
-              />
-              <Column field="first_name" header="First Name" sortable />
-              <Column field="last_name" header="Last Name" sortable />
-              <Column field="email_address" header="Email" sortable />
-              <Column field="institution" header="Institution" sortable />
-              <Column field="country" header="Country" style={{ width: '8rem' }} />
-              <Column
-                field="paper_id"
-                header="Paper ID"
-                body={(row) => (
-                  <Stack w={250}>
-                    <Text size='sm' style={{ textWrap: 'wrap' }}>{row.paper_title}</Text>
-                    {row.full_paper_path && (
-                      <Button
-                        color="blue"
-                        size="xs"
-                        variant="light"
-                        leftSection={<i className="pi pi-download" />}
-                        onClick={() => window.open(`/storage/${row.full_paper_path}`, '_blank')}
-                      >
-                        Download Paper
-                      </Button>
-                    )}
-                  </Stack>
-                )}
-              />
-              <Column
-                field='payment_method'
-                header="Payment Method"
-                body={(row) => {
-                  const isTransferWithProof = row.payment_method === 'transfer_bank' && row.payment_proof_path;
-
-                  return (
-                    <Stack>
-                      <Text size='sm'>{PAYMENT_METHOD[row.payment_method as keyof typeof PAYMENT_METHOD]}</Text>
-                      {isTransferWithProof && (
-                        <Button
-                          color="blue"
-                          size="xs"
-                          variant="light"
-                          leftSection={<i className="pi pi-download" />}
-                          onClick={() => window.open(`/storage/${row.payment_proof_path}`, '_blank')}
-                        >
-                          Download Proof
-                        </Button>
-                      )}
-                    </Stack>
-                  );
-                }}
-              />
-              <Column
-                field="payment_status"
-                header="Payment Status"
-                body={(row) => getStatusBadge(row.payment_status)}
-              />
-              <Column
-                field="paid_fee"
-                header="Paid Fee"
-                body={(row) => formatCurrency(row.paid_fee, row.country === 'ID' ? 'idr' : 'usd')}
-              />
-              <Column
-                header="Actions"
-                body={(row: JoivRegistration) => (
-                  <Flex gap="xs">
-                    <ActionButtonExt
-                      color="green"
-                      handleClick={() => handleView(row)}
-                      icon="pi pi-fw pi-eye"
-                    />
-                    {row.payment_method === 'transfer_bank' && (
-                      <ActionButtonExt
-                        color="blue"
-                        handleClick={() => handleUpdateStatus(row)}
-                        icon="pi pi-fw pi-credit-card"
-                      />
-                    )}
-                  </Flex>
-                )}
-                style={{ width: '12rem' }}
-              />
+              {TableData({ handleUpdateStatus, handleView }).map((col) => (
+                <Column
+                  key={col.label}
+                  field={col.name}
+                  header={col.label}
+                  body={col.renderCell}
+                  sortable={col.sortable}
+                />
+              ))}
             </DataTable>
           </Card>
         </Stack>
