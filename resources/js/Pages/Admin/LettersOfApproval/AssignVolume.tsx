@@ -92,7 +92,7 @@ function LettersOfApprovalDownloadForm({ audience, loaVolumes }: DownloadFormPro
             Back
           </Button>
         </Group>
-
+        
         {/* Participant Info */}
         <Card padding="lg" radius="md" withBorder>
           <Title order={4} mb="md">Participant Information</Title>

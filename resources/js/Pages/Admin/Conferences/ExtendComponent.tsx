@@ -10,6 +10,8 @@ interface ActionButtonExtProps {
   children?: React.ReactNode;
   handleClick?: (row: any) => void;
   icon?: string;
+  title?: string;
+  color?: string;
   [key: string]: unknown;
 }
 
@@ -35,9 +37,11 @@ export const ActionButtonExt = ({
   children,
   handleClick,
   icon,
+  title,
   ...props
 }: ActionButtonExtProps) => {
   return (
+    <Tooltip label={title} withArrow>
     <ActionIcon
       variant="outline"
       color={props.color || 'blue'}
@@ -45,5 +49,6 @@ export const ActionButtonExt = ({
     >
       {children ? children : <i className={icon}></i>}
     </ActionIcon>
+    </Tooltip>
   );
 };

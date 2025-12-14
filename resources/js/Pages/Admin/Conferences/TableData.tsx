@@ -147,21 +147,25 @@ export const TableData = ({ handleDelete }: DataProps) => [
           color="blue"
           handleClick={() => (router.visit(`/conferences/${row.id}/edit`))}
           icon="pi pi-fw pi-pencil"
+          title="Edit"
         />
         <ActionButtonExt
           color="green"
           handleClick={() => (router.visit(`/conferences/${row.id}/show`))}
           icon="pi pi-fw pi-eye"
+          title="View Details"
         />
         <ActionButtonExt
           color="yellow"
           handleClick={() => (router.visit(`/conferences/${row.id}/setting`))}
           icon="pi pi-fw pi-cog"
+          title="Settings"
         />
         <ActionButtonExt
           color="red"
           handleClick={() => handleDelete(row.id)}
           icon="pi pi-fw pi-trash"
+          title="Delete"
         />
       </Stack>
     ),

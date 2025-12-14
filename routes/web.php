@@ -128,6 +128,7 @@ Route::middleware(['auth'])->group(function () {
 
     // LoA - LoA Volume Management
     Route::prefix('loa')->name('loa.')->group(function () {
+        Route::get('loa-volumes/{loaVolume}/export', [LoaVolumeManagementController::class, 'exportArticles'])->name('loa-volumes.export');
         Route::resource('loa-volumes', LoaVolumeManagementController::class);
     });
 
