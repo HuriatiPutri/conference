@@ -87,7 +87,7 @@ export const TableData = ({ handleDelete }: DataProps) => [
     colspan: 2,
     renderCell: (row: Conference) => (
       <Text fw={500} ta={'right'}>
-        {formatCurrency(row.onsite_fee_usd, 'usd')}
+        {formatCurrency(row.onsite_fee)}
       </Text>
     ),
   },
