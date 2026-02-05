@@ -237,7 +237,7 @@ class JoivArticleController extends Controller
             'payment_method' => $joivArticle->payment_method === 'transfer_bank' ? 'Bank Transfer' : 'Payment Gateway',
             'payment_date' => $joivArticle->updated_at->format('d M Y H:i'),
             'invoice_id' => 'Ref. No.' . strtoupper($joivArticle->public_id) . '/PAID/JOIV/' . now()->format('Y'),
-            'signature' => storage_path('app/public/images/signature.png'),
+            'signature' => storage_path('app/public/images/joiv-signature.png'),
         ];
 
         try {
