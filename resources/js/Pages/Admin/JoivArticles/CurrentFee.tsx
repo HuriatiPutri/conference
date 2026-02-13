@@ -62,8 +62,8 @@ export default function CurrentFee({ currentFee, isShowEdit }: CurrentFeeProps) 
           </Grid.Col>
           <Grid.Col span={6}>
             <Text size="sm" c="dimmed">Url Registration</Text>
-            <Flex>
-              <Text component="a" href="https://app.sotvi.org/joiv/registration/" target="_blank" size="sm">https://app.sotvi.org/joiv/registration/</Text>
+            <Flex align={'center'} gap={'xs'}>
+              <Text c={'blue'} component="a" href="https://app.sotvi.org/joiv/registration/" target="_blank" size="sm">https://app.sotvi.org/joiv/registration/</Text>
               <CopyButton value="https://app.sotvi.org/joiv/registration/" timeout={2000}>
                 {({ copied, copy }) => (
                   <Tooltip label={copied ? 'Copied' : 'Copy'} withArrow position="right">
