@@ -1,8 +1,9 @@
 import React from "react";
-import { Title, Text, Grid, ActionIcon, Flex } from "@mantine/core";
+import { Title, Text, Grid, ActionIcon, Flex, CopyButton, Tooltip } from "@mantine/core";
 import { Card } from "@mantine/core";
 import { formatDate } from "../../../utils";
 import { route } from "ziggy-js";
+import { IconCheck, IconCopy } from "@tabler/icons-react";
 
 interface JoivRegistrationFee {
   id: number;
@@ -54,9 +55,25 @@ export default function CurrentFee({ currentFee, isShowEdit }: CurrentFeeProps) 
               Rp {Number.parseFloat(currentFee.idr_amount).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </Text>
           </Grid.Col>
-          <Grid.Col span={12}>
+          <Grid.Col span={6}>
             <Text size="sm" c="dimmed">Last Updated</Text>
             <Text size="sm">{formatDate(currentFee.created_at)}</Text>
+            {/* <Text size="sm" c="dimmed">by {currentFee.creator.full_name}</Text> */}
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <Text size="sm" c="dimmed">Url Registration</Text>
+            <Flex>
+              <Text component="a" href="https://app.sotvi.org/joiv/registration/" target="_blank" size="sm">https://app.sotvi.org/joiv/registration/</Text>
+              <CopyButton value="https://app.sotvi.org/joiv/registration/" timeout={2000}>
+                {({ copied, copy }) => (
+                  <Tooltip label={copied ? 'Copied' : 'Copy'} withArrow position="right">
+                    <ActionIcon color={copied ? 'teal' : 'gray'} variant="subtle" onClick={copy}>
+                      {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+                    </ActionIcon>
+                  </Tooltip>
+                )}
+              </CopyButton>
+            </Flex>
             {/* <Text size="sm" c="dimmed">by {currentFee.creator.full_name}</Text> */}
           </Grid.Col>
           {currentFee.notes && (
