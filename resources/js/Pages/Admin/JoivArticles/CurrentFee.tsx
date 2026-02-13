@@ -61,7 +61,7 @@ export default function CurrentFee({ currentFee, isShowEdit }: CurrentFeeProps) 
             {/* <Text size="sm" c="dimmed">by {currentFee.creator.full_name}</Text> */}
           </Grid.Col>
           <Grid.Col span={6}>
-            <Text size="sm" c="dimmed">Url Registration</Text>
+            <Text size="sm" c="dimmed">Registration Link</Text>
             <Flex align={'center'} gap={'xs'}>
               <Text c={'blue'} component="a" href="https://app.sotvi.org/joiv/registration/" target="_blank" size="sm">https://app.sotvi.org/joiv/registration/</Text>
               <CopyButton value="https://app.sotvi.org/joiv/registration/" timeout={2000}>
