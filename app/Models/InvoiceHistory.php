@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InvoiceHistory extends Model
 {
+  public function reference()
+    {
+        return $this->morphTo();
+    }
     use HasFactory;
 
     protected $table = 'invoice_history';
@@ -52,29 +56,38 @@ class InvoiceHistory extends Model
      * Generate unique public ID for the invoice
      */
     protected static function boot()
-    {
-        parent::boot();
-        
-        static::creating(function ($model) {
-            // Generate unique string ID
-            if (empty($model->id)) {
-                $model->id = 'IH-' . strtoupper(uniqid());
-            }
-            
-            if (empty($model->public_id)) {
-                $model->public_id = 'INV-' . strtoupper(uniqid());
-            }
-            
-            if (empty($model->invoice_number)) {
-                $model->invoice_number = 'INV-' . date('Ymd') . '-' . str_pad(
-                    static::whereDate('created_at', today())->count() + 1, 
-                    4, 
-                    '0', 
-                    STR_PAD_LEFT
-                );
-            }
-        });
-    }
+{
+    parent::boot();
+
+    static::creating(function ($model) {
+
+        // Tentukan prefix berdasarkan jenis pembayaran
+        $prefix = match ($model->payment_method) {
+            'paypal' => 'PP-',
+            'bank_transfer' => 'TF-',
+            'membership' => 'MB-',
+            default => 'IH-',
+        };
+
+        // Generate ID hanya jika belum diset manual
+        if (empty($model->id)) {
+            $model->id = $prefix . strtoupper(bin2hex(random_bytes(4)));
+        }
+
+        if (empty($model->public_id)) {
+            $model->public_id = 'INV-' . strtoupper(uniqid());
+        }
+
+        if (empty($model->invoice_number)) {
+            $model->invoice_number = 'INV-' . now()->format('Ymd') . '-' . str_pad(
+                static::whereDate('created_at', today())->count() + 1,
+                4,
+                '0',
+                STR_PAD_LEFT
+            );
+        }
+    });
+}
 
     /**
      * Relationship with Audience

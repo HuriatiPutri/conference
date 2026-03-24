@@ -42,6 +42,10 @@ class JoivRegistration extends Model
         return $this->where($field ?? 'id', $value)->withTrashed()->firstOrFail();
     }
 
+    public function invoices(){
+      return $this->morphMany(InvoiceHistory::class, 'reference');
+    }
+    
     // Relationships
     public function creator(): BelongsTo
     {

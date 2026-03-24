@@ -34,8 +34,13 @@ export const TableData = ({ handleUpdateStatus, handleView }: DataProps) => [
   },
   {
     label: 'Institution',
-    name: 'institution',
+    // name: 'institution',
     sortable: true,
+    renderCell: (row: JoivRegistration) => (
+      <Stack w={250}>
+        <Text style={{ textWrap: 'wrap' }}>{row.institution}</Text>
+      </Stack>
+    )
   },
   {
     label: 'Country',
@@ -139,7 +144,7 @@ export const TableData = ({ handleUpdateStatus, handleView }: DataProps) => [
         )}
       </Stack>
     )
-      
+
   },
   {
     label: 'paid_fee',

@@ -43,6 +43,10 @@ class Audience extends Model
         return $this->where($field ?? 'id', $value)->withTrashed()->firstOrFail();
     }
 
+    public function invoices(){
+      return $this->morphMany(InvoiceHistory::class, 'reference');
+    }
+    
     public function conference()
     {
         return $this->belongsTo(Conference::class);

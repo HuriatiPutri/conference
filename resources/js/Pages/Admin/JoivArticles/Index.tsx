@@ -1,5 +1,5 @@
 import { router, usePage } from '@inertiajs/react';
-import { ActionIcon, Card, Container, Flex, Stack, Text, Title } from '@mantine/core';
+import { ActionIcon, Card, Container, Flex, Modal, Stack, Text, Title } from '@mantine/core';
 import { Column } from 'primereact/column';
 import { DataTable, DataTableStateEvent } from 'primereact/datatable';
 import { IconField } from 'primereact/iconfield';
@@ -49,6 +49,7 @@ function JoivArticleIndex() {
       institution?: string;
       payment_status?: string;
       search?: string;
+      isFullScreen?: boolean
     };
     summary: {
       paid: number;
@@ -60,20 +61,19 @@ function JoivArticleIndex() {
   }>().props;
 
   const { data } = registrations;
-
-  console.log('registrations data:', registrations);
-
+  const urlParams = new URLSearchParams(window.location.search);
   const [isExporting, setIsExporting] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(urlParams.get('isFullScreen') === 'true');
   const [countryFilter, setCountryFilter] = useState(filters?.country || '');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState(filters?.payment_status || '');
   const [modalOpened, setModalOpened] = useState(false);
   const [selectedRegistration, setSelectedRegistration] = useState<JoivRegistration | null>(null);
 
   const [globalFilterValue, setGlobalFilterValue] = useState(() => {
-    const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('search') || '';
   });
 
+  console.log('filters', filters)
   const [searchTimeout, setSearchTimeout] = useState<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -118,14 +118,14 @@ function JoivArticleIndex() {
     const search = searchValue !== undefined ? searchValue : globalFilterValue;
     if (search.trim()) params.append('search', search.trim());
 
-    router.visit(`/joiv-articles?${params.toString()}`);
+    router.visit(`/joiv-articles?${params.toString()}&isFullScreen=${isFullscreen}`);
   };
 
   const clearFilters = () => {
     setGlobalFilterValue('');
     setCountryFilter('');
     setPaymentStatusFilter('');
-    router.visit('/joiv-articles');
+    router.visit(`/joiv-articles?isFullScreen=${isFullscreen}`);
   };
 
   const handleExportExcel = () => {
@@ -154,6 +154,10 @@ function JoivArticleIndex() {
     setModalOpened(true);
   };
 
+  const handleToggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
   const renderHeader = () => {
     return (
       <Flex justify={'space-between'} direction={{ base: 'column', sm: 'row' }} gap={'md'}>
@@ -169,6 +173,16 @@ function JoivArticleIndex() {
             disabled={isExporting}
           >
             <i className="pi pi-file-excel" />
+          </ActionIcon>
+          <ActionIcon
+            color={'blue'}
+            variant="outline"
+            radius={'lg'}
+            size={'lg'}
+            onClick={handleToggleFullscreen}
+            title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+          >
+            <i className={`pi ${isFullscreen ? 'pi-times' : 'pi-window-maximize'}`} />
           </ActionIcon>
         </Flex>
         <IconField iconPosition="left">
@@ -204,11 +218,23 @@ function JoivArticleIndex() {
     }
   }
 
-  return (
-    <MainLayout title='JOIV Article Management'>
-      <Container size="xl">
+  const renderMain = () => {
+    return (
+      <Container size={isFullscreen ? "xxl" : "xl"}>
         <Stack gap="lg">
-          <Title order={2}>JOIV Article Management</Title>
+          <Flex justify={'space-between'}>
+            <Title order={2}>JOIV Article Management</Title>
+            <ActionIcon
+              color={'blue'}
+              variant="outline"
+              radius={'lg'}
+              size={'lg'}
+              onClick={handleToggleFullscreen}
+              title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+            >
+              <i className={`pi ${isFullscreen ? 'pi-times' : 'pi-window-maximize'}`} />
+            </ActionIcon>
+          </Flex>
           <CurrentFee currentFee={currentFee} isShowEdit={true} />
 
           <FilterData
@@ -255,8 +281,13 @@ function JoivArticleIndex() {
             </DataTable>
           </Card>
         </Stack>
-      </Container>
+      </Container >
+    )
+  }
+  return (
+    <MainLayout title='JOIV Article Management'>
 
+      {renderMain()}
       <JoivPaymentStatusModal
         opened={modalOpened}
         onClose={() => {
@@ -265,6 +296,17 @@ function JoivArticleIndex() {
         }}
         registration={selectedRegistration}
       />
+      <Modal
+        opened={isFullscreen}
+        onClose={handleToggleFullscreen}
+        fullScreen
+        radius={0}
+        transitionProps={{ transition: 'fade', duration: 200 }}
+        withCloseButton={false}
+        padding="lg"
+      >
+        {renderMain()}
+      </Modal>
     </MainLayout>
   );
 }
