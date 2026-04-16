@@ -14,6 +14,8 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Admin\LettersOfApprovalController;
 use App\Http\Controllers\Admin\LoaVolumeManagementController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Auth\MembershipRegistrationController;
+
 use Inertia\Inertia;
 
 // Public routes
@@ -186,3 +188,7 @@ Route::post('/joiv/registration/{registration:public_id}/payment', [\App\Http\Co
 Route::get('/joiv/registration/{registration:public_id}/payment/complete', [\App\Http\Controllers\JoivRegistrationController::class, 'paymentComplete'])->name('joiv.payment.complete');
 Route::get('/joiv/registration/{registration:public_id}/paypal/success', [\App\Http\Controllers\JoivRegistrationController::class, 'paypalSuccess'])->name('joiv.paypal.success');
 Route::get('/joiv/registration/{registration:public_id}/paypal/cancel', [\App\Http\Controllers\JoivRegistrationController::class, 'paypalCancel'])->name('joiv.paypal.cancel');
+
+//Membership Registration
+Route::get('/register-membership', [MembershipRegistrationController::class, 'create'])->name('membership.register');
+Route::post('/register-membership', [MembershipRegistrationController::class, 'store']);
