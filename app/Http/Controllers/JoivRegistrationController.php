@@ -107,7 +107,6 @@ class JoivRegistrationController extends Controller
     /**
      * Show registration details
      */
-
     public function details(JoivRegistration $registration): Response
     {
         return Inertia::render('Joiv/Registration/Details', [
@@ -141,11 +140,6 @@ class JoivRegistrationController extends Controller
                 ->with('error', 'Payment already processed.');
         }
 
-        //if payment method already set and is payment_gateway, redirect to paypal
-        if ($registration->payment_method === 'payment_gateway') {
-            return $this->initiatePayPalPayment($registration);
-        }
-
         $validatedData = $request->validate([
             'payment_method' => 'required|in:transfer_bank,payment_gateway',
             'payment_proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240'
@@ -157,19 +151,21 @@ class JoivRegistrationController extends Controller
                 'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:10240'
             ], [
                 'payment_proof.required' => 'Bukti pembayaran wajib diupload untuk metode transfer bank.',
+                'payment_proof.file' => 'Bukti pembayaran harus berupa file.',
+                'payment_proof.mimes' => 'Bukti pembayaran harus berformat: jpg, jpeg, png, atau pdf.',
+                'payment_proof.max' => 'Ukuran bukti pembayaran maksimal 10MB.',
             ]);
         }
 
-        // Handle PayPal payment
+        // Handle PayPal payment - save method first, then initiate PayPal
         if ($validatedData['payment_method'] === 'payment_gateway') {
-            //update registration to payment_gateway and status pending
+            // Update payment method on registration record
             $registration->update([
                 'payment_method' => 'payment_gateway',
-                'payment_status' => 'pending_payment',
             ]);
-            //redirect to registration detail page with message
-            return redirect()->route('joiv.registration.details', ['registration' => $registration->public_id])
-                ->with('success', 'Please proceed to PayPal payment gateway from your registration details page.');
+
+            // Directly initiate PayPal payment (same as RegistrationController new flow)
+            return $this->initiatePayPalPayment($registration);
         }
 
         // Handle Bank Transfer
@@ -206,53 +202,61 @@ class JoivRegistrationController extends Controller
     private function initiatePayPalPayment(JoivRegistration $registration)
     {
         try {
-          //check is invoice history already exists for this registration with pending status
+            // Check if there is already a pending PayPal invoice for this registration
             $existingInvoice = InvoiceHistory::where('joiv_registration_id', $registration->id)
-              ->where('status', 'pending')
-              ->where('payment_gateway', 'paypal')
-              ->first();
+                ->where('status', 'pending')
+                ->where('payment_gateway', 'paypal')
+                ->first();
 
             $paymentResult = null;
             $invoiceHistory = null;
 
-            if($existingInvoice && $existingInvoice->transaction_id){
-                // Use existing transaction ID
+            if ($existingInvoice && $existingInvoice->transaction_id) {
+                // Reuse existing pending payment
                 $paymentId = $existingInvoice->transaction_id;
                 $invoiceHistory = $existingInvoice;
-                \Log::info('Using existing PayPal payment', [
+
+                \Log::info('Reusing existing pending PayPal payment', [
                     'payment_id' => $paymentId,
                     'registration_id' => $registration->id,
-                    'invoice_id' => $existingInvoice->id
+                    'invoice_id' => $existingInvoice->id,
                 ]);
-
             } else {
-
+                // Create new PayPal payment
                 $payPalService = new PayPalService();
-                
+
                 $amount = $registration->paid_fee;
-                $currency = 'USD'; // PayPal mostly uses USD
+                $currency = 'USD'; // PayPal uses USD
                 $description = 'JOIV Article Registration - ' . $registration->paper_title;
-                $returnUrl = route('joiv.registration.details', $registration->public_id);
+                $returnUrl = route('joiv.paypal.success', $registration->public_id);
                 $cancelUrl = route('joiv.paypal.cancel', $registration->public_id);
+
+                \Log::info('PayPal Payment Creation', [
+                    'return_url' => $returnUrl,
+                    'cancel_url' => $cancelUrl,
+                    'amount' => $amount,
+                    'currency' => $currency,
+                ]);
 
                 $paymentResult = $payPalService->createPayment($amount, $currency, $description, $returnUrl, $cancelUrl);
                 $paymentId = $paymentResult['payment_id'];
 
+                \Log::info('PayPal Payment Result', $paymentResult);
+
                 if ($existingInvoice) {
+                    // Update existing invoice that had no transaction_id yet
                     $existingInvoice->update([
                         'transaction_id' => $paymentId,
                         'amount' => $amount,
                         'currency' => $currency,
                         'gateway_response' => $paymentResult,
                         'payment_initiated_at' => now(),
-                        'updated_at' => now(),
                     ]);
                     $invoiceHistory = $existingInvoice;
                 } else {
-                    // Create invoice history
+                    // Create new invoice history record
                     $invoiceHistory = InvoiceHistory::create([
                         'joiv_registration_id' => $registration->id,
-                        'transaction_id' => $paymentId,
                         'payment_gateway' => 'paypal',
                         'payment_method' => 'payment_gateway',
                         'transaction_id' => $paymentId,
@@ -266,34 +270,47 @@ class JoivRegistrationController extends Controller
                         'payment_initiated_at' => now(),
                     ]);
                 }
-          }
-          // Store payment details in session for return handling
+
+                \Log::info('Created/Updated invoice history for PayPal', [
+                    'invoice_id' => $invoiceHistory->id,
+                    'transaction_id' => $paymentId,
+                    'registration_id' => $registration->id,
+                ]);
+            }
+
+            // Store payment details in session for return handling
             session([
                 'paypal_payment_id' => $paymentId,
                 'invoice_history_id' => $invoiceHistory->id,
-                'registration_id' => $registration->id
+                'joiv_registration_id' => $registration->id,
             ]);
 
-            // Get approval URL from payment result and redirect
+            // Get approval URL
             if ($existingInvoice && $existingInvoice->gateway_response && isset($existingInvoice->gateway_response['approval_url'])) {
                 $approvalUrl = $existingInvoice->gateway_response['approval_url'];
             } else {
+                if (!isset($paymentResult['approval_url']) || empty($paymentResult['approval_url'])) {
+                    throw new \Exception('PayPal approval URL not found in response');
+                }
                 $approvalUrl = $paymentResult['approval_url'];
             }
+
+            \Log::info('Redirecting to PayPal URL', ['url' => $approvalUrl]);
 
             // For Inertia, use location header for external redirects
             return response('', 409)
                 ->header('X-Inertia-Location', $approvalUrl);
 
         } catch (\Exception $e) {
-            \Log::error('PayPal payment creation failed for existing registration', [
+            \Log::error('PayPal payment creation failed for JOIV registration', [
                 'error' => $e->getMessage(),
                 'registration_id' => $registration->id,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            // Provide more specific error messages based on the error type
+
+            // Provide specific error messages
             $errorMessage = 'Payment processing failed. Please try again.';
-            
+
             if (strpos($e->getMessage(), 'credentials') !== false) {
                 $errorMessage = 'Payment service configuration error. Please contact support.';
             } elseif (strpos($e->getMessage(), 'access token') !== false) {
@@ -303,7 +320,7 @@ class JoivRegistrationController extends Controller
             }
 
             return redirect()->back()->withErrors([
-                'payment_method' => $errorMessage
+                'payment_method' => $errorMessage,
             ]);
         }
     }
@@ -313,41 +330,43 @@ class JoivRegistrationController extends Controller
      */
     public function paypalSuccess(Request $request, JoivRegistration $registration)
     {
-        $token = $request->query('token');
         $paymentId = $request->get('paymentId');
         $payerId = $request->get('PayerID');
+        $token = $request->query('token');
         $sessionPaymentId = session('paypal_payment_id');
         $invoiceHistoryId = session('invoice_history_id');
 
-        if (!$token) {
-            return redirect()->route('joiv.payment', ['registration' => $registration->public_id])
-                ->with('error', 'Payment token not found.');
-        }
-        
+        \Log::info('PayPal Return Debug Info', [
+            'request_payment_id' => $paymentId,
+            'request_payer_id' => $payerId,
+            'token' => $token,
+            'session_payment_id' => $sessionPaymentId,
+            'session_invoice_history_id' => $invoiceHistoryId,
+            'all_request_params' => $request->all(),
+        ]);
+
         if (!$paymentId || !$payerId || $paymentId !== $sessionPaymentId) {
             \Log::error('PayPal Return Validation Failed', [
                 'has_payment_id' => !empty($paymentId),
                 'has_payer_id' => !empty($payerId),
                 'payment_ids_match' => $paymentId === $sessionPaymentId,
                 'request_payment_id' => $paymentId,
-                'session_payment_id' => $sessionPaymentId
+                'session_payment_id' => $sessionPaymentId,
             ]);
 
-            // Update invoice history as failed if exists
+            // Mark invoice as failed if it exists
             if ($invoiceHistoryId) {
                 $invoiceHistory = InvoiceHistory::find($invoiceHistoryId);
                 if ($invoiceHistory) {
                     $invoiceHistory->update([
                         'status' => 'failed',
-                        'execution_response' => ['error' => 'Invalid PayPal payment data']
+                        'execution_response' => ['error' => 'Invalid PayPal payment data'],
                     ]);
                 }
             }
 
-
-
             return redirect()->route('joiv.registration.details', ['registration' => $registration->public_id])
-                ->with('error', 'Invalid PayPal payment data.');
+                ->with('error', 'Invalid PayPal payment data. Please try again.');
         }
 
         try {
@@ -356,8 +375,9 @@ class JoivRegistrationController extends Controller
 
             \Log::info('PayPal Payment Execution Response', [
                 'payment_details' => $paymentDetails,
-                'payment_state' => $paymentDetails['state'] ?? 'unknown'
+                'payment_state' => $paymentDetails['state'] ?? 'unknown',
             ]);
+
             // Update invoice history with execution response
             $invoiceHistory = null;
             if ($invoiceHistoryId) {
@@ -372,32 +392,81 @@ class JoivRegistrationController extends Controller
             }
 
             if ($paymentDetails['state'] === 'approved') {
-                // Update registration
+                // Update registration to paid
                 $registration->update([
                     'payment_status' => 'paid',
                 ]);
 
-                // Update invoice history
-                InvoiceHistory::where('joiv_registration_id', $registration->id)
-                    ->where('transaction_id', $token)
-                    ->update([
+                // Mark invoice as completed
+                if ($invoiceHistory) {
+                    $invoiceHistory->update([
                         'status' => 'completed',
                         'paid_at' => now(),
                     ]);
+                }
 
                 // Clear session
-                session()->forget(['paypal_payment_id', 'joiv_registration_id']);
+                session()->forget(['paypal_payment_id', 'invoice_history_id', 'joiv_registration_id']);
+
+                \Log::info('JOIV PayPal Payment Completed Successfully', [
+                    'payment_id' => $paymentId,
+                    'payer_id' => $payerId,
+                    'registration_id' => $registration->id,
+                    'invoice_history_id' => $invoiceHistory ? $invoiceHistory->id : null,
+                ]);
 
                 return redirect()->route('joiv.payment.complete', ['registration' => $registration->public_id])
                     ->with('success', 'Payment successful!');
             }
 
+            // Payment not approved
+            if ($invoiceHistory) {
+                $invoiceHistory->update([
+                    'status' => 'failed',
+                    'execution_response' => array_merge($paymentDetails, ['error' => 'Payment not approved']),
+                ]);
+            }
+
+            \Log::error('PayPal payment was not approved. Registration: ' . $registration->public_id);
+
             return redirect()->route('joiv.payment', ['registration' => $registration->public_id])
-                ->with('error', 'Payment was not completed.');
+                ->with('error', 'PayPal payment was not approved. Please try again.');
+
         } catch (\Exception $e) {
-            \Log::error('PayPal capture error: ' . $e->getMessage());
+            // Mark invoice as failed
+            if ($invoiceHistoryId) {
+                $invoiceHistoryRecord = InvoiceHistory::find($invoiceHistoryId);
+                if ($invoiceHistoryRecord) {
+                    $invoiceHistoryRecord->update([
+                        'status' => 'failed',
+                        'execution_response' => ['error' => $e->getMessage()],
+                    ]);
+                }
+            }
+
+            \Log::error('PayPal capture error', [
+                'payment_id' => $paymentId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            // Specific error messages
+            $errorMessage = 'Failed to process PayPal payment. Please try again.';
+
+            if (strpos($e->getMessage(), 'credentials') !== false) {
+                $errorMessage = 'Payment service configuration error. Please contact support.';
+            } elseif (strpos($e->getMessage(), 'access token') !== false) {
+                $errorMessage = 'Unable to connect to payment service. Please try again later.';
+            } elseif (strpos($e->getMessage(), 'network') !== false || strpos($e->getMessage(), 'timeout') !== false) {
+                $errorMessage = 'Network error occurred. Please check your connection and try again.';
+            } elseif (strpos($e->getMessage(), 'PAYMENT_ALREADY_DONE') !== false) {
+                $errorMessage = 'This payment has already been processed.';
+            } elseif (strpos($e->getMessage(), 'INVALID_PAYMENT_ID') !== false) {
+                $errorMessage = 'Invalid payment reference. Please start a new payment.';
+            }
+
             return redirect()->route('joiv.payment', ['registration' => $registration->public_id])
-                ->with('error', 'Payment verification failed.');
+                ->with('error', $errorMessage);
         }
     }
 
@@ -406,10 +475,23 @@ class JoivRegistrationController extends Controller
      */
     public function paypalCancel(JoivRegistration $registration)
     {
-        session()->forget(['paypal_payment_id', 'joiv_registration_id']);
+        $invoiceHistoryId = session('invoice_history_id');
+
+        // Mark invoice as cancelled
+        if ($invoiceHistoryId) {
+            $invoiceHistory = InvoiceHistory::find($invoiceHistoryId);
+            if ($invoiceHistory) {
+                $invoiceHistory->update([
+                    'status' => 'cancelled',
+                    'execution_response' => ['error' => 'Payment cancelled by user'],
+                ]);
+            }
+        }
+
+        session()->forget(['paypal_payment_id', 'invoice_history_id', 'joiv_registration_id']);
 
         return redirect()->route('joiv.payment', ['registration' => $registration->public_id])
-            ->with('error', 'Payment was cancelled.');
+            ->with('error', 'PayPal payment was cancelled. Please try again or choose a different payment method.');
     }
 
     /**
