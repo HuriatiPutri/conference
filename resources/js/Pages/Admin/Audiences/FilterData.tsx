@@ -16,7 +16,7 @@ type Props = {
 export const FilterData = ({ conferences, paymentStatusFilter, conferenceFilter, paymentMethodFilter, setConferenceFilter, setPaymentMethodFilter, setPaymentStatusFilter, handleFilterChange, clearFilters }: Props) => {
   return (
     <Card padding="lg" radius="md" withBorder>
-      <Title order={4} mb="md">Filter Audience Data</Title>
+      <Title order={4} mb="md">Filter Data</Title>
       <Grid>
         <Grid.Col span={{ base: 12, md: 3 }}>
           <Select

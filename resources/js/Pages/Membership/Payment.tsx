@@ -2,87 +2,95 @@ import React from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import {
   Container,
+  Card,
   Title,
   Text,
-  Card,
-  Stack,
-  Radio,
-  Group,
   Button,
+  Stack,
+  Group,
+  Radio,
   FileInput,
-  Alert,
-  Divider,
   Paper,
-  ThemeIcon
+  ThemeIcon,
+  Alert,
+  Divider
 } from '@mantine/core';
-import { IconUpload, IconInfoCircle, IconCreditCard, IconBuildingBank } from '@tabler/icons-react';
-import { formatCurrency } from '../../../utils';
-import AuthLayout from '../../../Layout/AuthLayout';
-import { JoivRegistration } from '../../../types';
+import { IconUpload, IconCreditCard, IconBuildingBank, IconInfoCircle } from '@tabler/icons-react';
+import { formatCurrency } from '../../utils';
+import AuthLayout from '../../Layout/AuthLayout';
 
-interface JoivPaymentProps {
-  readonly registration: JoivRegistration;
+interface Package {
+  id: number;
+  name: string;
+  price: number;
+  duration: number;
 }
 
-export default function JoivPaymentIndex({ registration }: JoivPaymentProps) {
+interface Membership {
+  public_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  country: string;
+}
 
+interface MembershipPaymentProps {
+  membership: Membership;
+  package: Package;
+}
+
+export default function MembershipPayment({ membership, package: packageData }: MembershipPaymentProps) {
   const { data, setData, post, processing, errors } = useForm({
     payment_method: '',
     payment_proof: null as File | null,
   });
 
-  const isIndonesia = registration.country === 'ID';
-  const currency = isIndonesia ? 'idr' : 'usd';
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    post(`/joiv/registration/${registration.public_id}/payment`, {
+    post(`/membership/${membership.public_id}/payment`, {
       forceFormData: true,
     });
   };
 
+  const isIndonesia = membership.country === 'ID';
+  // Use USD for PayPal usually, but follow your logic:
+  const currency = isIndonesia ? 'idr' : 'usd';
+
   return (
     <>
-      <Head title="Payment - JOIV Registration" />
+      <Head title="Membership Payment" />
 
       <Container size="md" py="xl">
         <Stack gap="lg">
           <div>
             <Title order={2} ta="center" mb="xs">
-              Complete Your Payment
+              Payment Information
             </Title>
-            <Text ta="center" c="dimmed">
-              JOIV Article Registration
+            <Text ta="center" c="dimmed" size="lg">
+              Complete your membership registration
             </Text>
           </div>
 
-          <Divider />
+          <Paper withBorder p="md" style={{ backgroundColor: 'var(--mantine-color-green-0)' }}>
+            <Group justify="space-between">
+              <div>
+                <Text fw={500}>Registration Details</Text>
+                <Text size="sm" c="dimmed">
+                  {membership.first_name} {membership.last_name} ({membership.email})
+                </Text>
+                <Text size="sm" c="dimmed" mt="xs" fw={500}>
+                  Package: {packageData.name} ({packageData.duration} days)
+                </Text>
+              </div>
+              <div>
+                <Text fw={700} size="xl" c="green">
+                  {formatCurrency(packageData.price, currency)}
+                </Text>
+              </div>
+            </Group>
+          </Paper>
 
-          <Card withBorder padding="md">
-            <Stack gap="sm">
-              <Group justify="space-between">
-                <Text fw={500}>Registration ID:</Text>
-                <Text c="blue">{registration.public_id}</Text>
-              </Group>
-              <Group justify="space-between">
-                <Text fw={500}>Name:</Text>
-                <Text>{registration.first_name} {registration.last_name}</Text>
-              </Group>
-              <Group justify="space-between">
-                <Text fw={500}>Paper Title:</Text>
-                <Text style={{ textAlign: 'right', maxWidth: '60%' }}>
-                  {registration.paper_title}
-                </Text>
-              </Group>
-              <Divider />
-              <Group justify="space-between">
-                <Text fw={700} size="lg">Total Amount:</Text>
-                <Text fw={700} size="lg" c="blue">
-                  {formatCurrency(registration.paid_fee, currency)}
-                </Text>
-              </Group>
-            </Stack>
-          </Card>
+          <Divider />
 
           <form onSubmit={handleSubmit}>
             <Stack gap="lg">
@@ -122,7 +130,7 @@ export default function JoivPaymentIndex({ registration }: JoivPaymentProps) {
                     withBorder
                     p="md"
                     style={{
-                      display: isIndonesia ? 'none' : 'block',
+                      display: isIndonesia ? 'none' : 'block', // PayPal mostly for international
                       cursor: 'pointer',
                       borderColor: data.payment_method === 'payment_gateway' ? 'var(--mantine-color-blue-5)' : undefined
                     }}
@@ -168,7 +176,7 @@ export default function JoivPaymentIndex({ registration }: JoivPaymentProps) {
                       <Text size="sm">Account Number: 0310526940</Text>
                       <Text size="sm">Account Name: Alde Alanda</Text>
                       <Text size="sm" fw={500} mt="xs">
-                        Amount: {formatCurrency(registration.paid_fee, currency)}
+                        Amount: {formatCurrency(packageData.price, currency)}
                       </Text>
                     </div>
 
@@ -186,6 +194,7 @@ export default function JoivPaymentIndex({ registration }: JoivPaymentProps) {
                       onChange={(file) => setData('payment_proof', file)}
                       error={errors.payment_proof}
                       description="Upload screenshot or receipt of your transfer"
+                      required={data.payment_method === 'transfer_bank'}
                     />
                   </Stack>
                 </Paper>
@@ -204,9 +213,9 @@ export default function JoivPaymentIndex({ registration }: JoivPaymentProps) {
                 disabled={!data.payment_method}
                 fullWidth
               >
-                {data.payment_method === 'transfer_bank'
-                  ? 'Submit Registration'
-                  : 'Pay with PayPal'
+                {data.payment_method === 'payment_gateway'
+                  ? 'Pay with PayPal'
+                  : 'Submit Registration'
                 }
               </Button>
             </Stack>
@@ -217,4 +226,6 @@ export default function JoivPaymentIndex({ registration }: JoivPaymentProps) {
   );
 }
 
-JoivPaymentIndex.layout = (page: React.ReactNode) => <AuthLayout>{page}</AuthLayout>;
+MembershipPayment.layout = (page: React.ReactNode) => (
+  <AuthLayout title="Membership Payment">{page}</AuthLayout>
+);

@@ -22,12 +22,18 @@ class JoivArticleController extends Controller
      */
     public function index(): Response
     {
+        $user = Auth::user();
         $currentFee = JoivRegistrationFee::getCurrentFee();
         $filters = Request::only('country', 'institution', 'payment_status', 'search');
         $perPage = Request::input('per_page', 15);
-        
-        $query = JoivRegistration::query();
 
+        $query = JoivRegistration::query();
+        if ($user->hasRole('user')) {
+            $query->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                    ->orWhere('email_address', $user->email);
+            });
+        }
         // Apply filters
         if (!empty($filters['country'])) {
             $query->where('country', $filters['country']);
@@ -41,17 +47,18 @@ class JoivArticleController extends Controller
             $query->where('payment_status', $filters['payment_status']);
         }
 
+
         // Apply search filter
         if (!empty($filters['search'])) {
             $searchTerm = $filters['search'];
-            $query->where(function($q) use ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
                 $q->where('first_name', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('last_name', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('email_address', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('phone_number', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('institution', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('paper_id', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('paper_title', 'LIKE', "%{$searchTerm}%");
+                    ->orWhere('last_name', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('email_address', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('phone_number', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('institution', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('paper_id', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('paper_title', 'LIKE', "%{$searchTerm}%");
             });
         }
 
@@ -62,13 +69,20 @@ class JoivArticleController extends Controller
 
         // Get summary counts
         $summaryQuery = JoivRegistration::query();
-        
+
         if (!empty($filters['country'])) {
             $summaryQuery->where('country', $filters['country']);
         }
 
         if (!empty($filters['institution'])) {
             $summaryQuery->where('institution', 'ILIKE', "%{$filters['institution']}%");
+        }
+
+        if ($user->hasRole('user')) {
+            $summaryQuery->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                    ->orWhere('email_address', $user->email);
+            });
         }
 
         $summary = [
@@ -201,17 +215,18 @@ class JoivArticleController extends Controller
      */
     public function export()
     {
+        $user = Auth::user();
         $filters = Request::only('country', 'institution', 'payment_status', 'search');
-        
+
         $filename = 'joiv_registrations_export_' . now()->format('Y-m-d_H-i-s');
-        
+
         if (!empty($filters['country'])) {
             $filename .= '_' . $filters['country'];
         }
-        
+
         $filename .= '.xlsx';
-        
-        return Excel::download(new JoivRegistrationExport($filters), $filename);
+
+        return Excel::download(new JoivRegistrationExport($filters, $user), $filename);
     }
 
     /**
@@ -243,7 +258,7 @@ class JoivArticleController extends Controller
         try {
             // Generate PDF using the same template as audience receipt
             $pdf = Pdf::loadView('receipt.joiv', compact('data'))
-                      ->setPaper('A4', 'portrait');
+                ->setPaper('A4', 'portrait');
 
             return $pdf->stream("receipt-{$data['name']}.pdf");
         } catch (\Exception $e) {
@@ -268,7 +283,7 @@ class JoivArticleController extends Controller
 
         try {
             $joivArticle->load(['loaVolume']);
-            
+
             $data = [
                 'participant_name' => $joivArticle->first_name . ' ' . $joivArticle->last_name,
                 'institution' => $joivArticle->institution ?? 'Unknown Institution',
@@ -282,7 +297,7 @@ class JoivArticleController extends Controller
                 'conference_country' => 'International',
                 'presentation_type' => 'journal article',
                 'registration_number' => $joivArticle->public_id ?? 'REG-' . $joivArticle->id,
-                'number_of_letter' => 'No: SOTVI/LoA/' . date('Y').'/' . ($joivArticle->public_id),
+                'number_of_letter' => 'No: SOTVI/LoA/' . date('Y') . '/' . ($joivArticle->public_id),
                 'issue_date' => $joivArticle->loa_approved_at ? \Carbon\Carbon::parse($joivArticle->loa_approved_at)->format('d F Y') : now()->format('d F Y'),
                 'signature_path' => storage_path('app/public/images/loa_signature.png'),
                 'joiv_logo_path' => storage_path('app/public/images/joiv_logo.png'),
@@ -291,7 +306,7 @@ class JoivArticleController extends Controller
             ];
 
             $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('letters-of-approval.template-clean', compact('data'))
-                      ->setPaper('A4', 'portrait');
+                ->setPaper('A4', 'portrait');
 
             $filename = "JOIV-Acceptance-Letter-{$joivArticle->first_name}-{$joivArticle->last_name}.pdf";
 

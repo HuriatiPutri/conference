@@ -24,6 +24,7 @@ class InvoiceHistory extends Model
         'public_id',
         'audience_id',
         'joiv_registration_id',
+        'membership_id',
         'conference_id',
         'payment_gateway',
         'payment_method',
@@ -41,6 +42,7 @@ class InvoiceHistory extends Model
         'payment_initiated_at',
         'payment_completed_at',
         'paid_at',
+        'payment_proof_path',
         'notes',
     ];
 
@@ -111,6 +113,14 @@ class InvoiceHistory extends Model
     public function joivRegistration(): BelongsTo
     {
         return $this->belongsTo(JoivRegistration::class);
+    }
+
+    /**
+     * Relationship with Membership
+     */
+    public function membership(): BelongsTo
+    {
+        return $this->belongsTo(Membership::class);
     }
 
     /**

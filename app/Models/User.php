@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -49,5 +50,31 @@ class User extends Authenticatable
     public function membership()
     {
         return $this->hasOne(Membership::class);
+    }
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    public function hasRole($roles)
+    {
+        if (is_array($roles)) {
+            return in_array($this->role->name, $roles);
+        }
+
+        return $this->role->name === $roles;
+    }
+
+    public function assignRole($roleName)
+    {
+        $role = Role::where('name', $roleName)->first();
+
+        if (!$role) {
+            throw new \Exception("Role not found");
+        }
+
+        $this->role()->associate($role);
+        $this->save();
     }
 }

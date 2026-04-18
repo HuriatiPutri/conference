@@ -14,7 +14,8 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Admin\LettersOfApprovalController;
 use App\Http\Controllers\Admin\LoaVolumeManagementController;
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Auth\MembershipRegistrationController;
+use App\Http\Controllers\MembershipRegistrationController;
+use App\Http\Controllers\Admin\JoivArticleController;
 
 use Inertia\Inertia;
 
@@ -34,9 +35,28 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Protected routes - require authentication
-Route::middleware(['auth'])->group(function () {
-    // Dashboard
+
+Route::middleware(['auth', 'role:admin,user'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('audiences/{audience}/receipt', [AudiencesController::class, 'downloadReceipt'])
+        ->name('audiences.receipt');
+
+    // Audiences
+    Route::get('audiences', [AudiencesController::class, 'index'])
+        ->name('audiences');
+
+    Route::get('audiences/export', [AudiencesController::class, 'export'])
+        ->name('audiences.export');
+
+    Route::get('audiences/download/{audience:public_id}', [AudiencesController::class, 'download'])
+        ->name('audiences.download');
+
+    Route::get('joiv-articles', [JoivArticleController::class, 'index'])->name('joiv-articles.index');
+});
+
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    // Dashboard
+    // Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Conferences
     Route::get('conferences', [ConferencesController::class, 'index'])
@@ -72,40 +92,29 @@ Route::middleware(['auth'])->group(function () {
     Route::put('conferences/{conference}/restore', [ConferencesController::class, 'restore'])
         ->name('conferences.restore');
 
-    // Audiences
-    Route::get('audiences', [AudiencesController::class, 'index'])
-        ->name('audiences');
-    
-    Route::get('audiences/export', [AudiencesController::class, 'export'])
-        ->name('audiences.export');
-    
-    Route::get('audiences/{audience}/receipt', [AudiencesController::class, 'downloadReceipt'])
-        ->name('audiences.receipt');
-    
+    //Admin - Audience
+
     Route::get('audiences/{audience}/show', [AudiencesController::class, 'show'])
         ->name('audiences.show');
-    
+
     Route::get('audiences/create', [AudiencesController::class, 'create'])
         ->name('audiences.create');
-    
+
     Route::post('audiences', [AudiencesController::class, 'store'])
         ->name('audiences.store');
-    
+
     Route::get('audiences/{audience}/edit', [AudiencesController::class, 'edit'])
         ->name('audiences.edit');
-    
+
     Route::put('audiences/{audience}', [AudiencesController::class, 'update'])
         ->name('audiences.update');
-    
+
     Route::delete('audiences/{audience}', [AudiencesController::class, 'destroy'])
         ->name('audiences.destroy');
-    
+
     Route::put('audiences/{audience}/restore', [AudiencesController::class, 'restore'])
         ->name('audiences.restore');
-    
-    Route::get('audiences/download/{audience:public_id}', [AudiencesController::class, 'download'])
-        ->name('audiences.download');
-    
+
     Route::patch('audiences/{audience}/payment-status', [AudiencesController::class, 'updatePaymentStatus'])
         ->name('audiences.updatePaymentStatus');
 
@@ -136,22 +145,26 @@ Route::middleware(['auth'])->group(function () {
 
     // JOIV Article Management - Admin Routes
     Route::prefix('joiv-articles')->name('joiv-articles.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\JoivArticleController::class, 'index'])->name('index');
-        Route::get('/fee-settings', [\App\Http\Controllers\Admin\JoivArticleController::class, 'feeSettings'])->name('fee-settings');
-        Route::post('/fee-settings', [\App\Http\Controllers\Admin\JoivArticleController::class, 'updateFee'])->name('fee-settings.update');
-        Route::delete('/fee-settings/{fee}', [\App\Http\Controllers\Admin\JoivArticleController::class, 'deleteFee'])->name('fee-settings.delete');
-        Route::get('/{joivArticle}/assign-volume', [\App\Http\Controllers\Admin\JoivArticleController::class, 'assignVolumeForm'])->name('assign-volume');
-        Route::post('/{joivArticle}/update-loa-info', [\App\Http\Controllers\Admin\JoivArticleController::class, 'updateLoaInfo'])->name('update-loa-info');
-        Route::get('/{joivArticle}', [\App\Http\Controllers\Admin\JoivArticleController::class, 'show'])->name('show');
-        Route::patch('/{joivArticle}/payment-status', [\App\Http\Controllers\Admin\JoivArticleController::class, 'updatePaymentStatus'])->name('updatePaymentStatus');
-        Route::get('/{joivArticle}/download-paper', [\App\Http\Controllers\Admin\JoivArticleController::class, 'downloadPaper'])->name('downloadPaper');
-        Route::get('/{joivArticle}/download-payment-proof', [\App\Http\Controllers\Admin\JoivArticleController::class, 'downloadPaymentProof'])->name('downloadPaymentProof');
-        Route::get('/{joivArticle}/download-receipt', [\App\Http\Controllers\Admin\JoivArticleController::class, 'downloadReceipt'])->name('downloadReceipt');
-        Route::get('/{joivArticle}/download-loa', [\App\Http\Controllers\Admin\JoivArticleController::class, 'downloadLoa'])->name('downloadLoa');
-        Route::get('/export/excel', [\App\Http\Controllers\Admin\JoivArticleController::class, 'export'])->name('export');
-        Route::delete('/{joivArticle}', [\App\Http\Controllers\Admin\JoivArticleController::class, 'destroy'])->name('destroy');
-        Route::put('/{joivArticle}/restore', [\App\Http\Controllers\Admin\JoivArticleController::class, 'restore'])->name('restore');
+        // Route::get('/', [JoivArticleController::class, 'index'])->name('index');
+        Route::get('/fee-settings', [JoivArticleController::class, 'feeSettings'])->name('fee-settings');
+        Route::post('/fee-settings', [JoivArticleController::class, 'updateFee'])->name('fee-settings.update');
+        Route::delete('/fee-settings/{fee}', [JoivArticleController::class, 'deleteFee'])->name('fee-settings.delete');
+        Route::get('/{joivArticle}/assign-volume', [JoivArticleController::class, 'assignVolumeForm'])->name('assign-volume');
+        Route::post('/{joivArticle}/update-loa-info', [JoivArticleController::class, 'updateLoaInfo'])->name('update-loa-info');
+        Route::get('/{joivArticle}', [JoivArticleController::class, 'show'])->name('show');
+        Route::patch('/{joivArticle}/payment-status', [JoivArticleController::class, 'updatePaymentStatus'])->name('updatePaymentStatus');
+        Route::get('/{joivArticle}/download-paper', [JoivArticleController::class, 'downloadPaper'])->name('downloadPaper');
+        Route::get('/{joivArticle}/download-payment-proof', [JoivArticleController::class, 'downloadPaymentProof'])->name('downloadPaymentProof');
+        Route::get('/{joivArticle}/download-receipt', [JoivArticleController::class, 'downloadReceipt'])->name('downloadReceipt');
+        Route::get('/{joivArticle}/download-loa', [JoivArticleController::class, 'downloadLoa'])->name('downloadLoa');
+        Route::get('/export/excel', [JoivArticleController::class, 'export'])->name('export');
+        Route::delete('/{joivArticle}', [JoivArticleController::class, 'destroy'])->name('destroy');
+        Route::put('/{joivArticle}/restore', [JoivArticleController::class, 'restore'])->name('restore');
     });
+
+    // Admin - Membership
+    Route::get('/memberships', [\App\Http\Controllers\Admin\MembershipController::class, 'index'])->name('memberships.index');
+    Route::patch('/memberships/{membership}/payment-status/{invoice}', [\App\Http\Controllers\Admin\MembershipController::class, 'updatePaymentStatus'])->name('memberships.updatePaymentStatus');
 });
 
 // Registration - Public Access (No Auth Middleware)
@@ -190,5 +203,12 @@ Route::get('/joiv/registration/{registration:public_id}/paypal/success', [\App\H
 Route::get('/joiv/registration/{registration:public_id}/paypal/cancel', [\App\Http\Controllers\JoivRegistrationController::class, 'paypalCancel'])->name('joiv.paypal.cancel');
 
 //Membership Registration
-Route::get('/register-membership', [MembershipRegistrationController::class, 'create'])->name('membership.register');
+Route::get('/register-membership', [MembershipRegistrationController::class, 'index'])->name('membership.register');
 Route::post('/register-membership', [MembershipRegistrationController::class, 'store']);
+Route::get('/membership/{membership:public_id}/payment', [MembershipRegistrationController::class, 'payment'])->name('membership.payment');
+Route::post('/membership/{membership:public_id}/payment', [MembershipRegistrationController::class, 'processPayment'])->name('membership.payment.process');
+Route::get('/membership/{membership:public_id}/payment/complete', [MembershipRegistrationController::class, 'paymentComplete'])->name('membership.payment.complete');
+Route::get('/membership/{membership:public_id}/paypal/success', [MembershipRegistrationController::class, 'paypalSuccess'])->name('membership.paypal.success');
+Route::get('/membership/{membership:public_id}/paypal/cancel', [MembershipRegistrationController::class, 'paypalCancel'])->name('membership.paypal.cancel');
+Route::get('/membership/set-password/{token}', [MembershipRegistrationController::class, 'setPassword'])->name('membership.set-password');
+Route::post('/membership/set-password/{token}', [MembershipRegistrationController::class, 'savePassword'])->name('membership.save-password');

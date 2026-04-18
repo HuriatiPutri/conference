@@ -28,11 +28,19 @@ function PublicLayout({ children, title }: PublicLayoutProps) {
                 <Group gap="sm">
                   <Button
                     component={Link}
-                    href="/register"
+                    href="/register-membership"
                     variant="light"
                     size="sm"
                   >
-                    Register
+                    Join Us
+                  </Button>
+                  <Button
+                    component={Link}
+                    href="/login"
+                    variant="light"
+                    size="sm"
+                  >
+                    Login
                   </Button>
                 </Group>
               </Group>

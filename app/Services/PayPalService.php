@@ -135,6 +135,7 @@ class PayPalService
      */
     public function executePayment($paymentId, $payerId)
     {
+        Log::info('==== PayPal payment execution ====', ['paymentId' => $paymentId]);
         $accessToken = $this->getAccessToken();
 
         $response = Http::withToken($accessToken)
@@ -143,6 +144,7 @@ class PayPalService
             ]);
 
         if ($response->successful()) {
+            Log::info('PayPal payment execution', ['response' => $response->json()]);
             return $response->json();
         }
 

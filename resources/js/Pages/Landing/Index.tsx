@@ -89,7 +89,7 @@ function LandingPage() {
                   size="lg"
                   radius="xl"
                   component={Link}
-                  href="/register"
+                  href="/register-membership"
                   variant="filled"
                   color="blue"
                 >
@@ -332,7 +332,7 @@ function LandingPage() {
             <Grid.Col span={{ base: 12, md: 3 }}>
               <Stack gap="sm">
                 <Title order={5} c="white">Quick Links</Title>
-                <Anchor component={Link} href="/register" c="gray.4">Registration</Anchor>
+                <Anchor component={Link} href="/register-membership" c="gray.4">Registration</Anchor>
                 <Anchor component={Link} href="/#conferences" c="gray.4">Conferences</Anchor>
               </Stack>
             </Grid.Col>

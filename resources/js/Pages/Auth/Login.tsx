@@ -10,11 +10,10 @@ import {
   Container,
   Alert,
   Checkbox,
-  Stack
+  Stack,
+  Anchor
 } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
-import { route } from 'ziggy-js';
-import MainLayout from '../../Layout/MainLayout';
 import AuthLayout from '../../Layout/AuthLayout';
 
 interface LoginForm {
@@ -37,14 +36,14 @@ export default function Login() {
 
   return (
     <Container size={420} my={40}>
-      <Title ta="center" mb="lg">
-        Login Admin
+      <Title ta="center">
+        Sign In to SOTVI
       </Title>
       <Text c="dimmed" size="sm" ta="center" mb="xl">
-        Masuk ke dashboard admin untuk mengelola konferensi
+        Welcome Back! Please enter your details to sign in.
       </Text>
 
-      <Paper withBorder shadow="md" p={30} mt={30} radius="md">
+      <Paper p={30} mt={20} radius="md">
         {errors.email && (
           <Alert
             icon={<IconAlertCircle size="1rem" />}
@@ -90,6 +89,12 @@ export default function Login() {
             </Button>
           </Stack>
         </form>
+        <Text ta="center" mt="md">
+          Don&apos;t have an account?{' '}
+          <Anchor href={'/register-membership'} fw={500}>
+            Register
+          </Anchor>
+        </Text>
       </Paper>
     </Container>
   );

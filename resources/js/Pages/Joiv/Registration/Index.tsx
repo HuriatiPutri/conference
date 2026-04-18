@@ -47,145 +47,143 @@ export default function JoivRegistrationIndex() {
     <>
       <Head title="JOIV Registration" />
       <Container size="md" py="xl">
-        <Card shadow="md" padding="xl" radius="md">
-          <Stack gap="lg">
-            <div>
-              <Title order={2} ta="center" mb="xs">
-                JOIV Article Registration
-              </Title>
-              <Text ta="center" c="dimmed" size="lg">
-                International Journal on Informatics Visualization
-              </Text>
-            </div>
+        <Stack gap="lg">
+          <div>
+            <Title order={2} ta="center" mb="xs">
+              JOIV Article Registration
+            </Title>
+            <Text ta="center" c="dimmed" size="lg">
+              International Journal on Informatics Visualization
+            </Text>
+          </div>
 
-            <Alert icon={<IconInfoCircle size="1rem" />} title="Registration Fee" color="blue">
-              <Text>
-                International Fee: {formatCurrency(Number(registrationFeeUSD), 'usd')} USD
-              </Text>
-              <Text>
-                Indonesian Fee: {formatCurrency(Number(registrationFeeIDR), 'idr')} IDR
-              </Text>
-            </Alert>
+          <Alert icon={<IconInfoCircle size="1rem" />} title="Registration Fee" color="blue">
+            <Text>
+              International Fee: {formatCurrency(Number(registrationFeeUSD), 'usd')} USD
+            </Text>
+            <Text>
+              Indonesian Fee: {formatCurrency(Number(registrationFeeIDR), 'idr')} IDR
+            </Text>
+          </Alert>
 
-            <Divider />
+          <Divider />
 
-            <form onSubmit={handleSubmit}>
-              <Stack gap="md">
-                <Title order={4}>Author Information</Title>
+          <form onSubmit={handleSubmit}>
+            <Stack gap="md">
+              <Title order={4}>Author Information</Title>
 
-                <Group grow>
-                  <TextInput
-                    label="First Name"
-                    placeholder="Enter your first name"
-                    value={data.first_name}
-                    onChange={(e) => setData('first_name', e.currentTarget.value)}
-                    error={errors.first_name}
-                    required
-                  />
-                  <TextInput
-                    label="Last Name"
-                    placeholder="Enter your last name"
-                    value={data.last_name}
-                    onChange={(e) => setData('last_name', e.currentTarget.value)}
-                    error={errors.last_name}
-                    required
-                  />
-                </Group>
-
+              <Group grow>
                 <TextInput
-                  label="Email Address"
-                  placeholder="Enter your email"
-                  type="email"
-                  value={data.email_address}
-                  onChange={(e) => setData('email_address', e.currentTarget.value)}
-                  error={errors.email_address}
+                  label="First Name"
+                  placeholder="Enter your first name"
+                  value={data.first_name}
+                  onChange={(e) => setData('first_name', e.currentTarget.value)}
+                  error={errors.first_name}
                   required
                 />
-
-                <Group grow>
-                  <TextInput
-                    label="Phone Number"
-                    placeholder="Enter your phone number"
-                    value={data.phone_number}
-                    onChange={(e) => {
-                      const value = e.currentTarget.value.replace(/\D/g, '');
-                      setData('phone_number', value);
-                    }}
-                    error={errors.phone_number}
-                    required
-                  />
-                  <Select
-                    label="Country"
-                    placeholder="Select your country"
-                    data={COUNTRIES}
-                    value={data.country}
-                    onChange={(value) => setData('country', value || '')}
-                    error={errors.country}
-                    searchable
-                    required
-                  />
-                </Group>
-
                 <TextInput
-                  label="Institution"
-                  placeholder="Enter your institution/university"
-                  value={data.institution}
-                  onChange={(e) => setData('institution', e.currentTarget.value)}
-                  error={errors.institution}
+                  label="Last Name"
+                  placeholder="Enter your last name"
+                  value={data.last_name}
+                  onChange={(e) => setData('last_name', e.currentTarget.value)}
+                  error={errors.last_name}
                   required
                 />
+              </Group>
 
-                <Divider />
+              <TextInput
+                label="Email Address"
+                placeholder="Enter your email"
+                type="email"
+                value={data.email_address}
+                onChange={(e) => setData('email_address', e.currentTarget.value)}
+                error={errors.email_address}
+                required
+              />
 
-                <Title order={4}>Paper Information</Title>
-
+              <Group grow>
                 <TextInput
-                  label="Paper ID"
-                  placeholder="Enter paper ID"
-                  value={data.paper_id}
-                  onChange={(e) => setData('paper_id', e.currentTarget.value)}
-                  error={errors.paper_id}
+                  label="Phone Number"
+                  placeholder="Enter your phone number"
+                  value={data.phone_number}
+                  onChange={(e) => {
+                    const value = e.currentTarget.value.replace(/\D/g, '');
+                    setData('phone_number', value);
+                  }}
+                  error={errors.phone_number}
                   required
                 />
-
-                <TextInput
-                  label="Paper Title"
-                  placeholder="Enter your paper title"
-                  value={data.paper_title}
-                  onChange={(e) => setData('paper_title', e.currentTarget.value)}
-                  error={errors.paper_title}
+                <Select
+                  label="Country"
+                  placeholder="Select your country"
+                  data={COUNTRIES}
+                  value={data.country}
+                  onChange={(value) => setData('country', value || '')}
+                  error={errors.country}
+                  searchable
                   required
                 />
+              </Group>
 
-                <FileInput
-                  label="Full Paper"
-                  placeholder="Upload your full paper"
-                  accept="application/pdf,.doc,.docx"
-                  leftSection={<IconUpload size={14} />}
-                  value={data.full_paper}
-                  onChange={(file) => setData('full_paper', file)}
-                  error={errors.full_paper}
-                  description="Accepted formats: PDF, DOC, DOCX (Max: 50MB)"
-                  required
-                />
+              <TextInput
+                label="Institution"
+                placeholder="Enter your institution/university"
+                value={data.institution}
+                onChange={(e) => setData('institution', e.currentTarget.value)}
+                error={errors.institution}
+                required
+              />
 
-                <Divider mt="md" />
+              <Divider />
 
-                <Group justify="flex-end" mt="lg">
-                  <Button
-                    type="submit"
-                    size="lg"
-                    fullWidth
-                    loading={processing}
-                    disabled={processing}
-                  >
-                    Continue to Payment
-                  </Button>
-                </Group>
-              </Stack>
-            </form>
-          </Stack>
-        </Card>
+              <Title order={4}>Paper Information</Title>
+
+              <TextInput
+                label="Paper ID"
+                placeholder="Enter paper ID"
+                value={data.paper_id}
+                onChange={(e) => setData('paper_id', e.currentTarget.value)}
+                error={errors.paper_id}
+                required
+              />
+
+              <TextInput
+                label="Paper Title"
+                placeholder="Enter your paper title"
+                value={data.paper_title}
+                onChange={(e) => setData('paper_title', e.currentTarget.value)}
+                error={errors.paper_title}
+                required
+              />
+
+              <FileInput
+                label="Full Paper"
+                placeholder="Upload your full paper"
+                accept="application/pdf,.doc,.docx"
+                leftSection={<IconUpload size={14} />}
+                value={data.full_paper}
+                onChange={(file) => setData('full_paper', file)}
+                error={errors.full_paper}
+                description="Accepted formats: PDF, DOC, DOCX (Max: 50MB)"
+                required
+              />
+
+              <Divider mt="md" />
+
+              <Group justify="flex-end" mt="lg">
+                <Button
+                  type="submit"
+                  size="lg"
+                  fullWidth
+                  loading={processing}
+                  disabled={processing}
+                >
+                  Continue to Payment
+                </Button>
+              </Group>
+            </Stack>
+          </form>
+        </Stack>
       </Container>
     </>
   );
