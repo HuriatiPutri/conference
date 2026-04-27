@@ -32,6 +32,7 @@ class InvoiceHistory extends Model
         'payer_id',
         'invoice_number',
         'amount',
+        'discount_amount',
         'currency',
         'status',
         'gateway_response',

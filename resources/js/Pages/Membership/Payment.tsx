@@ -22,7 +22,8 @@ import AuthLayout from '../../Layout/AuthLayout';
 interface Package {
   id: number;
   name: string;
-  price: number;
+  price_idr: number;
+  price_usd: number;
   duration: number;
 }
 
@@ -84,7 +85,7 @@ export default function MembershipPayment({ membership, package: packageData }: 
               </div>
               <div>
                 <Text fw={700} size="xl" c="green">
-                  {formatCurrency(packageData.price, currency)}
+                  {formatCurrency(isIndonesia ? packageData.price_idr : packageData.price_usd, currency as any)}
                 </Text>
               </div>
             </Group>
@@ -176,7 +177,7 @@ export default function MembershipPayment({ membership, package: packageData }: 
                       <Text size="sm">Account Number: 0310526940</Text>
                       <Text size="sm">Account Name: Alde Alanda</Text>
                       <Text size="sm" fw={500} mt="xs">
-                        Amount: {formatCurrency(packageData.price, currency)}
+                        Amount: {formatCurrency(isIndonesia ? packageData.price_idr : packageData.price_usd, currency as any)}
                       </Text>
                     </div>
 

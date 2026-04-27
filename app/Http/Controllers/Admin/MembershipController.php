@@ -15,7 +15,7 @@ class MembershipController extends Controller
         $memberships = Membership::with(['package', 'user', 'invoices'])
             ->latest()
             ->paginate(15);
-            
+
         return Inertia::render('Admin/Memberships/Index', [
             'memberships' => $memberships
         ]);
@@ -38,15 +38,13 @@ class MembershipController extends Controller
 
         if ($request->status === 'completed') {
             $membership->activate();
-            
+
             // Generate token and send email so user can set password
             if (!$membership->user_id) {
                 $membership->sendSetPasswordEmail();
             }
-            
+
             return redirect()->back()->with('success', 'Payment verified and set-password email sent.');
         }
-
-        return redirect()->back()->with('success', 'Payment marked as failed.');
     }
 }

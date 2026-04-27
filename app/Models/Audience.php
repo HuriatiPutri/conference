@@ -25,6 +25,7 @@ class Audience extends Model
         'country',
         'presentation_type',
         'paid_fee',
+        'discount_amount',
         'payment_status',
         'payment_method',
         'payment_proof_path',
@@ -38,7 +39,7 @@ class Audience extends Model
         'loa_volume_id',
     ];
 
-    public function resolveRouteBinding($value, $field = null)
+        public function resolveRouteBinding($value, $field = null)
     {
         return $this->where($field ?? 'id', $value)->withTrashed()->firstOrFail();
     }

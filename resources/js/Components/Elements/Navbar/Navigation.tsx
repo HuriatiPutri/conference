@@ -1,5 +1,5 @@
 import { Code, Group, ScrollArea, Text, Button } from '@mantine/core';
-import { IconGauge, IconPodium, IconUsersGroup, IconLogout, IconMicrophone, IconUsers, IconRubberStamp, IconArticle } from '@tabler/icons-react';
+import { IconGauge, IconPodium, IconUsersGroup, IconLogout, IconMicrophone, IconUsers, IconRubberStamp, IconArticle, IconCrown } from '@tabler/icons-react';
 import React from 'react';
 import { router, usePage } from '@inertiajs/react';
 import { LinksGroup } from '../LinkGroup/LinksGroup';
@@ -23,6 +23,7 @@ const adminMenus = [
 
 const userMenus = [
   { label: 'Dashboard', icon: IconGauge, link: '/dashboard' },
+  { label: 'Membership Card', icon: IconCrown, link: '/membership/card' },
   { label: 'My Conferences', icon: IconUsersGroup, link: '/audiences' },
   { label: 'Joiv Article', icon: IconArticle, link: '/joiv-articles' },
 ];

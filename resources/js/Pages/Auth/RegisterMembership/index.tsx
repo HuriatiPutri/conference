@@ -160,8 +160,7 @@ export default function RegisterMembership({ packages }: RegisterMembershipProps
                         </div>
                       </Group>
                       <Text fw={700} c="blue">
-                        {/* Note: we are currently simplifying the currency conversion visual for packages. */}
-                        {isIndonesia && pkg.price < 1000 ? '$' + pkg.price : formatCurrency(pkg.price, isIndonesia ? 'idr' : 'usd')}
+                        {formatCurrency(isIndonesia ? pkg.price_idr : pkg.price_usd, isIndonesia ? 'idr' : 'usd')}
                       </Text>
                     </Group>
                   </Paper>
@@ -176,7 +175,7 @@ export default function RegisterMembership({ packages }: RegisterMembershipProps
                   <Group justify="space-between">
                     <Text fw={500}>Total Fee:</Text>
                     <Text fw={700} size="lg" c="blue">
-                      {isIndonesia && selectedPackage.price < 1000 ? '$' + selectedPackage.price : formatCurrency(selectedPackage.price, isIndonesia ? 'idr' : 'usd')}
+                      {formatCurrency(isIndonesia ? selectedPackage.price_idr : selectedPackage.price_usd, isIndonesia ? 'idr' : 'usd')}
                     </Text>
                   </Group>
                 </Card>

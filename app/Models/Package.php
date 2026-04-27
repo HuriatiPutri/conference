@@ -8,7 +8,8 @@ class Package extends Model
 {
     protected $fillable = [
         'name',
-        'price',
+        'price_idr',
+        'price_usd',
         'status',
         'duration',
         'created_by',
@@ -16,8 +17,9 @@ class Package extends Model
     ];
 
     protected $casts = [
-        'price'    => 'decimal:2',
-        'duration' => 'integer',
+        'price_idr' => 'decimal:2',
+        'price_usd' => 'decimal:2',
+        'duration'  => 'integer',
     ];
 
     public function memberships()

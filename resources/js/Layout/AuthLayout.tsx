@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { Anchor, AppShell, Button, Container, Group, MantineProvider, Paper, Title } from '@mantine/core';
 import '@mantine/core/styles.css';
 import { Notifications } from '@mantine/notifications';
@@ -12,6 +12,8 @@ interface AuthLayoutProps {
 }
 
 export default function AuthLayout({ title, children }: AuthLayoutProps) {
+  const { auth } = usePage().props as any;
+
   return (
     <>
       <Head title={title ? title : 'Sotvi.org'} />
@@ -28,24 +30,35 @@ export default function AuthLayout({ title, children }: AuthLayoutProps) {
                     SOTVI Conference
                   </Title>
                 </Anchor>
-                <Group gap="sm">
+                {auth?.user ? (
                   <Button
                     component={Link}
-                    href="/register-membership"
-                    variant="light"
+                    href="/dashboard"
+                    variant="subtle"
                     size="sm"
                   >
-                    Join Us
+                    Dashboard
                   </Button>
-                  <Button
-                    component={Link}
-                    href="/login"
-                    variant="light"
-                    size="sm"
-                  >
-                    Login
-                  </Button>
-                </Group>
+                ) : (
+                  <Group gap="sm">
+                    <Button
+                      component={Link}
+                      href="/register-membership"
+                      variant="subtle"
+                      size="sm"
+                    >
+                      Join Us
+                    </Button>
+                    <Button
+                      component={Link}
+                      href="/login/member"
+                      variant="subtle"
+                      size="sm"
+                    >
+                      Login
+                    </Button>
+                  </Group>
+                )}
               </Group>
             </Container>
           </AppShell.Header>

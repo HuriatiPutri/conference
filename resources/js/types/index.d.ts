@@ -84,6 +84,7 @@ export interface Conference {
   onsite_fee_usd: number;
   participant_fee: number;
   participant_fee_usd: number;
+  member_discount_percentage?: number;
   registration_fee: number;
   certificate_template_path: string;
   certificate_template_position: string;

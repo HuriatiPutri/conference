@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Conference;
 use App\Models\Audience;
 use App\Models\Membership;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,8 +18,9 @@ class DashboardController extends Controller
         $user = Auth::user();
 
         $statRoleUser = [
-            'memberships' => Membership::with('package')->where('user_id', $user->id)->where('status', 'active')->first(),
-            'recent_conferences' => Audience::with('conference:id,name,city,date,year')->where('user_id', $user->id)->orWhere('email', $user->email)->latest()->take(5)->get(['id', 'first_name', 'last_name', 'email', 'conference_id', 'created_at']),
+            'memberships' => Membership::with('package')->where('user_id', $user->id)->latest()->first(),
+            'recent_conferences' => Audience::with('conference:id,name,city,date,year')->where('user_id', $user->id)->orWhere('email', $user->email)->latest()->take(5)->get(['id', 'first_name', 'last_name', 'email', 'conference_id', 'created_at', 'payment_status']),
+            'upcoming_conference' => Conference::where('date', '>=', Carbon::today())->orderBy('date', 'asc')->take(3)->get(),
         ];
 
         $stats = [
@@ -36,6 +38,22 @@ class DashboardController extends Controller
             'stats' => $stats,
             'statRoleUser' => $statRoleUser,
             'user' => Auth::user(),
+            'packages' => \App\Models\Package::active()->get(),
+        ]);
+    }
+
+    public function membershipCard(): Response
+    {
+        $user = Auth::user();
+
+        $membership = Membership::with('package')
+            ->where('user_id', $user->id)
+            ->latest()
+            ->first();
+
+        return Inertia::render('Admin/Memberships/Card', [
+            'membership' => $membership,
+            'user' => $user,
         ]);
     }
 }

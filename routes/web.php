@@ -30,14 +30,21 @@ Route::get('/detail/{conference:public_id}', [LandingController::class, 'detail'
 // });
 
 // Authentication routes
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
+Route::get('/login', function () {
+    return redirect()->route('login.admin');
+})->name('login');
+Route::get('/login/member', [AuthController::class, 'showMemberLoginForm'])->name('login.member');
+Route::post('/login/member', [AuthController::class, 'loginMember'])->name('login.member.store');
+Route::get('/login/admin', [AuthController::class, 'showAdminLoginForm'])->name('login.admin');
+Route::post('/login/admin', [AuthController::class, 'loginAdmin'])->name('login.admin.store');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Protected routes - require authentication
 
 Route::middleware(['auth', 'role:admin,user'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/membership/card', [DashboardController::class, 'membershipCard'])->name('membership.card');
+    Route::post('/memberships/{membership}/renew', [MembershipRegistrationController::class, 'renew'])->name('memberships.renew');
     Route::get('audiences/{audience}/receipt', [AudiencesController::class, 'downloadReceipt'])
         ->name('audiences.receipt');
 
@@ -52,6 +59,8 @@ Route::middleware(['auth', 'role:admin,user'])->group(function () {
         ->name('audiences.download');
 
     Route::get('joiv-articles', [JoivArticleController::class, 'index'])->name('joiv-articles.index');
+    Route::get('joiv-articles/{joivArticle}/download-receipt', [JoivArticleController::class, 'downloadReceipt'])->name('joiv-articles.downloadReceipt');
+
 });
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
@@ -155,7 +164,6 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::patch('/{joivArticle}/payment-status', [JoivArticleController::class, 'updatePaymentStatus'])->name('updatePaymentStatus');
         Route::get('/{joivArticle}/download-paper', [JoivArticleController::class, 'downloadPaper'])->name('downloadPaper');
         Route::get('/{joivArticle}/download-payment-proof', [JoivArticleController::class, 'downloadPaymentProof'])->name('downloadPaymentProof');
-        Route::get('/{joivArticle}/download-receipt', [JoivArticleController::class, 'downloadReceipt'])->name('downloadReceipt');
         Route::get('/{joivArticle}/download-loa', [JoivArticleController::class, 'downloadLoa'])->name('downloadLoa');
         Route::get('/export/excel', [JoivArticleController::class, 'export'])->name('export');
         Route::delete('/{joivArticle}', [JoivArticleController::class, 'destroy'])->name('destroy');

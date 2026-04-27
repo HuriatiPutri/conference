@@ -13,17 +13,38 @@ use Inertia\Response;
 class AuthController extends Controller
 {
     /**
-     * Show the login form.
+     * Show the member login form.
      */
-    public function showLoginForm(): Response
+    public function showMemberLoginForm(): Response
     {
         return Inertia::render('Auth/Login');
     }
 
     /**
-     * Handle an authentication attempt.
+     * Show the admin login form.
      */
-    public function login(Request $request): RedirectResponse
+    public function showAdminLoginForm(): Response
+    {
+        return Inertia::render('Auth/LoginAdmin');
+    }
+
+    /**
+     * Handle member authentication attempt.
+     */
+    public function loginMember(Request $request): RedirectResponse
+    {
+        return $this->loginByRole($request, 'user');
+    }
+
+    /**
+     * Handle admin authentication attempt.
+     */
+    public function loginAdmin(Request $request): RedirectResponse
+    {
+        return $this->loginByRole($request, 'admin');
+    }
+
+    private function loginByRole(Request $request, string $role): RedirectResponse
     {
         $credentials = $request->validate([
             'email' => ['required', 'email'],
@@ -32,6 +53,19 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
+
+            $user = Auth::user();
+            if (!$user || optional($user->role)->name !== $role) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                throw ValidationException::withMessages([
+                    'email' => $role === 'admin'
+                        ? 'Akun ini bukan akun admin.'
+                        : 'Akun ini bukan akun member.',
+                ]);
+            }
 
             return redirect()->intended('/dashboard');
         }
@@ -51,6 +85,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/login');
+        return redirect()->route('login.member');
     }
 }

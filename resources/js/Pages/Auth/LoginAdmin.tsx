@@ -22,7 +22,7 @@ interface LoginForm {
   remember: boolean;
 }
 
-export default function Login() {
+export default function LoginAdmin() {
   const { data, setData, post, processing, errors } = useForm<LoginForm>({
     email: '',
     password: '',
@@ -31,16 +31,16 @@ export default function Login() {
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    post(route('login.member.store'));
+    post('/login/admin');
   }
 
   return (
     <Container size={420} my={40}>
-      <Title ta="center" mb={'sm'}>
-        Member Portal Login
+      <Title ta="center">
+        Admin Login
       </Title>
       <Text c="dimmed" size="sm" ta="center" mb="xl">
-        Welcome back! Please sign in to continue your conference journey and access your dashboard.
+        Sign in with your admin account to manage the system.
       </Text>
 
       <Paper p={30} mt={20} radius="md">
@@ -59,7 +59,7 @@ export default function Login() {
           <Stack>
             <TextInput
               label="Email"
-              placeholder="member@example.com"
+              placeholder="admin@example.com"
               required
               value={data.email}
               onChange={(e) => setData('email', e.target.value)}
@@ -85,18 +85,20 @@ export default function Login() {
               type="submit"
               fullWidth
               loading={processing}>
-              Sign in as Member
+              Sign in as Admin
             </Button>
           </Stack>
         </form>
-        <Text ta="center" mt="xs">
-          Don&apos;t have an account?{' '}
-          <Anchor href={'/register-membership'} fw={500}>
-            Register
+
+        <Text ta="center" mt="md">
+          Member?{' '}
+          <Anchor href={'/login/member'} fw={500}>
+            Login as Member
           </Anchor>
         </Text>
       </Paper>
     </Container>
   );
 }
-Login.layout = (page: React.ReactNode) => <AuthLayout title="Member Login">{page}</AuthLayout>;
+
+LoginAdmin.layout = (page: React.ReactNode) => <AuthLayout title="Admin Login">{page}</AuthLayout>;

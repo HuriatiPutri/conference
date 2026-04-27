@@ -24,6 +24,7 @@ interface Invoice {
   status: string;
   payment_method: string;
   amount: number;
+  currency: string;
   payment_proof_path: string | null;
 }
 
@@ -103,7 +104,7 @@ export default function MembershipIndex({ memberships }: Props) {
                       <Text size="sm">{membership.package?.name}</Text>
                       {latestInvoice && (
                         <Text size="xs" c="dimmed">
-                          {formatCurrency(latestInvoice.amount, 'idr')} via {latestInvoice.payment_method.replace('_', ' ')}
+                          {formatCurrency(latestInvoice.amount, (latestInvoice.currency || 'idr').toLowerCase() as 'idr' | 'usd')} via {latestInvoice.payment_method.replace('_', ' ')}
                         </Text>
                       )}
                     </Table.Td>

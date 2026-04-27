@@ -58,6 +58,35 @@ class MembershipRegistrationController extends Controller
     }
 
     /**
+     * Proses pembaruan (renew) membership.
+     */
+    public function renew(Request $request, Membership $membership)
+    {
+        if ($membership->user_id !== \Illuminate\Support\Facades\Auth::id()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'package_id' => 'required|exists:packages,id',
+        ]);
+
+        // Replicate user's latest membership to create a new row for history
+        $newMembership = $membership->replicate();
+        
+        $newMembership->public_id = null; // Let the model boot method generate a new one
+        $newMembership->package_id = $request->package_id;
+        $newMembership->status = 'pending';
+        
+        // Reset start and end dates temporarily, they will update upon payment success
+        $newMembership->start_date = now()->toDateString();
+        $newMembership->end_date = now()->addDays(365)->toDateString();
+        
+        $newMembership->save();
+
+        return redirect()->route('membership.payment', $newMembership->public_id);
+    }
+
+    /**
      * Tampilkan halaman pemilihan metode pembayaran.
      */
     public function payment(Membership $membership)
@@ -110,7 +139,7 @@ class MembershipRegistrationController extends Controller
             $invoice = $membership->invoices()->create([
                 'payment_method' => 'transfer_bank',
                 'status' => 'pending',
-                'amount' => $package->price,
+                'amount' => $currency === 'IDR' ? $package->price_idr : $package->price_usd,
                 'currency' => $currency,
                 'payment_proof_path' => $proofPath,
                 'description' => "Membership Payment for " . $package->name,
@@ -120,7 +149,7 @@ class MembershipRegistrationController extends Controller
             DB::commit();
 
             // Send email confirmation
-            $membership->sendPaymentPendingEmail($package->price, $currency);
+            $membership->sendPaymentPendingEmail($currency === 'IDR' ? $package->price_idr : $package->price_usd, $currency);
 
             return redirect()->route('membership.payment.complete', $membership->public_id);
 
@@ -155,7 +184,7 @@ class MembershipRegistrationController extends Controller
                 $invoiceHistory = $membership->invoices()->create([
                     'payment_method' => 'payment_gateway',
                     'payment_gateway' => 'paypal',
-                    'amount' => $package->price,
+                    'amount' => $package->price_usd,
                     'currency' => $currency,
                     'description' => "Membership Payment for " . $package->name,
                     'status' => 'pending',
@@ -235,7 +264,10 @@ class MembershipRegistrationController extends Controller
             // Payment sukses
             $invoiceHistory->update(['status' => 'completed']);
             $membership->activate();
-            $membership->sendSetPasswordEmail();
+
+            if (!$membership->user_id) {
+                $membership->sendSetPasswordEmail();
+            }
 
             session()->forget(['paypal_payment_id', 'invoice_history_id']);
 
