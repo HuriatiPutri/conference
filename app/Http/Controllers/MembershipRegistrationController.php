@@ -136,7 +136,7 @@ class MembershipRegistrationController extends Controller
             $package = $membership->package;
             $currency = $membership->country === 'ID' ? 'IDR' : 'USD';
 
-            $invoice = $membership->invoices()->create([
+            $membership->invoices()->create([
                 'payment_method' => 'transfer_bank',
                 'status' => 'pending',
                 'amount' => $currency === 'IDR' ? $package->price_idr : $package->price_usd,
@@ -169,6 +169,13 @@ class MembershipRegistrationController extends Controller
     {
         $package = $membership->package;
         $currency = 'USD'; // PayPal generally uses USD
+        $amount = (float) ($package->price_usd ?? 0);
+
+        if ($amount <= 0) {
+            throw ValidationException::withMessages([
+                'payment_method' => ['Selected package does not have a valid USD price for PayPal payment.'],
+            ]);
+        }
 
         // Cek existing pending invoice untuk PayPal
         $invoiceHistory = $membership->invoices()
@@ -201,7 +208,7 @@ class MembershipRegistrationController extends Controller
 
             $paypal = app(PayPalService::class);
             $paymentDetails = $paypal->createPayment(
-                $package->price,
+                $amount,
                 $currency,
                 "Membership Payment for {$membership->first_name} {$membership->last_name}",
                 $returnUrl,
@@ -257,22 +264,24 @@ class MembershipRegistrationController extends Controller
 
             if (($paymentDetails['state'] ?? null) !== 'approved') {
                 $invoiceHistory->update(['status' => 'failed']);
-                return redirect()->route('membership.payment', $membership->public_id)
+                $redirect = redirect()->route('membership.payment', $membership->public_id)
                     ->with('error', 'PayPal payment was not approved.');
-            }
+            } else {
+                // Payment sukses
+                $invoiceHistory->update(['status' => 'completed']);
+                $membership->activate();
 
-            // Payment sukses
-            $invoiceHistory->update(['status' => 'completed']);
-            $membership->activate();
+                if (!$membership->user_id) {
+                    $membership->sendSetPasswordEmail();
+                }
 
-            if (!$membership->user_id) {
-                $membership->sendSetPasswordEmail();
+                $redirect = redirect()->route('membership.payment.complete', $membership->public_id)
+                    ->with('success', 'Payment successful!');
             }
 
             session()->forget(['paypal_payment_id', 'invoice_history_id']);
 
-            return redirect()->route('membership.payment.complete', $membership->public_id)
-                ->with('success', 'Payment successful!');
+            return $redirect;
 
         } catch (\Exception $e) {
             \Log::error('PayPal Membership Execute Error: ' . $e->getMessage());
