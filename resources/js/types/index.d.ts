@@ -202,12 +202,12 @@ export type PaginatedData<T> = {
     next: string | null;
   };
   current_page: number;
-    from: number;
-    last_page: number;
-    path: string;
-    per_page: number;
-    to: number;
-    total: number;
+  from: number;
+  last_page: number;
+  path: string;
+  per_page: number;
+  to: number;
+  total: number;
   meta: {
     current_page: number;
     from: number;
@@ -248,4 +248,42 @@ export interface JoivRegistrationFee {
     full_name: string;
   };
   created_at: string;
+}
+
+export interface Invoice {
+  id: string;
+  status: string;
+  payment_method: string;
+  amount: number;
+  currency: string;
+  payment_proof_path: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Package {
+  id: number;
+  name: string;
+  price: number;
+  duration: number;
+}
+
+export interface Membership {
+  id: number;
+  public_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  status: string;
+  package: Package;
+  package_id: number;
+  invoices: Invoice[];
+  start_date: string;
+  end_date: string;
+  user_id: number | null;
+  institution: string;
+  country: string;
+  phone_number: string;
+  created_at: string;
+  updated_at: string;
 }

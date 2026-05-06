@@ -10,14 +10,35 @@ use Inertia\Inertia;
 
 class MembershipController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $memberships = Membership::with(['package', 'user', 'invoices'])
-            ->latest()
-            ->paginate(15);
+        $query = Membership::with(['package', 'user', 'invoices']);
+
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Search by name or email
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->orWhere('institution', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $memberships = $query->latest()->paginate($request->input('per_page', 15));
+
+        $filters = [
+            'status' => $request->status,
+            'search' => $request->search,
+        ];
 
         return Inertia::render('Admin/Memberships/Index', [
-            'memberships' => $memberships
+            'memberships' => $memberships,
+            'filters' => $filters,
         ]);
     }
 

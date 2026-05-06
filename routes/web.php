@@ -213,6 +213,7 @@ Route::get('/joiv/registration/{registration:public_id}/paypal/cancel', [\App\Ht
 //Membership Registration
 Route::get('/register-membership', [MembershipRegistrationController::class, 'index'])->name('membership.register');
 Route::post('/register-membership', [MembershipRegistrationController::class, 'store']);
+Route::get('/membership/{membership:public_id}/status', [MembershipRegistrationController::class, 'status'])->name('membership.status');
 Route::get('/membership/{membership:public_id}/payment', [MembershipRegistrationController::class, 'payment'])->name('membership.payment');
 Route::post('/membership/{membership:public_id}/payment', [MembershipRegistrationController::class, 'processPayment'])->name('membership.payment.process');
 Route::get('/membership/{membership:public_id}/payment/complete', [MembershipRegistrationController::class, 'paymentComplete'])->name('membership.payment.complete');

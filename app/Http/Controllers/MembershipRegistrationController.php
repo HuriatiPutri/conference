@@ -104,6 +104,19 @@ class MembershipRegistrationController extends Controller
     }
 
     /**
+     * Public membership status page.
+     */
+    public function status(Membership $membership)
+    {
+        $membership->load('package');
+
+        return Inertia::render('Membership/Status', [
+            'membership' => $membership,
+            'package' => $membership->package,
+        ]);
+    }
+
+    /**
      * Proses metode pembayaran yang dipilih.
      */
     public function processPayment(Request $request, Membership $membership)

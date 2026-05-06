@@ -3,6 +3,8 @@ import { Badge, Box, Button, Card, Container, Group, Stack, Text, ThemeIcon, Tit
 import { IconAlertCircle, IconArrowLeft, IconCrown, IconIdBadge2 } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import React from 'react';
+import QRCode from 'react-qr-code';
+import { route } from 'ziggy-js';
 import MainLayout from '../../../Layout/MainLayout';
 
 interface MembershipPackage {
@@ -38,6 +40,7 @@ export default function MembershipCardPage() {
     : false;
 
   const isActive = membership?.status === 'active' && !isExpired;
+  const statusUrl = membership ? route('membership.status', membership.public_id) : '';
 
   const renderEmptyState = () => (
     <Card radius="xl" p="xl" withBorder>
@@ -92,14 +95,14 @@ export default function MembershipCardPage() {
 
         <Stack gap="md" style={{ position: 'relative', zIndex: 1 }}>
           <Group justify="space-between" align="flex-start">
-            <div>
+            <Box>
               <Text size="sm" fw={600} c={'white'} tt="uppercase" style={{ letterSpacing: '2px', opacity: 0.85 }}>
                 SOTVI Membership
               </Text>
               <Title order={2} style={{ color: 'white' }}>
                 {membership.package?.name || 'General Membership'}
               </Title>
-            </div>
+            </Box>
             <Badge
               color={isActive ? 'white' : 'red.9'}
               variant={isActive ? 'white' : 'filled'}
@@ -120,38 +123,50 @@ export default function MembershipCardPage() {
             </Text>
           </Group>
 
-          <Stack gap={2}>
-            <Text size="sm" style={{ opacity: 0.9 }} c={'white'} tt="uppercase">
-              Card Holder
-            </Text>
-            <Text fw={700} size="lg" c={'white'}>
-              {membership.first_name} {membership.last_name}
-            </Text>
-            <Text size="sm" style={{ opacity: 0.92 }} c={'white'}>
-              {membership.email}
-            </Text>
-            <Text size="sm" style={{ opacity: 0.92 }} c={'white'}>
-              {membership.institution} • {membership.country}
-            </Text>
-          </Stack>
+          <Group justify="space-between" mt="sm">
+
+            <Stack gap={2}>
+              <Text size="sm" style={{ opacity: 0.9 }} c={'white'} tt="uppercase">
+                Card Holder
+              </Text>
+              <Text fw={700} size="lg" c={'white'}>
+                {membership.first_name} {membership.last_name}
+              </Text>
+              <Text size="sm" style={{ opacity: 0.92 }} c={'white'}>
+                {membership.email}
+              </Text>
+              <Text size="sm" style={{ opacity: 0.92 }} c={'white'}>
+                {membership.institution} • {membership.country}
+              </Text>
+            </Stack>
+
+
+            <Stack gap={8} align="center">
+              <Box p={6} bg="white" style={{ borderRadius: 12 }}>
+                {statusUrl && (
+                  <QRCode value={statusUrl} size={80} fgColor="#111827" bgColor="#ffffff" />
+                )}
+              </Box>
+            </Stack>
+          </Group>
 
           <Group justify="space-between" mt="sm">
-            <div>
+            <Box>
               <Text size="xs" tt="uppercase" style={{ opacity: 0.75 }} c={'white'}>
                 Start Date
               </Text>
               <Text fw={600} c={'white'}>
                 {dayjs(membership.start_date).format('DD MMM YYYY')}
               </Text>
-            </div>
-            <div>
+            </Box>
+            <Box>
               <Text size="xs" tt="uppercase" style={{ opacity: 0.75 }} c={'white'}>
                 Valid Until
               </Text>
               <Text fw={600} c={'white'}>
                 {dayjs(membership.end_date).format('DD MMM YYYY')}
               </Text>
-            </div>
+            </Box>
           </Group>
         </Stack>
       </Card>
