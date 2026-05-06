@@ -23,8 +23,8 @@ interface Membership {
 }
 
 interface MembershipStatusProps {
-  membership: Membership;
-  package: MembershipPackage | null;
+  readonly membership: Membership;
+  readonly package: MembershipPackage | null;
 }
 
 export default function MembershipStatus({ membership, package: packageData }: MembershipStatusProps) {

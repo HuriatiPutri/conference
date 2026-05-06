@@ -1,8 +1,8 @@
 import React from 'react';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import {
+  Alert,
   Container,
-  Card,
   Title,
   Text,
   Button,
@@ -11,20 +11,24 @@ import {
   Paper,
   ThemeIcon
 } from '@mantine/core';
-import { IconLock } from '@tabler/icons-react';
+import { IconAlertCircle, IconLock } from '@tabler/icons-react';
 import AuthLayout from '../../Layout/AuthLayout';
+import { PageProps } from '../../types';
 
 interface SetPasswordProps {
-  token: string;
-  email: string;
+  readonly token: string;
+  readonly email: string;
 }
 
 export default function SetPassword({ token, email }: SetPasswordProps) {
+  const { flash } = usePage<PageProps>().props;
   const { data, setData, post, processing, errors } = useForm({
     email: email,
     password: '',
     password_confirmation: '',
   });
+
+  const submitError = flash?.error || errors.email;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +56,17 @@ export default function SetPassword({ token, email }: SetPasswordProps) {
             <Text size="sm" fw={500}>Account Email:</Text>
             <Text size="sm">{email}</Text>
           </Paper>
+
+          {submitError && (
+            <Alert
+              color="red"
+              variant="light"
+              icon={<IconAlertCircle size={16} />}
+              w="100%"
+            >
+              {submitError}
+            </Alert>
+          )}
 
           <form onSubmit={handleSubmit} style={{ width: '100%' }}>
             <Stack gap="md">

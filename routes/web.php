@@ -154,7 +154,6 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     // JOIV Article Management - Admin Routes
     Route::prefix('joiv-articles')->name('joiv-articles.')->group(function () {
-        // Route::get('/', [JoivArticleController::class, 'index'])->name('index');
         Route::get('/fee-settings', [JoivArticleController::class, 'feeSettings'])->name('fee-settings');
         Route::post('/fee-settings', [JoivArticleController::class, 'updateFee'])->name('fee-settings.update');
         Route::delete('/fee-settings/{fee}', [JoivArticleController::class, 'deleteFee'])->name('fee-settings.delete');
