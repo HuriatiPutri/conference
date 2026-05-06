@@ -386,7 +386,7 @@ class MembershipRegistrationController extends Controller
             DB::commit();
 
             // Auto login (opsional) atau redirect ke login
-            return redirect()->route('login')->with('success', 'Password set successfully. Please login.');
+            return redirect()->route('login.member')->with('success', 'Password set successfully. Please login.');
 
         } catch (\Exception $e) {
             DB::rollBack();
