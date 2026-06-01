@@ -62,8 +62,8 @@ class AuthController extends Controller
 
                 throw ValidationException::withMessages([
                     'email' => $role === 'admin'
-                        ? 'Akun ini bukan akun admin.'
-                        : 'Akun ini bukan akun member.',
+                        ? 'Credential not valid for admin account.'
+                        : 'Credential not valid for member account.',
                 ]);
             }
 

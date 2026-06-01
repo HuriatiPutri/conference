@@ -14,10 +14,11 @@ import {
   Title
 } from '@mantine/core';
 import { IconInfoCircle, IconUpload } from '@tabler/icons-react';
-import React from 'react';
+import React, { useState } from 'react';
 import { COUNTRIES } from '../../../Constants';
 import AuthLayout from '../../../Layout/AuthLayout';
 import { formatCurrency } from '../../../utils';
+import VoucherValidation from '../../../Components/VoucherValidation';
 
 export default function JoivRegistrationIndex() {
   const { registrationFeeIDR, registrationFeeUSD } = usePage().props as unknown as {
@@ -33,6 +34,7 @@ export default function JoivRegistrationIndex() {
     country: '',
     paper_id: '',
     paper_title: '',
+    voucher_code: '',
     full_paper: null as File | null,
   });
 
@@ -166,6 +168,16 @@ export default function JoivRegistrationIndex() {
                 error={errors.full_paper}
                 description="Accepted formats: PDF, DOC, DOCX (Max: 50MB)"
                 required
+              />
+
+              <Divider mt="md" label="Claim Voucher to get Discount" />
+
+              <VoucherValidation
+                value={data.voucher_code}
+                onChange={(value) => setData('voucher_code', value)}
+                onValidationChange={() => { }}
+                transactionType="joiv_article"
+                email={data.email_address}
               />
 
               <Divider mt="md" />

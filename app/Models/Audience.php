@@ -16,6 +16,8 @@ class Audience extends Model
 
     protected $fillable = [
         'conference_id',
+        'voucher_id',
+        'voucher_code',
         'first_name',
         'last_name',
         'paper_title',
@@ -52,6 +54,11 @@ class Audience extends Model
     public function conference()
     {
         return $this->belongsTo(Conference::class);
+    }
+
+    public function voucher()
+    {
+        return $this->belongsTo(Voucher::class);
     }
 
     public function key_notes(): HasMany

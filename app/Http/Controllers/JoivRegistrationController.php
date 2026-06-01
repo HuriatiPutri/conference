@@ -6,6 +6,7 @@ use App\Models\JoivRegistration;
 use App\Models\JoivRegistrationFee;
 use App\Models\InvoiceHistory;
 use App\Services\PayPalService;
+use App\Services\VoucherService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -42,6 +43,7 @@ class JoivRegistrationController extends Controller
             'paper_id' => 'nullable|string|max:255',
             'paper_title' => 'required|string|max:255',
             'full_paper' => 'required|file|mimes:pdf,doc,docx|max:51200',
+            'voucher_code' => 'nullable|string|size:6|alpha_num',
         ], [
             'email_address.unique' => 'This email has already been registered.',
             'phone_number.regex' => 'Phone number must contain only numbers without spaces or other characters.',
@@ -49,6 +51,12 @@ class JoivRegistrationController extends Controller
             'full_paper.mimes' => 'The full paper must be a file of type: pdf, doc, docx.',
             'full_paper.max' => 'The full paper may not be greater than 50MB.',
         ]);
+
+        $voucher = app(VoucherService::class)->claimOrFail(
+            $validatedData['voucher_code'] ?? null,
+            'joiv_article',
+            $validatedData['email_address']
+        );
 
         // Handle file upload
         $fullPaperPath = null;
@@ -65,7 +73,16 @@ class JoivRegistrationController extends Controller
         $currency = $validatedData['country'] === 'ID' ? 'IDR' : 'USD';
         
         // Get current registration fee from database based on currency
-        $paidFee = JoivRegistrationFee::getCurrentFeeAmount($currency);
+        $baseFee = JoivRegistrationFee::getCurrentFeeAmount($currency);
+
+        // Calculate voucher discount if applicable
+        $voucherDiscount = 0;
+        if ($voucher) {
+            $voucherDiscount = app(VoucherService::class)->calculateDiscount($voucher, $baseFee);
+        }
+
+        // Calculate final paid fee
+        $paidFee = max(0, $baseFee - $voucherDiscount);
 
         // Create registration record
         $registration = JoivRegistration::create([
@@ -81,6 +98,8 @@ class JoivRegistrationController extends Controller
             'paid_fee' => $paidFee,
             'currency' => $currency,
             'public_id' => $publicId,
+            'voucher_id' => $voucher?->id,
+            'voucher_code' => $voucher?->code,
             'payment_status' => 'pending_payment',
         ]);
 

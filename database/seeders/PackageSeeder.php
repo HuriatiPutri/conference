@@ -9,28 +9,31 @@ class PackageSeeder extends Seeder
 {
     public function run(): void
     {
+        if ($this->command) $this->command->info('Seeding packages...');
+
         Package::create([
-            'name' => 'Membership Regular (1 Year)',
-            'price_idr' => 500000,
-            'price_usd' => 50,
+            'name' => 'Package Platinum',
+            'price_idr' => 2000000,
+            'price_usd' => 200,
             'duration' => 365,
             'status' => 'active',
         ]);
 
         Package::create([
-            'name' => 'Membership Premium (2 Years)',
-            'price_idr' => 900000,
-            'price_usd' => 90,
-            'duration' => 730,
-            'status' => 'active',
-        ]);
-        
-        Package::create([
-            'name' => 'International Member (1 Year)',
-            'price_idr' => 750000,
-            'price_usd' => 50,
+            'name' => 'Package Gold',
+            'price_idr' => 1200000,
+            'price_usd' => 120,
             'duration' => 365,
             'status' => 'active',
         ]);
+
+        Package::create([
+            'name' => 'Package Silver',
+            'price_idr' => 600000,
+            'price_usd' => 60,
+            'duration' => 365,
+            'status' => 'active',
+        ]);
+        if ($this->command) $this->command->info('Packages seeded.');
     }
 }

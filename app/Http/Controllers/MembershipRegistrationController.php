@@ -8,6 +8,7 @@ use App\Models\InvoiceHistory;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\PayPalService;
+use App\Services\VoucherService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -42,12 +43,21 @@ class MembershipRegistrationController extends Controller
             'institution' => 'required|string|max:255',
             'country' => 'required|string|max:255',
             'package_id' => 'required|exists:packages,id',
+            'voucher_code' => 'nullable|string|size:6|alpha_num',
         ]);
+
+        $voucher = app(VoucherService::class)->claimOrFail(
+            $validated['voucher_code'] ?? null,
+            'membership_registration',
+            $validated['email']
+        );
 
         $package = Package::findOrFail($validated['package_id']);
 
         $membership = Membership::create([
             ...$validated,
+            'voucher_id' => $voucher?->id,
+            'voucher_code' => $voucher?->code,
             'status' => 'pending',
             // start_date & end_date will be set upon activation
             'start_date' => now()->toDateString(),
@@ -97,9 +107,20 @@ class MembershipRegistrationController extends Controller
 
         $membership->load('package');
 
+        // Calculate discount if voucher is applied
+        $discountAmount = 0;
+        if ($membership->voucher_id) {
+            $voucher = \App\Models\Voucher::find($membership->voucher_id);
+            if ($voucher) {
+                $baseFee = $membership->country === 'ID' ? $membership->package->price_idr : $membership->package->price_usd;
+                $discountAmount = app(VoucherService::class)->calculateDiscount($voucher, $baseFee);
+            }
+        }
+
         return Inertia::render('Membership/Payment', [
             'membership' => $membership,
-            'package' => $membership->package
+            'package' => $membership->package,
+            'discountAmount' => $discountAmount,
         ]);
     }
 
@@ -148,11 +169,22 @@ class MembershipRegistrationController extends Controller
 
             $package = $membership->package;
             $currency = $membership->country === 'ID' ? 'IDR' : 'USD';
+            
+            // Calculate base amount and apply voucher discount if applicable
+            $baseAmount = $currency === 'IDR' ? $package->price_idr : $package->price_usd;
+            $discountAmount = 0;
+            if ($membership->voucher_id) {
+                $voucher = \App\Models\Voucher::find($membership->voucher_id);
+                if ($voucher) {
+                    $discountAmount = app(VoucherService::class)->calculateDiscount($voucher, $baseAmount);
+                }
+            }
+            $finalAmount = max(0, $baseAmount - $discountAmount);
 
             $membership->invoices()->create([
                 'payment_method' => 'transfer_bank',
                 'status' => 'pending',
-                'amount' => $currency === 'IDR' ? $package->price_idr : $package->price_usd,
+                'amount' => $finalAmount,
                 'currency' => $currency,
                 'payment_proof_path' => $proofPath,
                 'description' => "Membership Payment for " . $package->name,
@@ -162,7 +194,7 @@ class MembershipRegistrationController extends Controller
             DB::commit();
 
             // Send email confirmation
-            $membership->sendPaymentPendingEmail($currency === 'IDR' ? $package->price_idr : $package->price_usd, $currency);
+            $membership->sendPaymentPendingEmail($finalAmount, $currency);
 
             return redirect()->route('membership.payment.complete', $membership->public_id);
 
@@ -182,13 +214,23 @@ class MembershipRegistrationController extends Controller
     {
         $package = $membership->package;
         $currency = 'USD'; // PayPal generally uses USD
-        $amount = (float) ($package->price_usd ?? 0);
+        $baseAmount = (float) ($package->price_usd ?? 0);
 
-        if ($amount <= 0) {
+        if ($baseAmount <= 0) {
             throw ValidationException::withMessages([
                 'payment_method' => ['Selected package does not have a valid USD price for PayPal payment.'],
             ]);
         }
+
+        // Calculate voucher discount if applicable
+        $discountAmount = 0;
+        if ($membership->voucher_id) {
+            $voucher = \App\Models\Voucher::find($membership->voucher_id);
+            if ($voucher) {
+                $discountAmount = app(VoucherService::class)->calculateDiscount($voucher, $baseAmount);
+            }
+        }
+        $amount = max(0, $baseAmount - $discountAmount);
 
         // Cek existing pending invoice untuk PayPal
         $invoiceHistory = $membership->invoices()
@@ -204,7 +246,7 @@ class MembershipRegistrationController extends Controller
                 $invoiceHistory = $membership->invoices()->create([
                     'payment_method' => 'payment_gateway',
                     'payment_gateway' => 'paypal',
-                    'amount' => $package->price_usd,
+                    'amount' => $amount,
                     'currency' => $currency,
                     'description' => "Membership Payment for " . $package->name,
                     'status' => 'pending',

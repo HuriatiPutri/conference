@@ -7,6 +7,7 @@ use App\Models\Conference;
 use App\Models\InvoiceHistory;
 use App\Models\Membership;
 use App\Services\PayPalService;
+use App\Services\VoucherService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\RedirectResponse;
@@ -77,6 +78,7 @@ class RegistrationController extends Controller
             'phone_number' => 'required|string|max:20|regex:/^[0-9]+$/',
             'country' => 'required|string|max:2',
             'presentation_type' => 'required|in:online_author,onsite,participant_only',
+            'voucher_code' => 'nullable|string|size:6|alpha_num',
         ];
 
         // Conditional validation for paper title and full paper
@@ -97,6 +99,12 @@ class RegistrationController extends Controller
             'paper_title.required' => 'Paper title is required for authors and presenters.',
         ]);
 
+        $voucher = app(VoucherService::class)->claimOrFail(
+            $validatedData['voucher_code'] ?? null,
+            'conference_registration',
+            $validatedData['email']
+        );
+
         // Handle file upload temporarily
         $fullPaperPath = null;
         if ($request->hasFile('full_paper')) {
@@ -104,7 +112,7 @@ class RegistrationController extends Controller
         }
 
         // Calculate fee based on country and presentation type
-        $feeCalculation = $this->calculateFee($conference, $validatedData['country'], $validatedData['presentation_type'], $validatedData['email']);
+        $feeCalculation = $this->calculateFee($conference, $validatedData['country'], $validatedData['presentation_type'], $validatedData['email'], $voucher);
         $paidFee = $feeCalculation['paid_fee'];
         $discountAmount = $feeCalculation['discount_amount'];
 
@@ -123,6 +131,8 @@ class RegistrationController extends Controller
                 'presentation_type' => $validatedData['presentation_type'],
                 'paid_fee' => $paidFee,
                 'discount_amount' => $discountAmount,
+                'voucher_id' => $voucher?->id,
+                'voucher_code' => $voucher?->code,
                 'full_paper_path' => $fullPaperPath,
             ]
         ]);
@@ -454,6 +464,8 @@ class RegistrationController extends Controller
             'presentation_type' => $registrationData['presentation_type'],
             'paid_fee' => $registrationData['paid_fee'],
             'discount_amount' => $registrationData['discount_amount'] ?? 0,
+            'voucher_id' => $registrationData['voucher_id'] ?? null,
+            'voucher_code' => $registrationData['voucher_code'] ?? null,
             'payment_method' => $paymentMethod,
             'payment_proof_path' => $paymentProofPath,
             'full_paper_path' => $finalPaperPath,
@@ -649,7 +661,7 @@ class RegistrationController extends Controller
     /**
      * Calculate registration fee
      */
-    private function calculateFee(Conference $conference, string $country, string $presentationType, string $email): array
+    private function calculateFee(Conference $conference, string $country, string $presentationType, string $email, $voucher = null): array
     {
         $isIndonesia = $country === 'ID';
 
@@ -667,7 +679,10 @@ class RegistrationController extends Controller
         }
 
         $discountAmount = 0;
+        $voucherDiscountAmount = 0;
+
         if ($fee > 0) {
+            // Apply member discount first
             $isMember = Membership::where('email', $email)->where('status', 'active')->exists();
             if ($isMember) {
                 $discountPercentage = $conference->member_discount_percentage ?? 0;
@@ -679,11 +694,20 @@ class RegistrationController extends Controller
                     }
                 }
             }
+
+            // Apply voucher discount on the remaining fee
+            if ($voucher) {
+                $voucherDiscountAmount = app(VoucherService::class)->calculateDiscount($voucher, $fee);
+                $fee -= $voucherDiscountAmount;
+                if ($fee < 0) {
+                    $fee = 0;
+                }
+            }
         }
 
         return [
             'paid_fee' => $fee,
-            'discount_amount' => $discountAmount
+            'discount_amount' => $discountAmount + $voucherDiscountAmount
         ];
     }
 

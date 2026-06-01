@@ -19,6 +19,8 @@ class Membership extends Model
         'phone_number',
         'country',
         'package_id',
+        'voucher_id',
+        'voucher_code',
         'start_date',
         'end_date',
         'status',
@@ -53,6 +55,11 @@ class Membership extends Model
     public function package()
     {
         return $this->belongsTo(Package::class);
+    }
+
+    public function voucher()
+    {
+        return $this->belongsTo(Voucher::class);
     }
 
     /**

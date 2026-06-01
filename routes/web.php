@@ -61,6 +61,14 @@ Route::middleware(['auth', 'role:admin,user'])->group(function () {
     Route::get('joiv-articles', [JoivArticleController::class, 'index'])->name('joiv-articles.index');
     Route::get('joiv-articles/{joivArticle}/download-receipt', [JoivArticleController::class, 'downloadReceipt'])->name('joiv-articles.downloadReceipt');
 
+    // User profile, settings and change password
+    Route::get('/profile', [\App\Http\Controllers\UserProfileController::class, 'profile'])->name('profile');
+    Route::put('/profile', [\App\Http\Controllers\UserProfileController::class, 'updateProfile'])->name('profile.update');
+    Route::get('/settings', [\App\Http\Controllers\UserProfileController::class, 'settings'])->name('settings');
+    Route::put('/settings', [\App\Http\Controllers\UserProfileController::class, 'updateSettings'])->name('settings.update');
+    Route::get('/profile/password', [\App\Http\Controllers\UserProfileController::class, 'changePassword'])->name('profile.password');
+    Route::put('/profile/password', [\App\Http\Controllers\UserProfileController::class, 'updatePassword'])->name('profile.password.update');
+
 });
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
@@ -172,7 +180,34 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     // Admin - Membership
     Route::get('/memberships', [\App\Http\Controllers\Admin\MembershipController::class, 'index'])->name('memberships.index');
     Route::patch('/memberships/{membership}/payment-status/{invoice}', [\App\Http\Controllers\Admin\MembershipController::class, 'updatePaymentStatus'])->name('memberships.updatePaymentStatus');
+
+    // Admin - Packages
+    Route::get('packages', [\App\Http\Controllers\Admin\PackagesController::class, 'index'])->name('packages.index');
+    Route::get('packages/create', [\App\Http\Controllers\Admin\PackagesController::class, 'create'])->name('packages.create');
+    Route::post('packages', [\App\Http\Controllers\Admin\PackagesController::class, 'store'])->name('packages.store');
+    Route::get('packages/{package}/edit', [\App\Http\Controllers\Admin\PackagesController::class, 'edit'])->name('packages.edit');
+    Route::post('packages/{package}', [\App\Http\Controllers\Admin\PackagesController::class, 'update'])->name('packages.update');
+    Route::delete('packages/{package}', [\App\Http\Controllers\Admin\PackagesController::class, 'destroy'])->name('packages.destroy');
+
+    // Admin - Membership Benefits
+    Route::resource('membership-benefits', \App\Http\Controllers\Admin\MembershipBenefitsController::class);
+
+    // Admin - Package Benefits (assign/remove benefits to packages)
+    Route::post('package-benefits', [\App\Http\Controllers\Admin\PackageBenefitsController::class, 'store'])->name('package-benefits.store');
+    Route::delete('package-benefits/{packageBenefit}', [\App\Http\Controllers\Admin\PackageBenefitsController::class, 'destroy'])->name('package-benefits.destroy');
+
+    // Admin - Vouchers
+    Route::get('vouchers', [\App\Http\Controllers\Admin\VouchersController::class, 'index'])->name('vouchers.index');
+    Route::get('vouchers/create', [\App\Http\Controllers\Admin\VouchersController::class, 'create'])->name('vouchers.create');
+    Route::post('vouchers', [\App\Http\Controllers\Admin\VouchersController::class, 'store'])->name('vouchers.store');
+    Route::get('vouchers/{voucher}/edit', [\App\Http\Controllers\Admin\VouchersController::class, 'edit'])->name('vouchers.edit');
+    Route::post('vouchers/{voucher}', [\App\Http\Controllers\Admin\VouchersController::class, 'update'])->name('vouchers.update');
+    Route::delete('vouchers/{voucher}', [\App\Http\Controllers\Admin\VouchersController::class, 'destroy'])->name('vouchers.destroy');
+    Route::get('vouchers/report', [\App\Http\Controllers\Admin\VouchersController::class, 'report'])->name('vouchers.report');
 });
+
+// Public API Routes - Voucher Validation
+Route::get('/api/vouchers/validate/{code}', [\App\Http\Controllers\VoucherValidationController::class, 'check'])->name('vouchers.validate');
 
 // Registration - Public Access (No Auth Middleware)
 Route::get('/registration/{conference:public_id}', [RegistrationController::class, 'create'])->name('registration.create');

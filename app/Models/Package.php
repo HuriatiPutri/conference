@@ -27,6 +27,25 @@ class Package extends Model
         return $this->hasMany(Membership::class);
     }
 
+    public function packageBenefits()
+    {
+        return $this->hasMany(PackageBenefit::class);
+    }
+
+    public function membershipBenefits()
+    {
+        return $this->belongsToMany(MembershipBenefit::class, 'package_benefits')
+            ->withPivot([
+                'id',
+                'value_type',
+                'value',
+                'max_value',
+                'quota',
+                'notes',
+            ])
+            ->withTimestamps();
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active');

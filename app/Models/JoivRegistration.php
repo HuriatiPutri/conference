@@ -23,6 +23,8 @@ class JoivRegistration extends Model
         'paper_title',
         'loa_authors',
         'loa_volume_id',
+        'voucher_id',
+        'voucher_code',
         'loa_approved_at',
         'full_paper_path',
         'payment_status',
@@ -65,6 +67,11 @@ class JoivRegistration extends Model
     public function loaVolume(): BelongsTo
     {
         return $this->belongsTo(LoaVolume::class, 'loa_volume_id');
+    }
+
+    public function voucher(): BelongsTo
+    {
+        return $this->belongsTo(Voucher::class);
     }
 
     // Helper methods

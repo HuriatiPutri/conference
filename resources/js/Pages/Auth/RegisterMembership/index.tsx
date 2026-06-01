@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import {
   Container,
@@ -17,6 +17,7 @@ import {
 import AuthLayout from '../../../Layout/AuthLayout';
 import { COUNTRIES } from '../../../Constants';
 import { formatCurrency } from '../../../utils';
+import VoucherValidation from '../../../Components/VoucherValidation';
 
 interface Package {
   id: number;
@@ -38,6 +39,7 @@ export default function RegisterMembership({ packages }: RegisterMembershipProps
     institution: '',
     country: '',
     package_id: '' as string | number,
+    voucher_code: '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -130,6 +132,14 @@ export default function RegisterMembership({ packages }: RegisterMembershipProps
                 error={errors.country}
                 required
                 searchable
+              />
+
+              <VoucherValidation
+                value={data.voucher_code}
+                onChange={(value) => setData('voucher_code', value)}
+                onValidationChange={() => { }}
+                transactionType="membership_registration"
+                email={data.email}
               />
 
               <Title order={4} mt="md">Select Membership Package</Title>

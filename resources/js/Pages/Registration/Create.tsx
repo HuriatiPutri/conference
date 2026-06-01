@@ -19,6 +19,7 @@ import { IconUpload } from '@tabler/icons-react';
 import { Conference } from '../../types';
 import { formatCurrency } from '../../utils';
 import AuthLayout from '../../Layout/AuthLayout';
+import VoucherValidation from '../../Components/VoucherValidation';
 import dayjs from 'dayjs';
 import { COUNTRIES, PRESENTATION_TYPES } from '../../Constants';
 
@@ -47,6 +48,7 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
     phone_number: auth?.user?.membership?.phone_number || '',
     country: defaultCountry,
     presentation_type: DEFAULT_PRESENTATION_TYPE,
+    voucher_code: '',
     full_paper: null as File | null,
   });
 
@@ -220,6 +222,14 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
                   />
                 )}
               </Group>
+
+              <VoucherValidation
+                value={data.voucher_code}
+                onChange={(value) => setData('voucher_code', value)}
+                onValidationChange={() => null}
+                transactionType="conference_registration"
+                email={data.email}
+              />
 
               <TextInput
                 label="Paper Title"

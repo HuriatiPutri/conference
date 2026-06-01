@@ -1,5 +1,5 @@
 import { Code, Group, ScrollArea, Text, Button } from '@mantine/core';
-import { IconGauge, IconPodium, IconUsersGroup, IconLogout, IconMicrophone, IconUsers, IconRubberStamp, IconArticle, IconCrown } from '@tabler/icons-react';
+import { IconGauge, IconPodium, IconUsersGroup, IconLogout, IconMicrophone, IconUsers, IconRubberStamp, IconArticle, IconCrown, IconTicket } from '@tabler/icons-react';
 import React from 'react';
 import { router, usePage } from '@inertiajs/react';
 import { LinksGroup } from '../LinkGroup/LinksGroup';
@@ -7,18 +7,23 @@ import classes from './NavbarNested.module.css';
 
 const adminMenus = [
   { label: 'Dashboard', icon: IconGauge, link: '/dashboard' },
+  { type: 'divider' as const, label: 'Events' },
   { label: 'Conference', icon: IconPodium, link: '/conferences' },
   { label: 'Audience', icon: IconUsersGroup, link: '/audiences' },
   { label: 'Keynote', icon: IconMicrophone, link: '/keynotes' },
   { label: 'Parallel Session', icon: IconUsers, link: '/parallel-sessions' },
-  { label: 'Memberships', icon: IconUsersGroup, link: '/memberships' },
+  { type: 'divider' as const, label: 'Publications' },
   { label: 'Joiv Article', icon: IconArticle, link: '/joiv-articles' },
   {
     label: 'Letter Of Approval', icon: IconRubberStamp, links: [
       { label: 'LoA Approval', link: '/letters-of-approval' },
       { label: 'LoA Volume', link: '/loa/loa-volumes' },
     ]
-  }
+  },
+  { type: 'divider' as const, label: 'Membership' },
+  { label: 'Memberships', icon: IconUsersGroup, link: '/memberships' },
+  { label: 'Packages', icon: IconCrown, link: '/packages' },
+  { label: 'Vouchers', icon: IconTicket, link: '/vouchers' },
 ];
 
 const userMenus = [
@@ -57,7 +62,7 @@ export function Navigation() {
 
       <div className={classes.footer}>
         <Button
-          variant="light"
+          variant="transparent"
           color="red"
           leftSection={<IconLogout size="1rem" />}
           onClick={handleLogout}
