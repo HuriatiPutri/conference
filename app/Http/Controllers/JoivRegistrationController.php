@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\JoivRegistration;
 use App\Models\JoivRegistrationFee;
 use App\Models\InvoiceHistory;
+use App\Services\MembershipBenefitService;
 use App\Services\PayPalService;
 use App\Services\VoucherService;
 use Illuminate\Http\Request;
@@ -75,14 +76,19 @@ class JoivRegistrationController extends Controller
         // Get current registration fee from database based on currency
         $baseFee = JoivRegistrationFee::getCurrentFeeAmount($currency);
 
+        $membershipBenefitService = app(MembershipBenefitService::class);
+        $membership = $membershipBenefitService->resolveActiveMembershipByEmail($validatedData['email_address']);
+        $benefitCalculation = $membershipBenefitService->calculateForFee($membership, (float) $baseFee);
+        $feeAfterMembershipBenefits = $benefitCalculation['paid_fee'];
+
         // Calculate voucher discount if applicable
         $voucherDiscount = 0;
         if ($voucher) {
-            $voucherDiscount = app(VoucherService::class)->calculateDiscount($voucher, $baseFee);
+            $voucherDiscount = app(VoucherService::class)->calculateDiscount($voucher, $feeAfterMembershipBenefits);
         }
 
         // Calculate final paid fee
-        $paidFee = max(0, $baseFee - $voucherDiscount);
+        $paidFee = max(0, $feeAfterMembershipBenefits - $voucherDiscount);
 
         // Create registration record
         $registration = JoivRegistration::create([
@@ -102,6 +108,8 @@ class JoivRegistrationController extends Controller
             'voucher_code' => $voucher?->code,
             'payment_status' => 'pending_payment',
         ]);
+
+        $membershipBenefitService->recordUsage($membership, $registration, $benefitCalculation['applied_benefits'] ?? []);
 
         // Store registration ID in session for payment process
         $sessionKey = 'registration_' . $registration->id;

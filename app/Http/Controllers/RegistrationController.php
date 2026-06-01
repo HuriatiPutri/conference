@@ -6,6 +6,7 @@ use App\Models\Audience;
 use App\Models\Conference;
 use App\Models\InvoiceHistory;
 use App\Models\Membership;
+use App\Services\MembershipBenefitService;
 use App\Services\PayPalService;
 use App\Services\VoucherService;
 use Illuminate\Http\Request;
@@ -134,6 +135,8 @@ class RegistrationController extends Controller
                 'voucher_id' => $voucher?->id,
                 'voucher_code' => $voucher?->code,
                 'full_paper_path' => $fullPaperPath,
+                'membership_id' => $feeCalculation['membership_id'] ?? null,
+                'benefit_usages' => $feeCalculation['benefit_usages'] ?? [],
             ]
         ]);
 
@@ -472,6 +475,12 @@ class RegistrationController extends Controller
             'payment_status' => $paymentStatus
         ]);
 
+        app(MembershipBenefitService::class)->recordUsage(
+            isset($registrationData['membership_id']) ? Membership::find($registrationData['membership_id']) : null,
+            $audience,
+            $registrationData['benefit_usages'] ?? []
+        );
+
         // Clear session data
         $sessionKey = 'registration_' . $conference->public_id;
         session()->forget($sessionKey);
@@ -678,23 +687,14 @@ class RegistrationController extends Controller
                 break;
         }
 
-        $discountAmount = 0;
+        $membershipDiscountAmount = 0;
         $voucherDiscountAmount = 0;
+        $membership = app(MembershipBenefitService::class)->resolveActiveMembershipByEmail($email);
+        $benefitCalculation = app(MembershipBenefitService::class)->calculateForFee($membership, (float) $fee);
+        $fee = $benefitCalculation['paid_fee'];
+        $membershipDiscountAmount = $benefitCalculation['discount_amount'];
 
         if ($fee > 0) {
-            // Apply member discount first
-            $isMember = Membership::where('email', $email)->where('status', 'active')->exists();
-            if ($isMember) {
-                $discountPercentage = $conference->member_discount_percentage ?? 0;
-                if ($discountPercentage > 0) {
-                    $discountAmount = $fee * ($discountPercentage / 100);
-                    $fee -= $discountAmount;
-                    if ($fee < 0) {
-                        $fee = 0;
-                    }
-                }
-            }
-
             // Apply voucher discount on the remaining fee
             if ($voucher) {
                 $voucherDiscountAmount = app(VoucherService::class)->calculateDiscount($voucher, $fee);
@@ -707,7 +707,9 @@ class RegistrationController extends Controller
 
         return [
             'paid_fee' => $fee,
-            'discount_amount' => $discountAmount + $voucherDiscountAmount
+            'discount_amount' => $membershipDiscountAmount + $voucherDiscountAmount,
+            'membership_id' => $membership?->id,
+            'benefit_usages' => $benefitCalculation['applied_benefits'] ?? [],
         ];
     }
 

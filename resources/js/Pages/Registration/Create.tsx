@@ -1,27 +1,28 @@
-import React, { useState } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import {
-  Container,
-  Title,
-  TextInput,
-  Select,
-  FileInput,
-  Button,
-  Stack,
-  Group,
-  Text,
-  Card,
+  Alert,
   Badge,
+  Button,
+  Card,
+  Container,
   Divider,
-  Alert
+  FileInput,
+  Group,
+  Select,
+  Stack,
+  Text,
+  TextInput,
+  Title
 } from '@mantine/core';
 import { IconUpload } from '@tabler/icons-react';
+import dayjs from 'dayjs';
+import React, { useState } from 'react';
+import MembershipInfo from '../../Components/Elements/MembershipInfo';
+import VoucherValidation from '../../Components/VoucherValidation';
+import { COUNTRIES, PRESENTATION_TYPES } from '../../Constants';
+import AuthLayout from '../../Layout/AuthLayout';
 import { Conference } from '../../types';
 import { formatCurrency } from '../../utils';
-import AuthLayout from '../../Layout/AuthLayout';
-import VoucherValidation from '../../Components/VoucherValidation';
-import dayjs from 'dayjs';
-import { COUNTRIES, PRESENTATION_TYPES } from '../../Constants';
 
 interface RegistrationCreateProps {
   conference: Conference;
@@ -32,9 +33,9 @@ const DEFAULT_PRESENTATION_TYPE = 'online_author';
 export default function RegistrationCreate({ conference }: RegistrationCreateProps) {
   const { auth } = usePage().props as any;
 
-  console.log('auth', auth);
   const defaultCountry = auth?.user?.membership?.country || '';
   const [selectedCountry, setSelectedCountry] = useState<string>(defaultCountry);
+  const [discountVoucher, setDiscountVoucher] = useState<{ type: string; value: number; description?: string } | null>(null);
 
   const [selectedType, setSelectedType] = useState<string>(DEFAULT_PRESENTATION_TYPE);
   const isJOIV = conference.name === 'JOIV : International Journal on Informatics Visualization';
@@ -55,6 +56,11 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
   const [isMember] = useState<boolean>(
     auth?.user?.membership?.status === 'active'
   );
+
+  const membership = auth?.user?.membership;
+  const packageName = membership?.package?.name || '-';
+  const packageBenefits = membership?.package?.package_benefits || [];
+
 
   const calculateFee = (country: string, type: string): { fee: number, discountAmount: number, totalFee: number, discountPercentage: number } => {
     if (!country || !type) return { fee: 0, discountAmount: 0, totalFee: 0, discountPercentage: 0 };
@@ -77,9 +83,14 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
         break;
     }
 
-    console.log('isMember', isMember)
-    if (fee > 0 && isMember) {
-      discountPercentage = conference.member_discount_percentage || 0;
+    if (isMember) {
+      discountPercentage = packageBenefits.reduce((maxDiscount: number, benefit: any) => {
+        console.log('Evaluating benefit for discount:', benefit);
+        const isDiscount = benefit.membership_benefit?.benefit_type === 'discount' || benefit.value_type === 'percentage';
+        const value = benefit.value_type === 'percentage' ? benefit.value : 0;
+        return isDiscount ? Math.max(maxDiscount, value) : maxDiscount;
+      }, 0);
+
       if (discountPercentage > 0) {
         discountAmount = fee * (discountPercentage / 100);
         totalFee = fee - discountAmount;
@@ -87,6 +98,17 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
         totalFee = fee;
       }
     } else {
+      discountPercentage = discountVoucher?.type === 'percent' ? Number(discountVoucher.value) : 0;
+      if (discountPercentage > 0) {
+        discountAmount = fee * (discountPercentage / 100);
+        totalFee = fee - discountAmount;
+      } else {
+        totalFee = fee;
+      }
+    }
+
+    // Ensure total fee is not negative
+    if (totalFee < 0) {
       totalFee = fee;
     }
 
@@ -130,6 +152,14 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
           </div>
 
           <Divider />
+
+          {isMember && (
+            <MembershipInfo
+              membership={membership}
+              packageName={packageName}
+              packageBenefits={packageBenefits}
+            />
+          )}
 
           <form onSubmit={handleSubmit}>
             <Stack gap="md">
@@ -216,20 +246,13 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
                     onChange={(value) => {
                       setData('presentation_type', value || '');
                       setSelectedType(value || '');
+                      calculateFee(selectedCountry, value || '');
                     }}
                     error={errors.presentation_type}
                     required
                   />
                 )}
               </Group>
-
-              <VoucherValidation
-                value={data.voucher_code}
-                onChange={(value) => setData('voucher_code', value)}
-                onValidationChange={() => null}
-                transactionType="conference_registration"
-                email={data.email}
-              />
 
               <TextInput
                 label="Paper Title"
@@ -251,6 +274,29 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
                 description="Accepted formats: PDF, DOC, DOCX (Max: 50MB)"
                 required
               />
+
+
+              {!isMember && (
+                <>
+                  <Divider mt="md" label="Claim Voucher to get Discount" />
+                  <Text size="sm" c="dimmed">
+                    If you have a voucher code, enter it below to check for discounts on your registration fee.
+                  </Text>
+                  <VoucherValidation
+                    value={data.voucher_code}
+                    onChange={(value) => setData('voucher_code', value)}
+                    onValidationChange={(isValid, discountData) => {
+                      if (isValid) {
+                        setDiscountVoucher(discountData as { type: string; value: number; description?: string } | null);
+                      } else {
+                        setDiscountVoucher(null);
+                      }
+                    }}
+                    transactionType="conference_registration"
+                    email={data.email}
+                  />
+                </>
+              )}
               {(discountPercentage > 0 && isMember) && (
                 <Alert color='green'>
                   <Text size="sm">Your <b>{discountPercentage}% discount</b> is applied</Text>
@@ -260,7 +306,7 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
                 <Group justify="space-between">
                   <Text fw={500}>Registration Fee:</Text>
                   <Stack gap={0} align="flex-end">
-                    {isMember && (
+                    {discountPercentage > 0 && (
                       <Text fw={700} size="sm" c="orange" td="line-through">
                         {formatCurrency(fee, currency.toLowerCase() as 'idr' | 'usd')}
                       </Text>
@@ -268,9 +314,9 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
                     <Text fw={700} size="lg" c="blue">
                       {formatCurrency(totalFee, currency.toLowerCase() as 'idr' | 'usd')}
                     </Text>
-                    {isMember && (
+                    {discountPercentage > 0 && (
                       <Text size="xs" c="green" fw={500}>
-                        Member discount applied
+                        You saved {formatCurrency(fee - totalFee, currency.toLowerCase() as 'idr' | 'usd')} with your {isMember ? 'membership benefits' : 'voucher'}
                       </Text>
                     )}
                   </Stack>

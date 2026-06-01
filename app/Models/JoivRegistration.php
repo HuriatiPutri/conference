@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class JoivRegistration extends Model
@@ -47,6 +48,11 @@ class JoivRegistration extends Model
     public function invoices(){
       return $this->morphMany(InvoiceHistory::class, 'reference');
     }
+
+        public function benefitUsages(): MorphMany
+        {
+                return $this->morphMany(BenefitUsage::class, 'reference');
+        }
     
     // Relationships
     public function creator(): BelongsTo

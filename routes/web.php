@@ -14,6 +14,7 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Admin\LettersOfApprovalController;
 use App\Http\Controllers\Admin\LoaVolumeManagementController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\BenefitUsageController;
 use App\Http\Controllers\MembershipRegistrationController;
 use App\Http\Controllers\Admin\JoivArticleController;
 
@@ -180,6 +181,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     // Admin - Membership
     Route::get('/memberships', [\App\Http\Controllers\Admin\MembershipController::class, 'index'])->name('memberships.index');
     Route::patch('/memberships/{membership}/payment-status/{invoice}', [\App\Http\Controllers\Admin\MembershipController::class, 'updatePaymentStatus'])->name('memberships.updatePaymentStatus');
+    Route::get('/benefit-usages', [BenefitUsageController::class, 'index'])->name('benefit-usages.index');
 
     // Admin - Packages
     Route::get('packages', [\App\Http\Controllers\Admin\PackagesController::class, 'index'])->name('packages.index');

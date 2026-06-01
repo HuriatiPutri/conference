@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
@@ -73,6 +74,11 @@ class Membership extends Model
     public function audiences()
     {
         return $this->hasMany(Audience::class);
+    }
+
+    public function benefitUsages(): HasMany
+    {
+        return $this->hasMany(BenefitUsage::class);
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────

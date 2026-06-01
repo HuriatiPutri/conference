@@ -18,7 +18,7 @@ class DashboardController extends Controller
         $user = Auth::user();
 
         $statRoleUser = [
-            'memberships' => Membership::with('package')->where('user_id', $user->id)->latest()->first(),
+            'memberships' => Membership::with('package.packageBenefits.membershipBenefit')->where('user_id', $user->id)->latest()->first(),
             'recent_conferences' => Audience::with('conference:id,name,city,date,year')->where('user_id', $user->id)->orWhere('email', $user->email)->latest()->take(5)->get(['id', 'first_name', 'last_name', 'email', 'conference_id', 'created_at', 'payment_status']),
             'upcoming_conference' => Conference::where('date', '>=', Carbon::today())->orderBy('date', 'asc')->take(3)->get(),
         ];
@@ -46,7 +46,7 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        $membership = Membership::with('package')
+        $membership = Membership::with('package.packageBenefits.membershipBenefit')
             ->where('user_id', $user->id)
             ->latest()
             ->first();

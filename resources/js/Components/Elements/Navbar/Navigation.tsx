@@ -1,5 +1,5 @@
 import { Code, Group, ScrollArea, Text, Button } from '@mantine/core';
-import { IconGauge, IconPodium, IconUsersGroup, IconLogout, IconMicrophone, IconUsers, IconRubberStamp, IconArticle, IconCrown, IconTicket } from '@tabler/icons-react';
+import { IconGauge, IconPodium, IconUsersGroup, IconLogout, IconMicrophone, IconUsers, IconRubberStamp, IconArticle, IconCrown, IconTicket, IconHistory } from '@tabler/icons-react';
 import React from 'react';
 import { router, usePage } from '@inertiajs/react';
 import { LinksGroup } from '../LinkGroup/LinksGroup';
@@ -23,6 +23,7 @@ const adminMenus = [
   { type: 'divider' as const, label: 'Membership' },
   { label: 'Memberships', icon: IconUsersGroup, link: '/memberships' },
   { label: 'Packages', icon: IconCrown, link: '/packages' },
+  { label: 'Benefit Usage', icon: IconHistory, link: '/benefit-usages' },
   { label: 'Vouchers', icon: IconTicket, link: '/vouchers' },
 ];
 

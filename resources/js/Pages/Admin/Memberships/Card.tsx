@@ -9,6 +9,8 @@ import MainLayout from '../../../Layout/MainLayout';
 
 interface MembershipPackage {
   name: string;
+  packageBenefits?: any[];
+  package_benefits?: any[];
 }
 
 interface Membership {
@@ -34,6 +36,8 @@ interface MembershipCardProps {
 
 export default function MembershipCardPage() {
   const { membership, user } = usePage().props as unknown as MembershipCardProps;
+
+  console.log('Membership data:', membership);
 
   const isExpired = membership
     ? dayjs().isAfter(dayjs(membership.end_date).endOf('day'))
@@ -63,6 +67,8 @@ export default function MembershipCardPage() {
     if (!membership) {
       return renderEmptyState();
     }
+
+    const packageBenefits = membership.package?.packageBenefits || membership.package?.package_benefits || [];
 
     return (
       <Card
@@ -149,6 +155,43 @@ export default function MembershipCardPage() {
               </Box>
             </Stack>
           </Group>
+
+          <Box>
+            <Text size="xs" tt="uppercase" style={{ opacity: 0.75 }} c={'white'} mb={6}>
+              Package Benefits
+            </Text>
+            {packageBenefits.length > 0 ? (
+              <Group gap="xs">
+                {packageBenefits.map((benefit: any) => {
+                  const benefitName = benefit.membershipBenefit?.name || benefit.membership_benefit?.name || 'Benefit';
+                  const benefitType = benefit.membershipBenefit?.benefit_type || benefit.membership_benefit?.benefit_type || benefit.value_type || '-';
+                  const parts: string[] = [];
+
+                  if (benefit.value_type === 'percentage' && benefit.value != null) {
+                    parts.push(`${Number(benefit.value)}%`);
+                  }
+
+                  if (benefit.value_type === 'item' && benefit.notes) {
+                    parts.push(String(benefit.notes));
+                  }
+
+                  if (benefit.value_type === 'quota' && benefit.quota != null) {
+                    parts.push(`Quota ${benefit.quota}`);
+                  }
+
+                  return (
+                    <Badge key={benefit.id} color="white" variant="filled" c="blue.8" radius="lg">
+                      {benefitName} ({benefitType}){parts.length ? ` • ${parts.join(' • ')}` : ''}
+                    </Badge>
+                  );
+                })}
+              </Group>
+            ) : (
+              <Text size="sm" c={'white'} style={{ opacity: 0.9 }}>
+                No benefits attached to this package.
+              </Text>
+            )}
+          </Box>
 
           <Group justify="space-between" mt="sm">
             <Box>

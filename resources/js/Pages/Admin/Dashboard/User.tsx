@@ -34,6 +34,8 @@ interface DashboardProps {
       id: number;
       package: {
         name: string;
+        packageBenefits?: any[];
+        package_benefits?: any[];
       };
       public_id: string,
       end_date: string;
@@ -69,6 +71,7 @@ export default function Dashboard() {
             {/* Memberships Info Cards */}
             {statRoleUser.memberships ? (() => {
               const isExpired = dayjs().isAfter(dayjs(statRoleUser.memberships.end_date), 'day');
+              const packageBenefits = statRoleUser.memberships.package.packageBenefits || statRoleUser.memberships.package.package_benefits || [];
               return (
                 <Card
                   radius="xl"
@@ -109,6 +112,36 @@ export default function Dashboard() {
                           {isExpired ? 'INACTIVE' : 'ACTIVE'}
                         </Badge>
                       </Group>
+                      <Stack gap={6} mb="sm">
+                        <Text size="sm" c={'white'} tt="uppercase" style={{ letterSpacing: '1px', opacity: 0.8 }}>Benefits</Text>
+                        <Group gap={6} wrap="wrap">
+                          {packageBenefits.length > 0 ? packageBenefits.map((benefit: any) => {
+                            const benefitName = benefit.membershipBenefit?.name || benefit.membership_benefit?.name || 'Benefit';
+                            const benefitType = benefit.membershipBenefit?.benefit_type || benefit.membership_benefit?.benefit_type || benefit.value_type || '-';
+                            const details: string[] = [];
+
+                            if (benefit.value_type === 'percentage' && benefit.value != null) {
+                              details.push(`${Number(benefit.value)}%`);
+                            }
+
+                            if (benefit.value_type === 'item' && benefit.notes) {
+                              details.push(String(benefit.notes));
+                            }
+
+                            if (benefit.value_type === 'quota' && benefit.quota != null) {
+                              details.push(`Quota ${benefit.quota}`);
+                            }
+
+                            return (
+                              <Badge key={benefit.id} color="white" variant="filled" c="blue.8" radius="lg">
+                                {benefitName} ({benefitType}){details.length ? ` • ${details.join(' • ')}` : ''}
+                              </Badge>
+                            );
+                          }) : (
+                            <Text size="sm" c={'white'} style={{ opacity: 0.9 }}>No benefits attached to this package.</Text>
+                          )}
+                        </Group>
+                      </Stack>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <ThemeIcon variant="white" color={isExpired ? 'red.8' : 'blue.8'} size="lg" radius="xl">
                           <IconIdBadge2 size={18} />

@@ -81,7 +81,7 @@ export default function VoucherValidation({
       setDiscount(null);
       onValidationChange(false);
     }
-  }, [transactionType, email, onValidationChange]);
+  }, [transactionType, email]);
 
   // Debounce validation
   useEffect(() => {
@@ -97,7 +97,7 @@ export default function VoucherValidation({
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [value, validateVoucher, onValidationChange]);
+  }, [value, validateVoucher]);
 
   const getRightSection = () => {
     if (validationState === 'loading') {

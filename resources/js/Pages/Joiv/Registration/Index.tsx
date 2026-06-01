@@ -21,22 +21,80 @@ import { formatCurrency } from '../../../utils';
 import VoucherValidation from '../../../Components/VoucherValidation';
 
 export default function JoivRegistrationIndex() {
+  const { auth } = usePage().props as any;
+
+  const [discountVoucher, setDiscountVoucher] = useState<{ type: string; value: number; description?: string } | null>(null);
   const { registrationFeeIDR, registrationFeeUSD } = usePage().props as unknown as {
     registrationFeeIDR: string | number;
     registrationFeeUSD: string | number;
   };
+  const defaultCountry = auth?.user?.membership?.country || '';
   const { data, setData, post, processing, errors } = useForm({
-    first_name: '',
-    last_name: '',
-    email_address: '',
-    phone_number: '',
-    institution: '',
-    country: '',
+    first_name: auth?.user?.membership?.first_name || '',
+    last_name: auth?.user?.membership?.last_name || '',
+    email_address: auth?.user?.membership?.email || '',
+    phone_number: auth?.user?.membership?.phone_number || '',
+    institution: auth?.user?.membership?.institution || '',
+    country: defaultCountry,
     paper_id: '',
     paper_title: '',
     voucher_code: '',
     full_paper: null as File | null,
   });
+
+  const [isMember] = useState<boolean>(
+    auth?.user?.membership?.status === 'active'
+  );
+
+  const membership = auth?.user?.membership;
+  const packageName = membership?.package?.name || '-';
+  const packageBenefits = membership?.package?.package_benefits || [];
+
+
+  const calculateFee = (country: string): { fee: number, discountAmount: number, totalFee: number, discountPercentage: number } => {
+    if (!country) return { fee: 0, discountAmount: 0, totalFee: 0, discountPercentage: 0 };
+
+    const isIndonesia = country === 'ID';
+    let fee = isIndonesia ? Number(registrationFeeIDR) : Number(registrationFeeUSD);
+    let discountAmount = 0;
+    let totalFee = 0;
+    let discountPercentage = 0;
+
+
+    if (isMember) {
+      discountPercentage = packageBenefits.reduce((maxDiscount: number, benefit: any) => {
+        console.log('Evaluating benefit for discount:', benefit);
+        const isDiscount = benefit.membership_benefit?.benefit_type === 'discount' || benefit.value_type === 'percentage';
+        const value = benefit.value_type === 'percentage' ? benefit.value : 0;
+        return isDiscount ? Math.max(maxDiscount, value) : maxDiscount;
+      }, 0);
+
+      if (discountPercentage > 0) {
+        discountAmount = fee * (discountPercentage / 100);
+        totalFee = fee - discountAmount;
+      } else {
+        totalFee = fee;
+      }
+    } else {
+      discountPercentage = discountVoucher?.type === 'percent' ? Number(discountVoucher.value) : 0;
+      if (discountPercentage > 0) {
+        discountAmount = fee * (discountPercentage / 100);
+        totalFee = fee - discountAmount;
+      } else {
+        totalFee = fee;
+      }
+    }
+
+    // Ensure total fee is not negative
+    if (totalFee < 0) {
+      totalFee = fee;
+    }
+
+    return { fee, discountAmount, totalFee, discountPercentage };
+  };
+
+  const { fee, discountPercentage, totalFee } = calculateFee(data.country);
+  const currency = data.country === 'ID' ? 'IDR' : 'USD';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,15 +116,6 @@ export default function JoivRegistrationIndex() {
               International Journal on Informatics Visualization
             </Text>
           </div>
-
-          <Alert icon={<IconInfoCircle size="1rem" />} title="Registration Fee" color="blue">
-            <Text>
-              International Fee: {formatCurrency(Number(registrationFeeUSD), 'usd')} USD
-            </Text>
-            <Text>
-              Indonesian Fee: {formatCurrency(Number(registrationFeeIDR), 'idr')} IDR
-            </Text>
-          </Alert>
 
           <Divider />
 
@@ -170,17 +219,56 @@ export default function JoivRegistrationIndex() {
                 required
               />
 
-              <Divider mt="md" label="Claim Voucher to get Discount" />
-
-              <VoucherValidation
-                value={data.voucher_code}
-                onChange={(value) => setData('voucher_code', value)}
-                onValidationChange={() => { }}
-                transactionType="joiv_article"
-                email={data.email_address}
-              />
+              {!isMember && (
+                <>
+                  <Divider mt="md" label="Claim Voucher to get Discount" />
+                  <Text size="sm" c="dimmed">
+                    If you have a voucher code, enter it below to check for discounts on your registration fee.
+                  </Text>
+                  <VoucherValidation
+                    value={data.voucher_code}
+                    onChange={(value) => setData('voucher_code', value)}
+                    onValidationChange={(isValid, discountData) => {
+                      console.log('Voucher validation result:', { isValid, discountData });
+                      if (isValid) {
+                        setDiscountVoucher(discountData as { type: string; value: number; description?: string } | null);
+                      } else {
+                        setDiscountVoucher(null);
+                      }
+                    }}
+                    transactionType="joiv_article"
+                    email={data.email_address}
+                  />
+                </>
+              )}
 
               <Divider mt="md" />
+
+              {(discountPercentage > 0 && isMember) && (
+                <Alert color='green'>
+                  <Text size="sm">Your <b>{discountPercentage}% discount</b> is applied</Text>
+                </Alert>
+              )}
+              <Card withBorder padding="md" bg="blue.0">
+                <Group justify="space-between">
+                  <Text fw={500}>Registration Fee:</Text>
+                  <Stack gap={0} align="flex-end">
+                    {discountPercentage > 0 && (
+                      <Text fw={700} size="sm" c="orange" td="line-through">
+                        {formatCurrency(fee, currency.toLowerCase() as 'idr' | 'usd')}
+                      </Text>
+                    )}
+                    <Text fw={700} size="lg" c="blue">
+                      {formatCurrency(totalFee, currency.toLowerCase() as 'idr' | 'usd')}
+                    </Text>
+                    {discountPercentage > 0 && (
+                      <Text size="xs" c="green" fw={500}>
+                        You saved {formatCurrency(fee - totalFee, currency.toLowerCase() as 'idr' | 'usd')} with your {isMember ? 'membership benefits' : 'voucher'}
+                      </Text>
+                    )}
+                  </Stack>
+                </Group>
+              </Card>
 
               <Group justify="flex-end" mt="lg">
                 <Button

@@ -51,6 +51,11 @@ class Audience extends Model
         return $this->morphMany(InvoiceHistory::class, 'reference');
     }
 
+    public function benefitUsages()
+    {
+        return $this->morphMany(BenefitUsage::class, 'reference');
+    }
+
     public function conference()
     {
         return $this->belongsTo(Conference::class);
