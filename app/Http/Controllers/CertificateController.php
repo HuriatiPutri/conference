@@ -39,8 +39,8 @@ class CertificateController extends Controller
     public function create(): Response
     {
         $conferences = Conference::whereNull('deleted_at')
-                                ->orderBy('name')
-                                ->get(['id', 'name', 'initial', 'date', 'city', 'country']);
+            ->orderBy('name')
+            ->get(['id', 'name', 'initial', 'date', 'city', 'country']);
 
         return Inertia::render('Certificate/Download', [
             'conferences' => $conferences,
@@ -61,9 +61,9 @@ class CertificateController extends Controller
 
         // Find conference by ID
         $conference = Conference::where('id', $validatedData['conference_id'])
-                               ->whereNull('deleted_at')
-                               ->first();
-        
+            ->whereNull('deleted_at')
+            ->first();
+
         if (!$conference) {
             return redirect('/certificate/download')
                 ->withErrors(['conference_id' => 'Conference not found.'])
@@ -72,9 +72,9 @@ class CertificateController extends Controller
 
         // Find audience by email and conference
         $audience = Audience::where('email', $validatedData['email'])
-                           ->where('conference_id', $conference->id)
-                           ->whereNull('deleted_at')
-                           ->first();
+            ->where('conference_id', $conference->id)
+            ->whereNull('deleted_at')
+            ->first();
 
         if (!$audience) {
             return redirect('/certificate/download')
@@ -99,14 +99,14 @@ class CertificateController extends Controller
         // Load conference with template
         $audience->load('conference');
         $conference = $audience->conference;
-        
+
         // Validate certificate template exists
         if (!$conference || !$conference->certificate_template_path || !$conference->certificate_template_position) {
             return redirect('/certificate/download')
                 ->withErrors(['conference_id' => 'Certificate template has not been set up for this conference.'])
                 ->withInput($request->only(['conference_id', 'email']));
         }
-        
+
         // Parse position data
         try {
             $positionData = json_decode($conference->certificate_template_position, true);
@@ -119,16 +119,16 @@ class CertificateController extends Controller
                 ->withErrors(['conference_id' => 'Certificate template position data is invalid: ' . $e->getMessage()])
                 ->withInput($request->only(['conference_id', 'email']));
         }
-        
+
         // Template image path
         $templatePath = storage_path('app/public/' . $conference->certificate_template_path);
-        
+
         if (!file_exists($templatePath)) {
             return redirect('/certificate/download')
                 ->withErrors(['conference_id' => 'Certificate template file not found.'])
                 ->withInput($request->only(['conference_id', 'email']));
         }
-        
+
         // Encode image to base64 for HTML use
         try {
             $templateBase64 = base64_encode(file_get_contents($templatePath));
@@ -138,7 +138,7 @@ class CertificateController extends Controller
                 ->withErrors(['conference_id' => 'Failed to read certificate template image: ' . $e->getMessage()])
                 ->withInput($request->only(['conference_id', 'email']));
         }
-        
+
         // Certificate data
         $certificateData = [
             'participant_name' => $audience->parallel_sessions->first()->name_of_presenter,
@@ -149,29 +149,23 @@ class CertificateController extends Controller
             'template_mime' => $templateMimeType,
             'positions' => $positions
         ];
-        
+
         try {
             // Generate PDF
             $pdf = Pdf::loadView('certificates.template', $certificateData);
             $pdf->setPaper('A4', 'landscape');
-            $pdf->setOptions([
-                'isHtml5ParserEnabled' => true,
-                'isPhpEnabled' => true,
-                'dpi' => 150,
-                'defaultFont' => 'Arial'
-            ]);
-            
+
             // Filename
             $filename = 'Certificate_' . str_replace([' ', '.', ','], '_', $audience->first_name . '_' . $audience->last_name) . '_' . $conference->initial . '.pdf';
-            
-            return $pdf->download($filename);
+
+            return $pdf->stream($filename);
         } catch (\Exception $e) {
             \Log::error('Certificate PDF generation failed: ' . $e->getMessage(), [
                 'audience_id' => $audience->id,
                 'conference_id' => $conference->id,
                 'error' => $e->getTraceAsString()
             ]);
-            
+
             return redirect('/certificate/download')
                 ->withErrors(['conference_id' => 'Failed to generate certificate PDF. Please try again or contact support.'])
                 ->withInput($request->only(['conference_id', 'email']));
