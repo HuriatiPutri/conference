@@ -158,7 +158,7 @@ class CertificateController extends Controller
             // Filename
             $filename = 'Certificate_' . str_replace([' ', '.', ','], '_', $audience->first_name . '_' . $audience->last_name) . '_' . $conference->initial . '.pdf';
 
-            return $pdf->stream($filename);
+            return $pdf->download($filename);
         } catch (\Exception $e) {
             \Log::error('Certificate PDF generation failed: ' . $e->getMessage(), [
                 'audience_id' => $audience->id,
