@@ -4,6 +4,7 @@ import { PRESENTATION_TYPE } from "../../../Constants";
 import { route } from "ziggy-js";
 import { Audiences, AudienceWithLoA } from "../../../types";
 import { ActionButtonExt } from "../Conferences/ExtendComponent";
+import { router } from "@inertiajs/react";
 
 const getLoAStatusBadge = (status: string) => {
   const statusMap = {
@@ -60,7 +61,7 @@ export const TableData = () => [
             <Badge color="blue" variant="outline">
               {row.loa_volume.volume}
             </Badge>
-            {row.loa_authors && row.payment_status === 'paid' && (
+            {row.payment_status === 'paid' && (
               <Button
                 color="green"
                 size="xs"
@@ -95,11 +96,23 @@ export const TableData = () => [
     body: (row: AudienceWithLoA) => (
       <Group gap="xs">
         <ActionButtonExt
-            color="violet"
-            handleClick={() => window.location.href = route('letters-of-approval.assign-volume', row.id)}
-            icon="pi pi-fw pi-book"
-            title="Assign Volume"
+          color="violet"
+          handleClick={() => window.location.href = route('letters-of-approval.assign-volume', row.id)}
+          icon="pi pi-fw pi-book"
+          title="Assign Volume"
+        />
+        {row.loa_volume?.id && row.payment_status === 'paid' && (
+          <ActionButtonExt
+            color="teal"
+            handleClick={() => {
+              if (confirm('Are you sure you want to resend the LoA email to this participant?')) {
+                router.post(route('letters-of-approval.resend', row.id));
+              }
+            }}
+            icon="pi pi-fw pi-envelope"
+            title="Resend LoA Email"
           />
+        )}
       </Group>
     )
   }

@@ -1,5 +1,5 @@
 import { router, usePage } from '@inertiajs/react';
-import { ActionIcon, Card, Container, Flex, Modal, Stack, Text, Title } from '@mantine/core';
+import { ActionIcon, Button, Card, Container, Flex, Modal, Stack, Text, Title } from '@mantine/core';
 import { Column } from 'primereact/column';
 import { DataTable, DataTableStateEvent } from 'primereact/datatable';
 import { IconField } from 'primereact/iconfield';
@@ -68,6 +68,22 @@ function JoivArticleIndex() {
   const [paymentStatusFilter, setPaymentStatusFilter] = useState(filters?.payment_status || '');
   const [modalOpened, setModalOpened] = useState(false);
   const [selectedRegistration, setSelectedRegistration] = useState<JoivRegistration | null>(null);
+
+  // Row selection state
+  const [selectedArticles, setSelectedArticles] = useState<JoivRegistration[]>([]);
+
+  const handleBulkResendEmail = () => {
+    if (selectedArticles.length === 0) return;
+    if (confirm(`Are you sure you want to resend the LoA email to the ${selectedArticles.length} selected participant(s)?`)) {
+      router.post(route('joiv-articles.bulk-resend-loa'), {
+        article_ids: selectedArticles.map(art => art.id)
+      }, {
+        onSuccess: () => {
+          setSelectedArticles([]);
+        }
+      });
+    }
+  };
 
   const [globalFilterValue, setGlobalFilterValue] = useState(() => {
     return urlParams.get('search') || '';
@@ -222,18 +238,29 @@ function JoivArticleIndex() {
     return (
       <Container size={isFullscreen ? "xxl" : "xl"}>
         <Stack gap="lg">
-          <Flex justify={'space-between'}>
+          <Flex justify={'space-between'} align="center">
             <Title order={2}>JOIV Article Management</Title>
-            <ActionIcon
-              color={'blue'}
-              variant="outline"
-              radius={'lg'}
-              size={'lg'}
-              onClick={handleToggleFullscreen}
-              title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
-            >
-              <i className={`pi ${isFullscreen ? 'pi-times' : 'pi-window-maximize'}`} />
-            </ActionIcon>
+            <Flex gap="md" align="center">
+              {selectedArticles.length > 0 && (
+                <Button
+                  color="teal"
+                  leftSection={<i className="pi pi-send" />}
+                  onClick={handleBulkResendEmail}
+                >
+                  Resend LoA Email ({selectedArticles.length} Selected)
+                </Button>
+              )}
+              <ActionIcon
+                color={'blue'}
+                variant="outline"
+                radius={'lg'}
+                size={'lg'}
+                onClick={handleToggleFullscreen}
+                title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+              >
+                <i className={`pi ${isFullscreen ? 'pi-times' : 'pi-window-maximize'}`} />
+              </ActionIcon>
+            </Flex>
           </Flex>
           <CurrentFee currentFee={currentFee} isShowEdit={true} />
 
@@ -268,7 +295,11 @@ function JoivArticleIndex() {
               rowsPerPageOptions={[15, 25, 50, 100]}
               paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
               currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+              selection={selectedArticles}
+              onSelectionChange={(e) => setSelectedArticles(e.value as JoivRegistration[])}
+              isDataSelectable={(e) => e.data.payment_status === 'paid' && !!e.data.loa_volume && !!e.data.loa_authors}
             >
+              <Column selectionMode="multiple" headerStyle={{ width: '3rem' }}></Column>
               {TableData({ handleUpdateStatus, handleView }).map((col) => (
                 <Column
                   key={col.label}

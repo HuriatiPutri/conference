@@ -96,4 +96,81 @@ class JoivRegistration extends Model
     {
         return $this->first_name . ' ' . $this->last_name;
     }
+
+    /**
+     * Send LoA email with PDF attachment.
+     */
+    public function sendLoaEmail()
+    {
+        $this->load(['loaVolume']);
+
+        $data = [
+            'name' => $this->first_name . ' ' . $this->last_name,
+            'initial' => 'JOIV',
+            'registration_number' => $this->public_id ?? 'REG-' . $this->id,
+            'paper_title' => $this->paper_title ?? 'Untitled Paper',
+            'authors' => $this->loa_authors,
+            'joiv_volume' => $this->loaVolume->volume ?? 'Volume Not Set',
+            'conference_name' => 'Journal on Informatics Visualization',
+            'year' => now()->format('Y'),
+            'place' => 'Online, International',
+            'email' => $this->email_address,
+        ];
+
+        \Illuminate\Support\Facades\Mail::send('emails.loa_email', $data, function ($message) {
+            $message->to($this->email_address, "{$this->first_name} {$this->last_name}")
+                    ->subject("Letter of Acceptance (LoA) – JOIV");
+
+            try {
+                $loaPdf = $this->generateLoaPdfContent();
+                if ($loaPdf) {
+                    $fileName = "JOIV-Acceptance-Letter-{$this->first_name}-{$this->last_name}.pdf";
+                    $message->attachData($loaPdf, $fileName, [
+                        'mime' => 'application/pdf',
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Error attaching JOIV LoA PDF to email: ' . $e->getMessage());
+            }
+        });
+    }
+
+    /**
+     * Generate LoA PDF content.
+     */
+    public function generateLoaPdfContent()
+    {
+        try {
+            $this->load(['loaVolume']);
+
+            $data = [
+                'participant_name' => $this->first_name . ' ' . $this->last_name,
+                'institution' => $this->institution ?? 'Unknown Institution',
+                'paper_title' => $this->paper_title ?? 'Untitled Paper',
+                'authors' => $this->loa_authors,
+                'joiv_volume' => $this->loaVolume->volume ?? 'Volume Not Set',
+                'conference_name' => 'Journal on Informatics Visualization',
+                'conference_initial' => 'JOIV',
+                'conference_date' => now(),
+                'conference_city' => 'Online',
+                'conference_country' => 'International',
+                'presentation_type' => 'journal article',
+                'registration_number' => $this->public_id ?? 'REG-' . $this->id,
+                'number_of_letter' => 'No: SOTVI/LoA/' . date('Y') . '/' . ($this->public_id),
+                'issue_date' => $this->loa_approved_at ? \Carbon\Carbon::parse($this->loa_approved_at)->format('d F Y') : now()->format('d F Y'),
+                'signature_path' => storage_path('app/public/images/loa_signature.png'),
+                'joiv_logo_path' => storage_path('app/public/images/joiv_logo.png'),
+                'sotvi_logo_path' => storage_path('app/public/images/sotvi_logo.png'),
+                'scopus_analitic_path' => storage_path('app/public/images/scopus.png'),
+            ];
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('letters-of-approval.template-clean', compact('data'))
+                      ->setPaper('A4', 'portrait');
+
+            return $pdf->output();
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error generating JOIV LoA PDF: ' . $e->getMessage());
+            return null;
+        }
+    }
 }

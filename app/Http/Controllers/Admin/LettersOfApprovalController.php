@@ -142,7 +142,14 @@ class LettersOfApprovalController extends Controller
             'loa_approved_at' => now(),
         ]);
 
-        return redirect()->back()->with('success', 'LoA information updated successfully. You can now download the letter.');
+        // Send LoA email to audience
+        try {
+            $audience->sendLoaEmail();
+        } catch (\Exception $e) {
+            \Log::error('Failed to send LoA email to audience ID ' . $audience->id . ': ' . $e->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'LoA information updated successfully. You can now download the letter and it has been sent to the audience.');
     }
 
     /**
@@ -281,5 +288,74 @@ class LettersOfApprovalController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'LoA status updated successfully.');
+    }
+
+    /**
+     * Resend Letter of Acceptance (LoA) email to audience.
+     */
+    public function resend(Audience $audience)
+    {
+        // Check if participant is eligible
+        if ($audience->payment_status !== 'paid') {
+            abort(404, 'Participant not eligible for Letter of Approval');
+        }
+
+        // Check if LoA info is complete
+        if (!$audience->loa_authors || !$audience->loa_volume_id) {
+            return redirect()->back()->withErrors(['error' => 'Please fill in the authors and volume information first.']);
+        }
+
+        try {
+            $audience->sendLoaEmail();
+            return redirect()->back()->with('success', 'LoA has been resent to the audience email successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Failed to resend LoA email: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['error' => 'Failed to resend email: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Bulk resend Letters of Approval.
+     */
+    public function bulkResend(Request $request)
+    {
+        $request->validate([
+            'audience_ids' => 'required|array',
+            'audience_ids.*' => 'exists:audiences,id'
+        ]);
+
+        $audiences = Audience::with(['conference', 'loaVolume'])
+            ->whereIn('id', $request->audience_ids)
+            ->where('payment_status', 'paid')
+            ->get();
+
+        if ($audiences->isEmpty()) {
+            return redirect()->back()->withErrors(['error' => 'No eligible participants found.']);
+        }
+
+        $sentCount = 0;
+        $failedCount = 0;
+
+        foreach ($audiences as $audience) {
+            // Check if LoA info is complete
+            if (!$audience->loa_authors || !$audience->loa_volume_id) {
+                $failedCount++;
+                continue;
+            }
+
+            try {
+                $audience->sendLoaEmail();
+                $sentCount++;
+            } catch (\Exception $e) {
+                \Log::error('Failed to bulk resend LoA email to audience ID ' . $audience->id . ': ' . $e->getMessage());
+                $failedCount++;
+            }
+        }
+
+        if ($failedCount > 0) {
+            return redirect()->back()->with('success', "LoA emails sent successfully to {$sentCount} participants. {$failedCount} participants failed due to incomplete LoA details or mail transport errors.");
+        }
+
+        return redirect()->back()->with('success', "LoA emails resent successfully to all {$sentCount} selected participants.");
     }
 }

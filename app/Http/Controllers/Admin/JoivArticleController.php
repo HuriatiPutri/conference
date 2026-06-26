@@ -152,7 +152,14 @@ class JoivArticleController extends Controller
             'updated_by' => Auth::id(),
         ]);
 
-        return redirect()->back()->with('success', 'LoA information updated successfully. You can now download the letter.');
+        // Send LoA email to participant
+        try {
+            $joivArticle->sendLoaEmail();
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send JOIV LoA email to participant ID ' . $joivArticle->id . ': ' . $e->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'LoA information updated successfully. You can now download the letter and it has been sent to the participant.');
     }
 
     /**
@@ -299,6 +306,75 @@ class JoivArticleController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Failed to generate PDF: ' . $e->getMessage()]);
         }
+    }
+
+    /**
+     * Resend LoA email for single JOIV article.
+     */
+    public function resendLoa(JoivRegistration $joivArticle): RedirectResponse
+    {
+        // Check if participant is eligible
+        if ($joivArticle->payment_status !== 'paid') {
+            abort(404, 'Participant not eligible for Letter of Approval');
+        }
+
+        // Check if LoA info is complete
+        if (!$joivArticle->loa_authors || !$joivArticle->loa_volume_id) {
+            return redirect()->back()->withErrors(['error' => 'Please fill in the authors and volume information first.']);
+        }
+
+        try {
+            $joivArticle->sendLoaEmail();
+            return redirect()->back()->with('success', 'LoA email has been resent successfully.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to resend JOIV LoA email: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['error' => 'Failed to resend email: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Bulk resend LoA emails for JOIV articles.
+     */
+    public function bulkResendLoa(\Illuminate\Http\Request $request): RedirectResponse
+    {
+        $request->validate([
+            'article_ids' => 'required|array',
+            'article_ids.*' => 'exists:joiv_registrations,id'
+        ]);
+
+        $articles = JoivRegistration::with(['loaVolume'])
+            ->whereIn('id', $request->article_ids)
+            ->where('payment_status', 'paid')
+            ->get();
+
+        if ($articles->isEmpty()) {
+            return redirect()->back()->withErrors(['error' => 'No eligible participants found.']);
+        }
+
+        $sentCount = 0;
+        $failedCount = 0;
+
+        foreach ($articles as $article) {
+            // Check if LoA info is complete
+            if (!$article->loa_authors || !$article->loa_volume_id) {
+                $failedCount++;
+                continue;
+            }
+
+            try {
+                $article->sendLoaEmail();
+                $sentCount++;
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to bulk resend JOIV LoA email to participant ID ' . $article->id . ': ' . $e->getMessage());
+                $failedCount++;
+            }
+        }
+
+        if ($failedCount > 0) {
+            return redirect()->back()->with('success', "LoA emails sent successfully to {$sentCount} participants. {$failedCount} participants failed due to incomplete LoA details or mail transport errors.");
+        }
+
+        return redirect()->back()->with('success', "LoA emails resent successfully to all {$sentCount} selected participants.");
     }
 
     /**

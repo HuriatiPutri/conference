@@ -5,6 +5,8 @@ import { PAYMENT_METHOD } from "../../../Constants";
 import { getStatusBadge } from "../../../Components/BadgeStatus";
 import { formatCurrency } from "../../../utils";
 import { ActionButtonExt } from "../Conferences/ExtendComponent";
+import { router } from "@inertiajs/react";
+import { route } from "ziggy-js";
 
 type DataProps = {
   handleUpdateStatus: (registration: JoivRegistration) => void;
@@ -168,6 +170,18 @@ export const TableData = ({ handleUpdateStatus, handleView }: DataProps) => [
             handleClick={() => window.location.href = `/joiv-articles/${row.id}/assign-volume`}
             icon="pi pi-fw pi-book"
             title="Assign Volume"
+          />
+        )}
+        {row.loa_authors && row.loa_volume && row.payment_status === 'paid' && (
+          <ActionButtonExt
+            color="teal"
+            handleClick={() => {
+              if (confirm('Are you sure you want to resend the LoA email to this participant?')) {
+                router.post(route('joiv-articles.resend-loa', row.id));
+              }
+            }}
+            icon="pi pi-fw pi-envelope"
+            title="Resend LoA Email"
           />
         )}
         {row.payment_method === 'transfer_bank' && (

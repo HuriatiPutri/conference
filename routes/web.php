@@ -125,6 +125,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('letters-of-approval/{audience:id}/download', [LettersOfApprovalController::class, 'download'])->name('letters-of-approval.download');
     Route::post('letters-of-approval/bulk-download', [LettersOfApprovalController::class, 'bulkDownload'])->name('letters-of-approval.bulk-download');
     Route::patch('letters-of-approval/{audience:id}/status', [LettersOfApprovalController::class, 'updateStatus'])->name('letters-of-approval.update-status');
+    Route::post('letters-of-approval/{audience:id}/resend', [LettersOfApprovalController::class, 'resend'])->name('letters-of-approval.resend');
+    Route::post('letters-of-approval/bulk-resend', [LettersOfApprovalController::class, 'bulkResend'])->name('letters-of-approval.bulk-resend');
 
     // LoA - LoA Volume Management
     Route::prefix('loa')->name('loa.')->group(function () {
@@ -146,6 +148,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{joivArticle}/download-payment-proof', [\App\Http\Controllers\Admin\JoivArticleController::class, 'downloadPaymentProof'])->name('downloadPaymentProof');
         Route::get('/{joivArticle}/download-receipt', [\App\Http\Controllers\Admin\JoivArticleController::class, 'downloadReceipt'])->name('downloadReceipt');
         Route::get('/{joivArticle}/download-loa', [\App\Http\Controllers\Admin\JoivArticleController::class, 'downloadLoa'])->name('downloadLoa');
+        Route::post('/{joivArticle}/resend-loa', [\App\Http\Controllers\Admin\JoivArticleController::class, 'resendLoa'])->name('resend-loa');
+        Route::post('/bulk-resend-loa', [\App\Http\Controllers\Admin\JoivArticleController::class, 'bulkResendLoa'])->name('bulk-resend-loa');
         Route::get('/export/excel', [\App\Http\Controllers\Admin\JoivArticleController::class, 'export'])->name('export');
         Route::delete('/{joivArticle}', [\App\Http\Controllers\Admin\JoivArticleController::class, 'destroy'])->name('destroy');
         Route::put('/{joivArticle}/restore', [\App\Http\Controllers\Admin\JoivArticleController::class, 'restore'])->name('restore');

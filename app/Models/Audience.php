@@ -237,4 +237,82 @@ class Audience extends Model
             return null;
         }
     }
+
+    /**
+     * Send Letter of Acceptance (LoA) email with attachment.
+     */
+    public function sendLoaEmail()
+    {
+        $this->load(['conference', 'loaVolume']);
+
+        $data = [
+            'name' => $this->first_name . ' ' . $this->last_name,
+            'initial' => $this->conference->initial ?? 'CONF',
+            'registration_number' => $this->public_id ?? 'REG-' . $this->id,
+            'paper_title' => $this->paper_title ?? 'Untitled Paper',
+            'authors' => $this->loa_authors,
+            'joiv_volume' => $this->loaVolume->volume ?? 'Volume Not Set',
+            'conference_name' => $this->conference->name ?? 'Conference',
+            'year' => $this->conference->year ?? now()->format('Y'),
+            'place' => ($this->conference->city ?? 'City') . ', ' . ($this->conference->country ?? 'Country'),
+            'email' => $this->email,
+        ];
+
+        Mail::send('emails.loa_email', $data, function ($message) {
+            $message->to($this->email, "{$this->first_name} {$this->last_name}")
+                    ->subject("Letter of Acceptance (LoA) – {$this->conference->initial}");
+
+            try {
+                $loaPdf = $this->generateLoaPdfContent();
+                if ($loaPdf) {
+                    $fileName = "JOIV-Acceptance-Letter-{$this->first_name}-{$this->last_name}.pdf";
+                    $message->attachData($loaPdf, $fileName, [
+                        'mime' => 'application/pdf',
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error('Error attaching LoA PDF to email: ' . $e->getMessage());
+            }
+        });
+    }
+
+    /**
+     * Generate LoA PDF content.
+     */
+    public function generateLoaPdfContent()
+    {
+        try {
+            $this->load(['conference', 'loaVolume']);
+
+            $data = [
+                'participant_name' => $this->first_name . ' ' . $this->last_name,
+                'institution' => $this->institution ?? 'Unknown Institution',
+                'paper_title' => $this->paper_title ?? 'Untitled Paper',
+                'authors' => $this->loa_authors,
+                'joiv_volume' => $this->loaVolume->volume ?? 'Volume Not Set',
+                'conference_name' => $this->conference->name ?? 'Conference',
+                'conference_initial' => $this->conference->initial ?? 'CONF',
+                'conference_date' => $this->conference->date ?? now(),
+                'conference_city' => $this->conference->city ?? 'City',
+                'conference_country' => $this->conference->country ?? 'Country',
+                'presentation_type' => $this->presentation_type ?? 'presentation',
+                'registration_number' => $this->public_id ?? 'REG-' . $this->id,
+                'number_of_letter' => 'No: SOTVI/LoA/' . date('Y') . '/' . ($this->public_id),
+                'issue_date' => $this->loa_approved_at ? \Carbon\Carbon::parse($this->loa_approved_at)->format('d F Y') : now()->format('d F Y'),
+                'signature_path' => storage_path('app/public/images/loa_signature.png'),
+                'joiv_logo_path' => storage_path('app/public/images/joiv_logo.png'),
+                'sotvi_logo_path' => storage_path('app/public/images/sotvi_logo.png'),
+                'scopus_analitic_path' => storage_path('app/public/images/scopus.png'),
+            ];
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('letters-of-approval.template-clean', compact('data'))
+                      ->setPaper('A4', 'portrait');
+
+            return $pdf->output();
+        } catch (\Exception $e) {
+            Log::error('Error generating LoA PDF: ' . $e->getMessage());
+            return null;
+        }
+    }
 }
+

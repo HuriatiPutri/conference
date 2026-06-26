@@ -1,5 +1,6 @@
 import { router, usePage } from '@inertiajs/react';
 import {
+  Button,
   Card,
   Container,
   Divider,
@@ -16,6 +17,7 @@ import SummaryLoaModule from '../../../Modules/SummaryLoaModule';
 import { AudienceWithLoA, PageProps } from '../../../types';
 import FilterData from './FilterData';
 import { TableData } from './TableData';
+import { route } from "ziggy-js";
 
 interface LettersOfApprovalPageProps extends PageProps {
   audiences: {
@@ -48,8 +50,24 @@ function LettersOfApprovalIndex() {
   const [loaVolumeFilter, setLoaVolumeFilter] = useState(filters?.loa_volume_id || '');
   const [searchTerm, setSearchTerm] = useState(filters?.search || '');
 
+  // Row selection state
+  const [selectedAudiences, setSelectedAudiences] = useState<AudienceWithLoA[]>([]);
+
   // Global filter for DataTable
   const [globalFilterValue] = useState('');
+
+  const handleBulkResendEmail = () => {
+    if (selectedAudiences.length === 0) return;
+    if (confirm(`Are you sure you want to resend the LoA email to the ${selectedAudiences.length} selected participant(s)?`)) {
+      router.post(route('letters-of-approval.bulk-resend'), {
+        audience_ids: selectedAudiences.map(aud => aud.id)
+      }, {
+        onSuccess: () => {
+          setSelectedAudiences([]);
+        }
+      });
+    }
+  };
 
   const handleFilterChange = () => {
     const params = new URLSearchParams();
@@ -88,6 +106,15 @@ function LettersOfApprovalIndex() {
             <Title order={2}>Letters of Approval</Title>
             <Text c="dimmed">Manage and generate Letters of Approval for conference participants</Text>
           </div>
+          {selectedAudiences.length > 0 && (
+            <Button
+              color="teal"
+              leftSection={<i className="pi pi-send" />}
+              onClick={handleBulkResendEmail}
+            >
+              Resend LoA Email ({selectedAudiences.length} Selected)
+            </Button>
+          )}
         </Group>
 
         {/* Summary Cards */}
@@ -131,7 +158,11 @@ function LettersOfApprovalIndex() {
             tableStyle={{ minWidth: '100rem' }}
             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+            selection={selectedAudiences}
+            onSelectionChange={(e) => setSelectedAudiences(e.value as AudienceWithLoA[])}
+            isDataSelectable={(e) => e.data.loa_status === 'approved'}
           >
+            <Column selectionMode="multiple" headerStyle={{ width: '3rem' }}></Column>
             {TableData().map((col, index) => (
               <Column
                 key={index}
