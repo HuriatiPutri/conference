@@ -33,8 +33,7 @@
     <hr style="border: 0; border-top: 1px solid #ccc; margin: 20px 0;">
 
     <p>Best Regards,<br />
-        Society of Visual Informatics<br />
-        <a href="{{ url('/') }}" style="color: #0066cc; text-decoration: none;">{{ url('/') }}</a>
+        Society of Visual Informatics
     </p>
 </body>
 
