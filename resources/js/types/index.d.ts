@@ -266,9 +266,18 @@ export interface Package {
   name: string;
   price: number;
   duration: number;
+  packageBenefits?: any[];
+  package_benefits?: any[];
 }
 
-export interface Membership {
+
+interface MembershipPackage {
+  name: string;
+  packageBenefits?: any[];
+  package_benefits?: any[];
+}
+
+export type Membership = {
   id: number;
   public_id: string;
   first_name: string;
