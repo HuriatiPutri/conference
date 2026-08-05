@@ -1,12 +1,11 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Badge, Box, Button, Card, Container, Group, Stack, Text, ThemeIcon, Title } from '@mantine/core';
-import { IconAlertCircle, IconArrowLeft, IconCrown, IconIdBadge2, IconDownload } from '@tabler/icons-react';
+import { Button, Card, Container, Group, Stack, Text, ThemeIcon, Title } from '@mantine/core';
+import { IconArrowLeft, IconCrown, IconDownload } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import React, { useRef, useState } from 'react';
-import QRCode from 'react-qr-code';
 import { route } from 'ziggy-js';
-import MainLayout from '../../../Layout/MainLayout';
 import MembershipCard from '../../../Components/MembershipCard';
+import MainLayout from '../../../Layout/MainLayout';
 
 import { Membership } from '../../../types';
 

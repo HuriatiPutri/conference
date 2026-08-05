@@ -158,7 +158,7 @@
             <img src="{{ $data['joiv_logo_path'] }}" alt="JOIV Logo" style="height: 60px;" />
         </div>
         <div class="journal-name">
-            INTERNATIONAL OURNAL ON INFORMATICS VISUALIZATION
+            INTERNATIONAL JOURNAL ON INFORMATICS VISUALIZATION
         </div>
     </div>
 
