@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class JoivRegistration extends Model
@@ -23,6 +24,8 @@ class JoivRegistration extends Model
         'paper_title',
         'loa_authors',
         'loa_volume_id',
+        'voucher_id',
+        'voucher_code',
         'loa_approved_at',
         'full_paper_path',
         'payment_status',
@@ -42,6 +45,15 @@ class JoivRegistration extends Model
         return $this->where($field ?? 'id', $value)->withTrashed()->firstOrFail();
     }
 
+    public function invoices(){
+      return $this->morphMany(InvoiceHistory::class, 'reference');
+    }
+
+        public function benefitUsages(): MorphMany
+        {
+                return $this->morphMany(BenefitUsage::class, 'reference');
+        }
+    
     // Relationships
     public function creator(): BelongsTo
     {
@@ -61,6 +73,11 @@ class JoivRegistration extends Model
     public function loaVolume(): BelongsTo
     {
         return $this->belongsTo(LoaVolume::class, 'loa_volume_id');
+    }
+
+    public function voucher(): BelongsTo
+    {
+        return $this->belongsTo(Voucher::class);
     }
 
     // Helper methods

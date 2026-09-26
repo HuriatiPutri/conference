@@ -1,0 +1,232 @@
+import React from 'react';
+import { Head, useForm } from '@inertiajs/react';
+import {
+  Container,
+  Card,
+  Title,
+  Text,
+  Button,
+  Stack,
+  Group,
+  Radio,
+  FileInput,
+  Paper,
+  ThemeIcon,
+  Alert,
+  Divider
+} from '@mantine/core';
+import { IconUpload, IconCreditCard, IconBuildingBank, IconInfoCircle } from '@tabler/icons-react';
+import { formatCurrency } from '../../utils';
+import AuthLayout from '../../Layout/AuthLayout';
+
+interface Package {
+  id: number;
+  name: string;
+  price_idr: number;
+  price_usd: number;
+  duration: number;
+}
+
+interface Membership {
+  public_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  country: string;
+}
+
+interface MembershipPaymentProps {
+  membership: Membership;
+  package: Package;
+}
+
+export default function MembershipPayment({ membership, package: packageData }: MembershipPaymentProps) {
+  const { data, setData, post, processing, errors } = useForm({
+    payment_method: '',
+    payment_proof: null as File | null,
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    post(`/membership/${membership.public_id}/payment`, {
+      forceFormData: true,
+    });
+  };
+
+  const isIndonesia = membership.country === 'ID';
+  // Use USD for PayPal usually, but follow your logic:
+  const currency = isIndonesia ? 'idr' : 'usd';
+
+  return (
+    <>
+      <Head title="Membership Payment" />
+
+      <Container size="md" py="xl">
+        <Stack gap="lg">
+          <div>
+            <Title order={2} ta="center" mb="xs">
+              Payment Information
+            </Title>
+            <Text ta="center" c="dimmed" size="lg">
+              Complete your membership registration
+            </Text>
+          </div>
+
+          <Paper withBorder p="md" style={{ backgroundColor: 'var(--mantine-color-green-0)' }}>
+            <Group justify="space-between">
+              <div>
+                <Text fw={500}>Registration Details</Text>
+                <Text size="sm" c="dimmed">
+                  {membership.first_name} {membership.last_name} ({membership.email})
+                </Text>
+                <Text size="sm" c="dimmed" mt="xs" fw={500}>
+                  Package: {packageData.name} ({packageData.duration} days)
+                </Text>
+              </div>
+              <div>
+                <Text fw={700} size="xl" c="green">
+                  {formatCurrency(isIndonesia ? packageData.price_idr : packageData.price_usd, currency as any)}
+                </Text>
+              </div>
+            </Group>
+          </Paper>
+
+          <Divider />
+
+          <form onSubmit={handleSubmit}>
+            <Stack gap="lg">
+              <div>
+                <Title order={4} mb="md">Select Payment Method</Title>
+
+                <Stack gap="md">
+                  <Paper
+                    withBorder
+                    p="md"
+                    style={{
+                      display: 'block',
+                      cursor: 'pointer',
+                      borderColor: data.payment_method === 'transfer_bank' ? 'var(--mantine-color-blue-5)' : undefined
+                    }}
+                    onClick={() => setData('payment_method', 'transfer_bank')}
+                  >
+                    <Group>
+                      <Radio
+                        value="transfer_bank"
+                        checked={data.payment_method === 'transfer_bank'}
+                        onChange={() => { }}
+                      />
+                      <ThemeIcon variant="light" size="lg">
+                        <IconBuildingBank size={20} />
+                      </ThemeIcon>
+                      <div>
+                        <Text fw={500}>Bank Transfer</Text>
+                        <Text size="sm" c="dimmed">
+                          Transfer to our bank account
+                        </Text>
+                      </div>
+                    </Group>
+                  </Paper>
+
+                  <Paper
+                    withBorder
+                    p="md"
+                    style={{
+                      display: isIndonesia ? 'none' : 'block', // PayPal mostly for international
+                      cursor: 'pointer',
+                      borderColor: data.payment_method === 'payment_gateway' ? 'var(--mantine-color-blue-5)' : undefined
+                    }}
+                    onClick={() => setData('payment_method', 'payment_gateway')}
+                  >
+                    <Group>
+                      <Radio
+                        value="payment_gateway"
+                        checked={data.payment_method === 'payment_gateway'}
+                        onChange={() => { }}
+                      />
+                      <ThemeIcon variant="light" size="lg" color="orange">
+                        <IconCreditCard size={20} />
+                      </ThemeIcon>
+                      <div>
+                        <Text fw={500}>PayPal</Text>
+                        <Text size="sm" c="dimmed">
+                          Pay securely with PayPal
+                        </Text>
+                      </div>
+                    </Group>
+                  </Paper>
+                </Stack>
+
+                {errors.payment_method && (
+                  <Text c="red" size="sm" mt="sm">{errors.payment_method}</Text>
+                )}
+              </div>
+
+              {data.payment_method === 'transfer_bank' && (
+                <Paper withBorder p="md" style={{ backgroundColor: 'var(--mantine-color-blue-0)' }}>
+                  <Stack gap="md">
+                    <Group>
+                      <ThemeIcon variant="light" color="blue">
+                        <IconInfoCircle size={16} />
+                      </ThemeIcon>
+                      <Text fw={500}>Bank Transfer Instructions</Text>
+                    </Group>
+
+                    <div>
+                      <Text size="sm" fw={500}>Bank Account Details:</Text>
+                      <Text size="sm">Bank: Bank Negara Indonesia (BNI)</Text>
+                      <Text size="sm">Account Number: 0310526940</Text>
+                      <Text size="sm">Account Name: Alde Alanda</Text>
+                      <Text size="sm" fw={500} mt="xs">
+                        Amount: {formatCurrency(isIndonesia ? packageData.price_idr : packageData.price_usd, currency as any)}
+                      </Text>
+                    </div>
+
+                    <Alert color="orange" variant="light">
+                      Please upload your payment proof after making the transfer.
+                      Your registration will be verified manually.
+                    </Alert>
+
+                    <FileInput
+                      label="Payment Proof"
+                      placeholder="Upload payment proof"
+                      accept="image/*,.pdf"
+                      leftSection={<IconUpload size={14} />}
+                      value={data.payment_proof}
+                      onChange={(file) => setData('payment_proof', file)}
+                      error={errors.payment_proof}
+                      description="Upload screenshot or receipt of your transfer"
+                      required={data.payment_method === 'transfer_bank'}
+                    />
+                  </Stack>
+                </Paper>
+              )}
+
+              {data.payment_method === 'payment_gateway' && (
+                <Alert color="blue" variant="light">
+                  You will be redirected to PayPal to complete your payment securely.
+                </Alert>
+              )}
+
+              <Button
+                type="submit"
+                size="lg"
+                loading={processing}
+                disabled={!data.payment_method}
+                fullWidth
+              >
+                {data.payment_method === 'payment_gateway'
+                  ? 'Pay with PayPal'
+                  : 'Submit Registration'
+                }
+              </Button>
+            </Stack>
+          </form>
+        </Stack>
+      </Container>
+    </>
+  );
+}
+
+MembershipPayment.layout = (page: React.ReactNode) => (
+  <AuthLayout title="Membership Payment">{page}</AuthLayout>
+);

@@ -22,7 +22,7 @@ export const FilterData = ({
 }: FilterDataProps) => {
   return (
     <Card padding="lg" radius="md" withBorder>
-      <Title order={4} mb="md">Filter Audience Data</Title>
+      <Title order={4} mb="md">Filter Data</Title>
       <Grid>
         <Grid.Col span={{ base: 12, md: 4 }}>
           <Select

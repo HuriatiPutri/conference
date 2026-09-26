@@ -14,10 +14,12 @@ use Illuminate\Database\Eloquent\Builder;
 class AudienceExport implements FromQuery, WithHeadings, WithMapping, WithColumnFormatting, ShouldAutoSize
 {
     protected $filters;
+    protected $user;
 
-    public function __construct($filters = [])
+    public function __construct($filters = [], $user = null)
     {
         $this->filters = $filters;
+        $this->user = $user;
     }
 
     public function query()
@@ -25,6 +27,10 @@ class AudienceExport implements FromQuery, WithHeadings, WithMapping, WithColumn
         $query = Audience::query()
             ->with(['conference', 'key_notes', 'parallel_sessions'])
             ->whereHas('conference');
+
+        if ($this->user->hasRole('user')) {
+            $query->where('user_id', $this->user->id)->orWhere('email', $this->user->email);
+        }
 
         // Apply filters
         if (!empty($this->filters['conference_id'])) {
@@ -42,16 +48,16 @@ class AudienceExport implements FromQuery, WithHeadings, WithMapping, WithColumn
         // Apply search filter
         if (!empty($this->filters['search'])) {
             $searchTerm = $this->filters['search'];
-            $query->where(function($q) use ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
                 $q->where('first_name', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('last_name', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('email', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('phone_number', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('institution', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('paper_title', 'LIKE', "%{$searchTerm}%")
-                  ->orWhereHas('conference', function($confQuery) use ($searchTerm) {
-                      $confQuery->where('name', 'LIKE', "%{$searchTerm}%");
-                  });
+                    ->orWhere('last_name', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('email', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('phone_number', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('institution', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('paper_title', 'LIKE', "%{$searchTerm}%")
+                    ->orWhereHas('conference', function ($confQuery) use ($searchTerm) {
+                        $confQuery->where('name', 'LIKE', "%{$searchTerm}%");
+                    });
             });
         }
 
@@ -141,10 +147,10 @@ class AudienceExport implements FromQuery, WithHeadings, WithMapping, WithColumn
 
     private function hasCertificateTemplate($audience)
     {
-        return $audience->conference && 
-               $audience->conference->certificate_template_path && 
-               $audience->conference->certificate_template_position &&
-               $audience->key_notes->count() > 0 && 
-               $audience->parallel_sessions->count() > 0;
+        return $audience->conference &&
+            $audience->conference->certificate_template_path &&
+            $audience->conference->certificate_template_position &&
+            $audience->key_notes->count() > 0 &&
+            $audience->parallel_sessions->count() > 0;
     }
 }

@@ -14,6 +14,9 @@ import { FilterData } from './FilterData';
 import { TableData } from './TableData';
 
 function AudienceIndex() {
+  const { auth } = usePage().props as any;
+  const role = auth.role;
+
   const { audiences, filters, summary, conferences } = usePage<{
     audiences: PaginatedData<Audiences>;
     filters: {
@@ -191,15 +194,22 @@ function AudienceIndex() {
     }
   }
 
+  const header = {
+    'user': <div>
+      <Title order={2}>My Conferences</Title>
+      <Text c="dimmed">List of conferences you have registered for</Text>
+    </div>,
+    'admin': <div>
+      <Title order={2}>Audience Management</Title>
+      <Text c="dimmed">Manage audiences, settings, and configurations</Text>
+    </div>
+  }
   return (
     <Container fluid>
       <Stack gap="lg">
         {/* Header */}
         <Group justify="space-between">
-          <div>
-            <Title order={2}>Audience Management</Title>
-            <Text c="dimmed">Manage audiences, settings, and configurations</Text>
-          </div>
+          {header[role]}
         </Group>
         <FilterData
           conferences={conferences}
@@ -238,20 +248,22 @@ function AudienceIndex() {
             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
           >
-            {TableData({ _handleRedirectWa, handlePaymentStatusClick }).map(col => (
-              <Column
-                key={col.name}
-                field={col.name}
-                body={col.renderCell}
-                header={col.label}
-                sortable={col.sortable}
-                style={{
-                  alignItems: 'top',
-                  textAlign: 'left',
-                  textWrap: 'nowrap',
-                  width: '250px',
-                }}
-              />
+            {TableData({ _handleRedirectWa, handlePaymentStatusClick, role }).map(col => (
+              col.hidden ? null : (
+                <Column
+                  key={col.name}
+                  field={col.name}
+                  body={col.renderCell}
+                  header={col.label}
+                  sortable={col.sortable}
+                  style={{
+                    alignItems: 'top',
+                    textAlign: 'left',
+                    textWrap: 'nowrap',
+                    width: '250px',
+                  }}
+                />
+              )
             ))}
           </DataTable>
           <PaymentStatusModal
@@ -265,6 +277,11 @@ function AudienceIndex() {
   );
 }
 
-AudienceIndex.layout = (page: React.ReactNode) => <MainLayout title="Audience Management">{page}</MainLayout>;
+AudienceIndex.layout = (page: any) => {
+  const role = page.props.auth?.role;
+  return (
+    <MainLayout title={role === 'admin' ? "Audience Management" : "My Conferences"}>{page}</MainLayout>
+  );
+}
 
 export default AudienceIndex;

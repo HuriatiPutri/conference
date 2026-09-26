@@ -24,14 +24,21 @@ class AudiencesController extends Controller
 {
     public function index(): Response
     {
+        $user = Auth::user();
         $filters = Request::only('conference_id', 'payment_method', 'payment_status', 'search');
         $perPage = Request::input('per_page', 15); // Default 15, bisa diubah via parameter
-        
+
         // Build query with filters
         $query = Audience::query()
             ->with(['conference', 'key_notes', 'parallel_sessions'])
             ->whereHas('conference');
 
+        if ($user->hasRole('user')) {
+            $query->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                    ->orWhere('email', $user->email);
+            });
+        }
         // Apply filters
         if (!empty($filters['conference_id'])) {
             $query->where('conference_id', $filters['conference_id']);
@@ -48,16 +55,16 @@ class AudiencesController extends Controller
         // Apply search filter
         if (!empty($filters['search'])) {
             $searchTerm = $filters['search'];
-            $query->where(function($q) use ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
                 $q->where('first_name', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('last_name', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('email', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('phone_number', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('institution', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('paper_title', 'LIKE', "%{$searchTerm}%")
-                  ->orWhereHas('conference', function($confQuery) use ($searchTerm) {
-                      $confQuery->where('name', 'LIKE', "%{$searchTerm}%");
-                  });
+                    ->orWhere('last_name', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('email', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('phone_number', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('institution', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('paper_title', 'LIKE', "%{$searchTerm}%")
+                    ->orWhereHas('conference', function ($confQuery) use ($searchTerm) {
+                        $confQuery->where('name', 'LIKE', "%{$searchTerm}%");
+                    });
             });
         }
 
@@ -66,7 +73,14 @@ class AudiencesController extends Controller
 
         // Get summary counts with same filters
         $summaryQuery = Audience::query()->whereHas('conference');
-        
+
+        if ($user->hasRole('user')) {
+            $summaryQuery->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                    ->orWhere('email', $user->email);
+            });
+        }
+
         if (!empty($filters['conference_id'])) {
             $summaryQuery->where('conference_id', $filters['conference_id']);
         }
@@ -97,27 +111,28 @@ class AudiencesController extends Controller
 
     public function export()
     {
+        $user = Auth::user();
         $filters = Request::only('conference_id', 'payment_method', 'payment_status', 'search');
-        
+
         // Generate filename with current date and filters
         $filename = 'audiences_export_' . now()->format('Y-m-d_H-i-s');
-        
+
         if (!empty($filters['conference_id'])) {
             $conference = Conference::find($filters['conference_id']);
             if ($conference) {
                 $filename .= '_' . str_replace([' ', '/', '\\'], '_', $conference->name);
             }
         }
-        
+
         $filename .= '.xlsx';
-        
-        return Excel::download(new AudienceExport($filters), $filename);
+
+        return Excel::download(new AudienceExport($filters, $user), $filename);
     }
 
     public function show(Audience $audience): Response
     {
         return Inertia::render('Admin/Audiences/Show', [
-            'audience' => new AudienceResource($audience->loadMissing(['conference', 'key_notes','parallel_sessions'])),
+            'audience' => new AudienceResource($audience->loadMissing(['conference', 'key_notes', 'parallel_sessions'])),
         ]);
     }
 
@@ -156,12 +171,12 @@ class AudiencesController extends Controller
         // Load conference dengan template sertifikat
         $audience->load('conference');
         $conference = $audience->conference;
-        
+
         // Validasi apakah ada template sertifikat
         if (!$conference || !$conference->certificate_template_path || !$conference->certificate_template_position) {
             return redirect()->back()->withErrors(['error' => 'Template sertifikat belum diatur untuk konferensi ini.']);
         }
-        
+
         // Parse position data
         try {
             $positionData = json_decode($conference->certificate_template_position, true);
@@ -172,18 +187,18 @@ class AudiencesController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Data posisi template sertifikat tidak valid: ' . $e->getMessage()]);
         }
-        
+
         // Path template image
         $templatePath = storage_path('app/public/' . $conference->certificate_template_path);
-        
+
         if (!file_exists($templatePath)) {
             return redirect()->back()->withErrors(['error' => 'File template sertifikat tidak ditemukan di: ' . $templatePath]);
         }
-        
+
         // Encode image to base64 untuk digunakan di HTML
         $templateBase64 = base64_encode(file_get_contents($templatePath));
         $templateMimeType = mime_content_type($templatePath);
-        $background = storage_path('app/public/'.$conference->certificate_template_path);
+        $background = storage_path('app/public/' . $conference->certificate_template_path);
         // Data untuk sertifikat
         $certificateData = [
             'participant_name' => $audience->parallel_sessions->first()->name_of_presenter,
@@ -195,15 +210,15 @@ class AudiencesController extends Controller
             'background' => $background,
             'positions' => $positions
         ];
-        
+
         try {
             // Generate PDF
             $pdf = Pdf::loadView('certificates.template', $certificateData);
             $pdf->setPaper('A4', 'landscape');
-            
+
             // Preview filename
             $filename = 'Certificate_' . str_replace([' ', '.', ','], '_', $audience->first_name . '_' . $audience->last_name) . '_' . $conference->initial . '.pdf';
-            
+
             return $pdf->stream($filename);
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Gagal membuat sertifikat PDF: ' . $e->getMessage()]);
@@ -225,8 +240,8 @@ class AudiencesController extends Controller
             'payment_status' => $validated['payment_status']
         ]);
 
-        if($validated['payment_status'] !== 'pending_payment') {
-        $audience->sendPaymentConfirmationEmail();
+        if ($validated['payment_status'] !== 'pending_payment') {
+            $audience->sendPaymentConfirmationEmail();
         }
 
         return redirect()->back()->with('success', 'Payment status updated successfully');
@@ -265,7 +280,7 @@ class AudiencesController extends Controller
         try {
             // Generate PDF
             $pdf = Pdf::loadView('receipt.index', compact('data'))
-                      ->setPaper('A4', 'portrait');
+                ->setPaper('A4', 'portrait');
 
             return $pdf->stream("receipt-{$data['name']}.pdf");
         } catch (\Exception $e) {

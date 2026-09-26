@@ -11,9 +11,10 @@ import { route } from "ziggy-js";
 type DataProps = {
   handleUpdateStatus: (registration: JoivRegistration) => void;
   handleView: (registration: JoivRegistration) => void;
+  role: string;
 }
 
-export const TableData = ({ handleUpdateStatus, handleView }: DataProps) => [
+export const TableData = ({ handleUpdateStatus, handleView, role }: DataProps) => [
   {
     label: 'No',
     name: 'serial_number',
@@ -156,6 +157,7 @@ export const TableData = ({ handleUpdateStatus, handleView }: DataProps) => [
   {
     label: 'Actions',
     name: 'actions',
+    hidden: role === 'user',
     renderCell: (row: JoivRegistration) => (
       <Flex gap="xs">
         <ActionButtonExt

@@ -31,6 +31,7 @@ class Conference extends Model
         'onsite_fee_usd',
         'participant_fee',
         'participant_fee_usd',
+        'member_discount_percentage',
     ];
     
     public function resolveRouteBinding($value, $field = null)

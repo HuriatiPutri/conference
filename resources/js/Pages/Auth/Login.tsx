@@ -10,11 +10,10 @@ import {
   Container,
   Alert,
   Checkbox,
-  Stack
+  Stack,
+  Anchor
 } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
-import { route } from 'ziggy-js';
-import MainLayout from '../../Layout/MainLayout';
 import AuthLayout from '../../Layout/AuthLayout';
 
 interface LoginForm {
@@ -32,19 +31,19 @@ export default function Login() {
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    post(route('login'));
+    post(route('login.member.store'));
   }
 
   return (
     <Container size={420} my={40}>
-      <Title ta="center" mb="lg">
-        Login Admin
+      <Title ta="center" mb={'sm'}>
+        Member Portal Login
       </Title>
       <Text c="dimmed" size="sm" ta="center" mb="xl">
-        Masuk ke dashboard admin untuk mengelola konferensi
+        Welcome back! Please sign in to continue your conference journey and access your dashboard.
       </Text>
 
-      <Paper withBorder shadow="md" p={30} mt={30} radius="md">
+      <Paper p={30} mt={20} radius="md">
         {errors.email && (
           <Alert
             icon={<IconAlertCircle size="1rem" />}
@@ -60,7 +59,7 @@ export default function Login() {
           <Stack>
             <TextInput
               label="Email"
-              placeholder="admin@example.com"
+              placeholder="member@example.com"
               required
               value={data.email}
               onChange={(e) => setData('email', e.target.value)}
@@ -86,12 +85,18 @@ export default function Login() {
               type="submit"
               fullWidth
               loading={processing}>
-              Sign in
+              Sign in as Member
             </Button>
           </Stack>
         </form>
+        <Text ta="center" mt="xs">
+          Don&apos;t have an account?{' '}
+          <Anchor href={'/register-membership'} fw={500}>
+            Register
+          </Anchor>
+        </Text>
       </Paper>
     </Container>
   );
 }
-Login.layout = (page: React.ReactNode) => <AuthLayout title="Login">{page}</AuthLayout>;
+Login.layout = (page: React.ReactNode) => <AuthLayout title="Member Login">{page}</AuthLayout>;

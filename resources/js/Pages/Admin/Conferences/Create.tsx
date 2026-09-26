@@ -12,7 +12,8 @@ import {
   Text,
   Textarea,
   TextInput,
-  Title
+  Title,
+  NumberInput
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import React, { useState } from 'react';
@@ -39,6 +40,7 @@ function ConferenceCreate() {
     onsite_fee_usd: 0,
     participant_fee: 0,
     participant_fee_usd: 0,
+    member_discount_percentage: 0,
     rooms: rooms,
   });
 
@@ -190,66 +192,118 @@ function ConferenceCreate() {
               <Grid.Col span={{ base: 12, md: 6 }}>
                 <Text fw={600}>Domestic Participants (IDR)</Text>
 
-                <TextInput
+                <NumberInput
                   label="Online Fee (IDR)"
                   name="online_fee"
-                  type="number"
                   required
+                  min={0}
+                  decimalScale={2}
+                  hideControls
+                  prefix="Rp "
+                  thousandSeparator="."
+                  decimalSeparator=","
                   error={errors.online_fee}
                   value={data.online_fee}
-                  onChange={e => setData('online_fee', Number(e.target.value))}
+                  onChange={val => setData('online_fee', val === '' ? 0 : Number(val))}
                 />
 
-                <TextInput
+                <NumberInput
                   label="Onsite Fee (IDR)"
                   name="onsite_fee"
-                  type="number"
                   required
+                  min={0}
+                  decimalScale={2}
+                  hideControls
+                  prefix="Rp "
+                  thousandSeparator="."
+                  decimalSeparator=","
                   error={errors.onsite_fee}
                   value={data.onsite_fee}
-                  onChange={e => setData('onsite_fee', Number(e.target.value))}
+                  onChange={val => setData('onsite_fee', val === '' ? 0 : Number(val))}
                 />
 
-                <TextInput
+                <NumberInput
                   label="Participant Only Fee (IDR)"
                   name="participant_fee"
-                  type="number"
                   required
+                  min={0}
+                  decimalScale={2}
+                  hideControls
+                  prefix="Rp "
+                  thousandSeparator="."
+                  decimalSeparator=","
                   error={errors.participant_fee}
                   value={data.participant_fee}
-                  onChange={e => setData('participant_fee', Number(e.target.value))}
+                  onChange={val => setData('participant_fee', val === '' ? 0 : Number(val))}
                 />
               </Grid.Col>
               <Grid.Col span={{ base: 12, md: 6 }}>
                 <Text fw={600}>International Participants (USD)</Text>
-                <TextInput
+                <NumberInput
                   label="Onsite Fee (USD)"
                   name="onsite_fee_usd"
-                  type="number"
                   required
+                  min={0}
+                  decimalScale={2}
+                  hideControls
+                  prefix="$ "
+                  thousandSeparator=","
+                  decimalSeparator="."
                   error={errors.onsite_fee_usd}
                   value={data.onsite_fee_usd}
-                  onChange={e => setData('onsite_fee_usd', Number(e.target.value))}
+                  onChange={val => setData('onsite_fee_usd', val === '' ? 0 : Number(val))}
                 />
 
-                <TextInput
+                <NumberInput
                   label="Online Fee (USD)"
                   name="online_fee_usd"
-                  type="number"
                   required
+                  min={0}
+                  decimalScale={2}
+                  hideControls
+                  prefix="$ "
+                  thousandSeparator=","
+                  decimalSeparator="."
                   error={errors.online_fee_usd}
                   value={data.online_fee_usd}
-                  onChange={e => setData('online_fee_usd', Number(e.target.value))}
+                  onChange={val => setData('online_fee_usd', val === '' ? 0 : Number(val))}
                 />
 
-                <TextInput
+                <NumberInput
                   label="Participant Only Fee (USD)"
                   name="participant_fee_usd"
-                  type="number"
                   required
+                  min={0}
+                  decimalScale={2}
+                  hideControls
+                  prefix="$ "
+                  thousandSeparator=","
+                  decimalSeparator="."
                   error={errors.participant_fee_usd}
                   value={data.participant_fee_usd}
-                  onChange={e => setData('participant_fee_usd', Number(e.target.value))}
+                  onChange={val => setData('participant_fee_usd', val === '' ? 0 : Number(val))}
+                />
+              </Grid.Col>
+            </Grid>
+
+            <Divider my={'md'} />
+            <Text fw={700} fz={'lg'} mb={'sm'}>
+              Global Settings
+            </Text>
+            <Grid>
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                <NumberInput
+                  label="Member Discount Percentage (%)"
+                  name="member_discount_percentage"
+                  min={0}
+                  max={100}
+                  decimalScale={2}
+                  decimalSeparator=","
+                  hideControls
+                  error={errors.member_discount_percentage}
+                  value={data.member_discount_percentage}
+                  onChange={val => setData('member_discount_percentage', val === '' ? 0 : Number(val))}
+                  description="Global percentage discount applied to valid members"
                 />
               </Grid.Col>
             </Grid>

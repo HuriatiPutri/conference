@@ -33,6 +33,7 @@ class ConferenceStoreRequest extends FormRequest
             'onsite_fee_usd' => ['nullable', 'numeric', 'min:0'],
             'participant_fee' => ['nullable', 'numeric', 'min:0'],
             'participant_fee_usd' => ['nullable', 'numeric', 'min:0'],
+            'member_discount_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'certificate_template_path' => ['nullable', 'file', 'mimes:png,jpg,jpeg,pdf', 'max:4096'],
             'certificate_template_position' => ['nullable', 'string', 'max:255'],
             'rooms' => ['nullable', 'array'],

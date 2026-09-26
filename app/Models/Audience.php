@@ -16,6 +16,8 @@ class Audience extends Model
 
     protected $fillable = [
         'conference_id',
+        'voucher_id',
+        'voucher_code',
         'first_name',
         'last_name',
         'paper_title',
@@ -25,6 +27,7 @@ class Audience extends Model
         'country',
         'presentation_type',
         'paid_fee',
+        'discount_amount',
         'payment_status',
         'payment_method',
         'payment_proof_path',
@@ -38,14 +41,29 @@ class Audience extends Model
         'loa_volume_id',
     ];
 
-    public function resolveRouteBinding($value, $field = null)
+        public function resolveRouteBinding($value, $field = null)
     {
         return $this->where($field ?? 'id', $value)->withTrashed()->firstOrFail();
+    }
+
+    public function invoices()
+    {
+        return $this->morphMany(InvoiceHistory::class, 'reference');
+    }
+
+    public function benefitUsages()
+    {
+        return $this->morphMany(BenefitUsage::class, 'reference');
     }
 
     public function conference()
     {
         return $this->belongsTo(Conference::class);
+    }
+
+    public function voucher()
+    {
+        return $this->belongsTo(Voucher::class);
     }
 
     public function key_notes(): HasMany
@@ -66,6 +84,11 @@ class Audience extends Model
     public function loaVolume()
     {
         return $this->belongsTo(LoaVolume::class, 'loa_volume_id');
+    }
+
+    public function member()
+    {
+        return $this->belongsTo(Membership::class);
     }
 
     public function getPaymentMethodText()
@@ -115,7 +138,7 @@ class Audience extends Model
     public function scopeFilter($query, array $filters)
     {
         $query->when($filters['search'] ?? null, function ($query, $search) {
-            $query->where('name', 'like', '%'.$search.'%');
+            $query->where('name', 'like', '%' . $search . '%');
         })->when($filters['trashed'] ?? null, function ($query, $trashed) {
             if ($trashed === 'with') {
                 $query->withTrashed();
@@ -128,14 +151,14 @@ class Audience extends Model
     public function sendEmail()
     {
         $data = [
-            'name' => $this->first_name.' '.$this->last_name,
+            'name' => $this->first_name . ' ' . $this->last_name,
             'initial' => $this->conference->initial,
             'registration_number' => $this->public_id,
             'registration_date' => $this->created_at->format('d M Y'),
             'paper_title' => $this->paper_title,
             'conference_name' => $this->conference->name,
             'year' => $this->conference->year,
-            'place' => $this->conference->city.', '.$this->conference->country,
+            'place' => $this->conference->city . ', ' . $this->conference->country,
             'email' => $this->email,
             'phone_number' => $this->phone_number,
             'payment_link' => route('registration.details', ['conference' => $this->conference->public_id, 'audience' => $this->public_id]),
@@ -143,21 +166,21 @@ class Audience extends Model
 
         Mail::send('emails.registration_confirmation', $data, function ($message) {
             $message->to($this->email, "{$this->first_name} {$this->last_name}")
-                    ->subject('Registration Confirmation');
+                ->subject('Registration Confirmation');
         });
     }
 
     public function sendPaymentConfirmationEmail()
     {
         $data = [
-            'name' => $this->first_name.' '.$this->last_name,
+            'name' => $this->first_name . ' ' . $this->last_name,
             'initial' => $this->conference->initial,
             'registration_number' => $this->public_id,
             'registration_date' => $this->created_at->format('d M Y'),
             'paper_title' => $this->paper_title,
             'conference_name' => $this->conference->name,
             'year' => $this->conference->year,
-            'place' => $this->conference->city.', '.$this->conference->country,
+            'place' => $this->conference->city . ', ' . $this->conference->country,
             'email' => $this->email,
             'phone_number' => $this->phone_number,
             'amount' => $this->paid_fee,
@@ -173,8 +196,8 @@ class Audience extends Model
 
         Mail::send($template[$this->payment_status], $data, function ($message) {
             $message->to($this->email, "{$this->first_name} {$this->last_name}")
-                    ->subject('Payment Confirmation');
-            
+                ->subject('Payment Confirmation');
+
             // Attach receipt PDF jika status adalah 'paid'
             if ($this->payment_status === 'paid') {
                 try {
@@ -200,7 +223,7 @@ class Audience extends Model
         try {
             // Ambil data yang sama seperti di controller
             $conference = $this->conference;
-            
+
             if (!$conference) {
                 Log::warning('No conference found for audience ID: ' . $this->id);
                 return null;
@@ -213,23 +236,23 @@ class Audience extends Model
 
             // Generate data yang sama seperti di controller
             $data = [
-                'name' => $this->first_name.' '.$this->last_name,
-                'address' => $this->institution. ', '.$this->country,
+                'name' => $this->first_name . ' ' . $this->last_name,
+                'address' => $this->institution . ', ' . $this->country,
                 'paper_title' => $this->paper_title ?? 'N/A',
                 'conference' => $conference->initial,
                 'conference_name' => $conference->name,
-                'conference_cover' => $conference->cover_poster_path ? storage_path('app/public/'.$conference->cover_poster_path) : null,
+                'conference_cover' => $conference->cover_poster_path ? storage_path('app/public/' . $conference->cover_poster_path) : null,
                 'date' => $conference->date,
-                'amount' => $this->country === 'ID' ?  'Rp'.number_format($this->paid_fee, 2) : '$'.number_format($this->paid_fee, 2),
+                'amount' => $this->country === 'ID' ? 'Rp' . number_format($this->paid_fee, 2) : '$' . number_format($this->paid_fee, 2),
                 'payment_method' => $this->payment_method,
                 'payment_date' => $this->updated_at->format('d M Y H:i'),
-                'invoice_id' => 'Ref. No.'.strtoupper($this->public_id).'/PAID/'.strtoupper($this->conference->initial).'/2025',
+                'invoice_id' => 'Ref. No.' . strtoupper($this->public_id) . '/PAID/' . strtoupper($this->conference->initial) . '/2025',
                 'signature' => storage_path('app/public/images/signature.png'),
             ];
 
             // Generate PDF menggunakan DomPDF
             $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('receipt.index', compact('data'))
-                      ->setPaper('A4', 'portrait');
+                ->setPaper('A4', 'portrait');
 
             return $pdf->output();
         } catch (\Exception $e) {

@@ -41,7 +41,7 @@ interface JoivRegistration {
 }
 
 function JoivArticleIndex() {
-  const { registrations, filters, summary, countries, currentFee } = usePage<{
+  const { auth, registrations, filters, summary, countries, currentFee } = usePage<{
     registrations: PaginatedData<JoivRegistration>;
     currentFee: JoivRegistrationFee | null;
     filters: {
@@ -58,7 +58,9 @@ function JoivArticleIndex() {
       refunded: number;
     };
     countries: string[];
+    auth: { role: string };
   }>().props;
+
 
   const { data } = registrations;
   const urlParams = new URLSearchParams(window.location.search);
@@ -89,7 +91,6 @@ function JoivArticleIndex() {
     return urlParams.get('search') || '';
   });
 
-  console.log('filters', filters)
   const [searchTimeout, setSearchTimeout] = useState<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -171,7 +172,8 @@ function JoivArticleIndex() {
   };
 
   const handleToggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
+    const params = new URLSearchParams();
+    router.visit(`/joiv-articles?isFullScreen=${!isFullscreen}&${params.toString()}`);
   };
 
   const renderHeader = () => {
@@ -234,6 +236,18 @@ function JoivArticleIndex() {
     }
   }
 
+
+  const headerContent = {
+    'user': <div>
+      <Title order={2}>JOIV Article</Title>
+      <Text c="dimmed">List of JOIV articles you have submitted</Text>
+    </div>,
+    'admin': <div>
+      <Title order={2}>JOIV Article Management</Title>
+      <Text c="dimmed">Manage JOIV articles, settings, and configurations</Text>
+    </div>
+  }
+
   const renderMain = () => {
     return (
       <Container size={isFullscreen ? "xxl" : "xl"}>
@@ -262,7 +276,7 @@ function JoivArticleIndex() {
               </ActionIcon>
             </Flex>
           </Flex>
-          <CurrentFee currentFee={currentFee} isShowEdit={true} />
+          {auth.role === 'admin' && <CurrentFee currentFee={currentFee} isShowEdit={true} />}
 
           <FilterData
             countries={countries}
@@ -299,8 +313,7 @@ function JoivArticleIndex() {
               onSelectionChange={(e) => setSelectedArticles(e.value as JoivRegistration[])}
               isDataSelectable={(e) => e.data.payment_status === 'paid' && !!e.data.loa_volume && !!e.data.loa_authors}
             >
-              <Column selectionMode="multiple" headerStyle={{ width: '3rem' }}></Column>
-              {TableData({ handleUpdateStatus, handleView }).map((col) => (
+              {TableData({ handleUpdateStatus, handleView, role: auth.role }).filter((col) => !col.hidden).map((col) => (
                 <Column
                   key={col.label}
                   field={col.name}
@@ -316,7 +329,7 @@ function JoivArticleIndex() {
     )
   }
   return (
-    <MainLayout title='JOIV Article Management'>
+    <MainLayout title={auth.role === 'admin' ? 'JOIV Article Management' : 'JOIV Article'}>
 
       {renderMain()}
       <JoivPaymentStatusModal
