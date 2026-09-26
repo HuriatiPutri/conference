@@ -43,10 +43,9 @@ function MembershipBenefitsEdit() {
                   label="Benefit Type"
                   data={[
                     { value: 'discount', label: 'Discount' },
-                    { value: 'item', label: 'Item' },
-                    { value: 'cashback', label: 'Cashback' },
-                    { value: 'shipping', label: 'Shipping' },
-                    { value: 'reward', label: 'Reward' },
+                    { value: 'souvenir', label: 'Souvenir' },
+                    { value: 'opportunity', label: 'Opportunity' },
+                    { value: 'voucher', label: 'Voucher' },
                   ]}
                   value={data.benefit_type}
                   onChange={(val) => setData('benefit_type', val || '')}
