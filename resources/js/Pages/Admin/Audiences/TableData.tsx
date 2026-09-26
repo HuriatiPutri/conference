@@ -11,7 +11,7 @@ type DataProps = {
   _handleRedirectWa: (row: Audiences) => void;
   handlePaymentStatusClick: (row: Audiences) => void;
 }
-export const TableData = ({ _handleRedirectWa, handlePaymentStatusClick }: DataProps) => [
+export const TableData = ({ _handleRedirectWa, handlePaymentStatusClick, role }: DataProps) => [
   {
     field: 'serial_number',
     label: 'No.',
@@ -181,6 +181,7 @@ export const TableData = ({ _handleRedirectWa, handlePaymentStatusClick }: DataP
   {
     label: 'Action',
     name: 'action',
+    hidden: role === 'user',
     renderCell: (row: Audiences) => (
       <Stack gap={'xs'} justify="center" align="center">
         {row.payment_method === 'transfer_bank' && (

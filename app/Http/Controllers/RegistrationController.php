@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Audience;
 use App\Models\Conference;
 use App\Models\InvoiceHistory;
+use App\Models\Membership;
+use App\Services\MembershipBenefitService;
 use App\Services\PayPalService;
+use App\Services\VoucherService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\RedirectResponse;
@@ -20,19 +23,37 @@ class RegistrationController extends Controller
     public function create(Conference $conference): Response
     {
         $isConferenceOpen = now()->between($conference->registration_start_date, $conference->registration_end_date);
-        if(!$isConferenceOpen) {
+        if (!$isConferenceOpen) {
             return Inertia::render('Registration/Closed', [
                 'conference' => $conference->only([
-                    'id', 'public_id', 'name', 'initial', 'date', 'city', 'country',
-                    'registration_start_date', 'registration_end_date'
+                    'id',
+                    'public_id',
+                    'name',
+                    'initial',
+                    'date',
+                    'city',
+                    'country',
+                    'registration_start_date',
+                    'registration_end_date'
                 ])
             ]);
         }
         return Inertia::render('Registration/Create', [
             'conference' => $conference->only([
-                'id', 'public_id', 'name', 'initial', 'date', 'city', 'country',
-                'online_fee', 'online_fee_usd', 'onsite_fee', 'onsite_fee_usd',
-                'participant_fee', 'participant_fee_usd'
+                'id',
+                'public_id',
+                'name',
+                'initial',
+                'date',
+                'city',
+                'country',
+                'online_fee',
+                'online_fee_usd',
+                'onsite_fee',
+                'onsite_fee_usd',
+                'participant_fee',
+                'participant_fee_usd',
+                'member_discount_percentage'
             ])
         ]);
     }
@@ -58,6 +79,7 @@ class RegistrationController extends Controller
             'phone_number' => 'required|string|max:20|regex:/^[0-9]+$/',
             'country' => 'required|string|max:2',
             'presentation_type' => 'required|in:online_author,onsite,participant_only',
+            'voucher_code' => 'nullable|string|size:6|alpha_num',
         ];
 
         // Conditional validation for paper title and full paper
@@ -78,6 +100,12 @@ class RegistrationController extends Controller
             'paper_title.required' => 'Paper title is required for authors and presenters.',
         ]);
 
+        $voucher = app(VoucherService::class)->claimOrFail(
+            $validatedData['voucher_code'] ?? null,
+            'conference_registration',
+            $validatedData['email']
+        );
+
         // Handle file upload temporarily
         $fullPaperPath = null;
         if ($request->hasFile('full_paper')) {
@@ -85,7 +113,9 @@ class RegistrationController extends Controller
         }
 
         // Calculate fee based on country and presentation type
-        $paidFee = $this->calculateFee($conference, $validatedData['country'], $validatedData['presentation_type']);
+        $feeCalculation = $this->calculateFee($conference, $validatedData['country'], $validatedData['presentation_type'], $validatedData['email'], $voucher);
+        $paidFee = $feeCalculation['paid_fee'];
+        $discountAmount = $feeCalculation['discount_amount'];
 
         // Store registration data in session
         $sessionKey = 'registration_' . $conference->public_id;
@@ -101,7 +131,12 @@ class RegistrationController extends Controller
                 'country' => $validatedData['country'],
                 'presentation_type' => $validatedData['presentation_type'],
                 'paid_fee' => $paidFee,
+                'discount_amount' => $discountAmount,
+                'voucher_id' => $voucher?->id,
+                'voucher_code' => $voucher?->code,
                 'full_paper_path' => $fullPaperPath,
+                'membership_id' => $feeCalculation['membership_id'] ?? null,
+                'benefit_usages' => $feeCalculation['benefit_usages'] ?? [],
             ]
         ]);
 
@@ -125,7 +160,10 @@ class RegistrationController extends Controller
 
         return Inertia::render('Registration/Payment', [
             'conference' => $conference->only([
-                'id', 'public_id', 'name', 'initial'
+                'id',
+                'public_id',
+                'name',
+                'initial'
             ]),
             'registrationData' => $registrationData
         ]);
@@ -211,6 +249,7 @@ class RegistrationController extends Controller
             'paper_title' => $audience->paper_title,
             'paid_fee' => $audience->paid_fee,
             'full_paper_path' => $audience->full_paper_path,
+            'discount_amount' => $audience->discount_amount,
         ];
 
         // Use the existing PayPal flow but with the audience record
@@ -227,7 +266,7 @@ class RegistrationController extends Controller
             $sessionKey = 'registration_' . $conference->public_id;
             $existingPaymentId = session('paypal_payment_id');
             $existingInvoiceHistoryId = session('invoice_history_id');
-            
+
             // Check for existing pending payment for this registration data
             $existingInvoice = InvoiceHistory::where('conference_id', $registrationData['conference_id'])
                 ->where('status', 'pending')
@@ -236,40 +275,40 @@ class RegistrationController extends Controller
                 ->where('created_at', '>=', now()->subHours(2)) // Only check recent payments (2 hours)
                 ->orderBy('created_at', 'desc')
                 ->first();
-            
+
             // If there's an existing pending payment, reuse it instead of creating new one
             if ($existingInvoice && $existingInvoice->transaction_id) {
                 \Log::info('Reusing existing pending PayPal payment', [
                     'existing_transaction_id' => $existingInvoice->transaction_id,
                     'invoice_history_id' => $existingInvoice->id
                 ]);
-                
+
                 // Update session with existing payment data
                 session([
                     'paypal_payment_id' => $existingInvoice->transaction_id,
                     'invoice_history_id' => $existingInvoice->id,
                 ]);
-                
+
                 // Get approval URL from stored gateway response
                 $gatewayResponse = $existingInvoice->gateway_response;
                 if ($gatewayResponse && isset($gatewayResponse['approval_url'])) {
                     return response('', 409)
                         ->header('X-Inertia-Location', $gatewayResponse['approval_url']);
                 }
-                
+
                 // If no approval URL in stored response, fall through to create new payment
             }
-            
+
             // Always use PayPal service (sandbox or live based on config)
             $paypalService = new PayPalService();
-            
+
             $amount = $registrationData['paid_fee'];
             $currency = 'USD'; // PayPal mostly uses USD
             $description = "Registration for {$conference->name} - {$registrationData['first_name']} {$registrationData['last_name']}";
-            
+
             $returnUrl = route('registration.paypal.return', $conference->public_id);
             $cancelUrl = route('registration.paypal.cancel', $conference->public_id);
-            
+
             // Debug: Log the URLs being used
             \Log::info('PayPal Payment Creation', [
                 'return_url' => $returnUrl,
@@ -277,22 +316,23 @@ class RegistrationController extends Controller
                 'amount' => $amount,
                 'currency' => $currency
             ]);
-            
+
             $paymentResult = $paypalService->createPayment($amount, $currency, $description, $returnUrl, $cancelUrl);
-            
+
             // Debug: Log the PayPal response
             \Log::info('PayPal Payment Result', $paymentResult);
-            
+
             // Create or update invoice history record for tracking
             if ($existingInvoice) {
                 // Update existing invoice with new payment data
                 $existingInvoice->update([
                     'transaction_id' => $paymentResult['payment_id'],
                     'gateway_response' => $paymentResult,
+                    'discount_amount' => $registrationData['discount_amount'] ?? 0,
                     'payment_initiated_at' => now(),
                 ]);
                 $invoiceHistory = $existingInvoice;
-                
+
                 \Log::info('Updated existing invoice history record', [
                     'invoice_history_id' => $invoiceHistory->id,
                     'transaction_id' => $paymentResult['payment_id']
@@ -306,6 +346,7 @@ class RegistrationController extends Controller
                     'payment_method' => 'payment_gateway',
                     'transaction_id' => $paymentResult['payment_id'],
                     'amount' => $amount,
+                    'discount_amount' => $registrationData['discount_amount'] ?? 0,
                     'currency' => $currency,
                     'status' => 'pending',
                     'description' => $description,
@@ -314,43 +355,44 @@ class RegistrationController extends Controller
                     'gateway_response' => $paymentResult,
                     'payment_initiated_at' => now(),
                 ]);
-                
+
                 \Log::info('Created new invoice history record', [
                     'invoice_history_id' => $invoiceHistory->id,
                     'transaction_id' => $paymentResult['payment_id']
                 ]);
             }
-            
+
             // Store payment ID and invoice history ID in session for later verification
             session([
                 'paypal_payment_id' => $paymentResult['payment_id'],
                 'invoice_history_id' => $invoiceHistory->id,
             ]);
-            
+
             // Debug: Check if approval_url exists
             if (!isset($paymentResult['approval_url']) || empty($paymentResult['approval_url'])) {
                 throw new \Exception('PayPal approval URL not found in response');
             }
-            
+
             // Debug: Log the URL we're trying to redirect to
             \Log::info('Redirecting to PayPal URL', ['url' => $paymentResult['approval_url']]);
-            
+
             $approvalUrl = $paymentResult['approval_url'];
-            
+
             // For Inertia, use location header for external redirects
             return response('', 409)
                 ->header('X-Inertia-Location', $approvalUrl);
-            
+
         } catch (\Exception $e) {
             // Log the full error
             \Log::error('PayPal Payment Error', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             // For now, if PayPal fails, redirect back with clear instructions
-            return redirect()->back()->with('error', 
-                'PayPal payment tidak dapat diinisialisasi. Kemungkinan masalah: ' . 
+            return redirect()->back()->with(
+                'error',
+                'PayPal payment tidak dapat diinisialisasi. Kemungkinan masalah: ' .
                 '1) Credentials PayPal tidak valid, ' .
                 '2) Perlu setup PayPal Sandbox account yang benar. ' .
                 'Silakan gunakan Transfer Bank atau hubungi administrator. ' .
@@ -372,10 +414,10 @@ class RegistrationController extends Controller
 
         // Create audience record with pending status
         $audience = $this->createAudienceRecord(
-            $conference, 
-            $registrationData, 
-            $validatedData['payment_method'], 
-            $paymentProofPath, 
+            $conference,
+            $registrationData,
+            $validatedData['payment_method'],
+            $paymentProofPath,
             'pending_payment'
         );
 
@@ -400,13 +442,13 @@ class RegistrationController extends Controller
                 $filename = basename($registrationData['full_paper_path']);
                 $finalPaperPath = 'audience_full_papers/' . $filename;
                 $finalPath = storage_path('app/public/' . $finalPaperPath);
-                
+
                 // Create directory if it doesn't exist
                 $dir = dirname($finalPath);
                 if (!is_dir($dir)) {
                     mkdir($dir, 0755, true);
                 }
-                
+
                 rename($tempPath, $finalPath);
             }
         }
@@ -424,11 +466,20 @@ class RegistrationController extends Controller
             'country' => $registrationData['country'],
             'presentation_type' => $registrationData['presentation_type'],
             'paid_fee' => $registrationData['paid_fee'],
+            'discount_amount' => $registrationData['discount_amount'] ?? 0,
+            'voucher_id' => $registrationData['voucher_id'] ?? null,
+            'voucher_code' => $registrationData['voucher_code'] ?? null,
             'payment_method' => $paymentMethod,
             'payment_proof_path' => $paymentProofPath,
             'full_paper_path' => $finalPaperPath,
             'payment_status' => $paymentStatus
         ]);
+
+        app(MembershipBenefitService::class)->recordUsage(
+            isset($registrationData['membership_id']) ? Membership::find($registrationData['membership_id']) : null,
+            $audience,
+            $registrationData['benefit_usages'] ?? []
+        );
 
         // Clear session data
         $sessionKey = 'registration_' . $conference->public_id;
@@ -446,204 +497,117 @@ class RegistrationController extends Controller
         $payerId = $request->get('PayerID');
         $sessionPaymentId = session('paypal_payment_id');
         $invoiceHistoryId = session('invoice_history_id');
-        $audienceId = session('audience_id'); // For new flow
 
-        // Debug logging
-        \Log::info('PayPal Return Debug Info', [
+        \Log::info('PayPal Return Debug', [
             'request_payment_id' => $paymentId,
-            'request_payer_id' => $payerId,
             'session_payment_id' => $sessionPaymentId,
-            'session_invoice_history_id' => $invoiceHistoryId,
-            'session_audience_id' => $audienceId,
-            'all_request_params' => $request->all(),
-            'all_session_data' => session()->all()
+            'invoice_history_id' => $invoiceHistoryId,
         ]);
 
         if (!$paymentId || !$payerId || $paymentId !== $sessionPaymentId) {
-            \Log::error('PayPal Return Validation Failed', [
-                'has_payment_id' => !empty($paymentId),
-                'has_payer_id' => !empty($payerId),
-                'payment_ids_match' => $paymentId === $sessionPaymentId,
-                'request_payment_id' => $paymentId,
-                'session_payment_id' => $sessionPaymentId
-            ]);
-
-            // Update invoice history as failed if exists
             if ($invoiceHistoryId) {
-                $invoiceHistory = InvoiceHistory::find($invoiceHistoryId);
-                if ($invoiceHistory) {
-                    $invoiceHistory->update([
-                        'status' => 'failed',
-                        'execution_response' => ['error' => 'Invalid PayPal payment data']
-                    ]);
-                }
+                InvoiceHistory::whereKey($invoiceHistoryId)->update([
+                    'status' => 'failed',
+                    'execution_response' => ['error' => 'Invalid PayPal payment data']
+                ]);
             }
 
-
-
-            return redirect()->route('registration.details', ['conference' => $conference->public_id, 'audience' => $audience->public_id])
+            return redirect()->route('registration.create', $conference->public_id)
                 ->with('error', 'Invalid PayPal payment data.');
         }
 
         try {
-            $paypalService = new PayPalService();
-            $paymentDetails = $paypalService->executePayment($paymentId, $payerId);
+            $invoiceHistory = InvoiceHistory::findOrFail($invoiceHistoryId);
 
-            \Log::info('PayPal Payment Execution Response', [
-                'payment_details' => $paymentDetails,
-                'payment_state' => $paymentDetails['state'] ?? 'unknown'
+            $paymentDetails = app(PayPalService::class)
+                ->executePayment($paymentId, $payerId);
+
+            $invoiceHistory->update([
+                'payer_id' => $payerId,
+                'execution_response' => $paymentDetails,
+                'payment_completed_at' => now(),
             ]);
 
-            // Update invoice history with execution details
-            $invoiceHistory = null;
-            if ($invoiceHistoryId) {
-                $invoiceHistory = InvoiceHistory::find($invoiceHistoryId);
-                if ($invoiceHistory) {
-                    $invoiceHistory->update([
-                        'payer_id' => $payerId,
-                        'execution_response' => $paymentDetails,
-                        'payment_completed_at' => now(),
-                    ]);
-                }
-            }
-
-            if ($paymentDetails['state'] === 'approved') {
-                $audience = null;
-
-                // Check if this is the new flow (audience already exists) or old flow (need to create audience)
-                if ($audienceId) {
-                    // NEW FLOW: Update existing audience record
-                    $audience = Audience::find($audienceId);
-                    if ($audience) {
-                        $audience->update([
-                            'payment_status' => 'paid'
-                        ]);
-
-                        $audience->sendPaymentConfirmationEmail();
-                        \Log::info('Updated existing audience payment status to paid', [
-                            'audience_id' => $audience->id,
-                            'payment_id' => $paymentId
-                        ]);
-                    } else {
-                        throw new \Exception('Audience record not found for ID: ' . $audienceId);
-                    }
-                } elseif ($invoiceHistory && $invoiceHistory->audience_id) {
-                    // NEW FLOW (alternative): Get audience from invoice history
-                    $audience = Audience::find($invoiceHistory->audience_id);
-                    if ($audience) {
-                        $audience->update([
-                            'payment_status' => 'paid'
-                        ]);
-                        $audience->sendPaymentConfirmationEmail();
-                        \Log::info('Updated audience payment status from invoice history', [
-                            'audience_id' => $audience->id,
-                            'payment_id' => $paymentId,
-                            'invoice_history_id' => $invoiceHistory->id
-                        ]);
-                    } else {
-                        throw new \Exception('Audience record not found from invoice history ID: ' . $invoiceHistory->audience_id);
-                    }
-                } else {
-                    // OLD FLOW: Create new audience record from session data
-                    $sessionKey = 'registration_' . $conference->public_id;
-                    $registrationData = session($sessionKey);
-
-                    if (!$registrationData) {
-                        // Update invoice history as failed
-                        if ($invoiceHistory) {
-                            $invoiceHistory->update(['status' => 'failed']);
-                        }
-                        
-                        \Log::error('PayPal return - no session data and no audience found', [
-                            'payment_id' => $paymentId,
-                            'session_audience_id' => $audienceId,
-                            'invoice_history_id' => $invoiceHistoryId,
-                            'invoice_audience_id' => $invoiceHistory ? $invoiceHistory->audience_id : null
-                        ]);
-                        
-                        return redirect()->route('registration.create', $conference->public_id)
-                            ->with('error', 'Registration data not found.');
-                    }
-
-                    // Create audience record with paid status
-                    $audience = $this->createAudienceRecord(
-                        $conference, 
-                        $registrationData, 
-                        'payment_gateway', 
-                        null, 
-                        'paid'
-                    );
-                }
-
-                // Update invoice history with audience ID and mark as completed
-                if ($invoiceHistory && $audience) {
-                    $invoiceHistory->update([
-                        'audience_id' => $audience->id,
-                        'status' => 'completed'
-                    ]);
-                }
-
-                // Clear PayPal session data
-                session()->forget(['paypal_payment_id', 'invoice_history_id', 'audience_id']);
-
-                // Log successful payment
-                \Log::info('PayPal Payment Completed Successfully', [
-                    'payment_id' => $paymentId,
-                    'payer_id' => $payerId,
-                    'audience_id' => $audience ? $audience->id : null,
-                    'invoice_history_id' => $invoiceHistory ? $invoiceHistory->id : null
+            if (($paymentDetails['state'] ?? null) !== 'approved') {
+                $invoiceHistory->update([
+                    'status' => 'failed',
+                    'execution_response' => array_merge(
+                        $paymentDetails,
+                        ['error' => 'Payment not approved']
+                    )
                 ]);
 
+                return redirect()->route('registration.create', $conference->public_id)
+                    ->with('error', 'PayPal payment was not approved.');
+            }
+
+            // 🔗 ambil model terkait dari polymorphic relation
+            $reference = $invoiceHistory->reference;
+
+            if (!$reference) {
+                throw new \Exception('Payment reference not found.');
+            }
+
+            // ✅ Update business entity berdasarkan tipe reference
+            if ($reference instanceof Audience) {
+                $reference->update(['payment_status' => 'paid']);
+                $reference->sendPaymentConfirmationEmail();
+                $audience = $reference;
+
+            } elseif ($reference instanceof JoivRegistration) {
+                $reference->update(['payment_status' => 'paid']);
+                $audience = null;
+
+            } else {
+                throw new \Exception('Unsupported payment reference type: ' . get_class($reference));
+            }
+
+            $invoiceHistory->update(['status' => 'completed']);
+
+            session()->forget([
+                'paypal_payment_id',
+                'invoice_history_id'
+            ]);
+
+            \Log::info('PayPal Payment Completed', [
+                'payment_id' => $paymentId,
+                'invoice_id' => $invoiceHistory->id,
+                'reference_type' => get_class($reference),
+                'reference_id' => $reference->id
+            ]);
+
+            if ($audience) {
                 return redirect()->route('registration.success', [
                     'conference' => $conference->public_id,
                     'audience' => $audience->public_id
                 ]);
-            } else {
-                // Update invoice history as failed
-                if ($invoiceHistory) {
-                    $invoiceHistory->update([
-                        'status' => 'failed',
-                        'execution_response' => array_merge($paymentDetails, ['error' => 'Payment not approved'])
-                    ]);
-                }
-
-                return redirect()->route('registration.details', [$conference->public_id, $audience->public_id])
-                    ->with('error', 'PayPal payment was not approved.');
             }
 
-        } catch (\Exception $e) {
-            // Update invoice history as failed with error details
+            return redirect()->route('joiv.registration.details', $reference->public_id);
+
+        } catch (\Throwable $e) {
             if ($invoiceHistoryId) {
-                $invoiceHistoryRecord = InvoiceHistory::find($invoiceHistoryId);
-                if ($invoiceHistoryRecord) {
-                    $invoiceHistoryRecord->update([
-                        'status' => 'failed',
-                        'execution_response' => ['error' => $e->getMessage()]
-                    ]);
-                }
+                InvoiceHistory::whereKey($invoiceHistoryId)->update([
+                    'status' => 'failed',
+                    'execution_response' => ['error' => $e->getMessage()]
+                ]);
             }
-            
-            \Log::error('PayPal Payment Execution Error', [
+
+            \Log::error('PayPal Execution Error', [
                 'payment_id' => $paymentId,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'error' => $e->getMessage()
             ]);
 
-            // Provide more specific error messages based on the error type
-            $errorMessage = 'Failed to process PayPal payment. Please try again.';
-            
-            if (strpos($e->getMessage(), 'credentials') !== false) {
-                $errorMessage = 'Payment service configuration error. Please contact support.';
-            } elseif (strpos($e->getMessage(), 'access token') !== false) {
-                $errorMessage = 'Unable to connect to payment service. Please try again later.';
-            } elseif (strpos($e->getMessage(), 'network') !== false || strpos($e->getMessage(), 'timeout') !== false) {
-                $errorMessage = 'Network error occurred. Please check your connection and try again.';
-            } elseif (strpos($e->getMessage(), 'PAYMENT_ALREADY_DONE') !== false) {
-                $errorMessage = 'This payment has already been processed.';
-            } elseif (strpos($e->getMessage(), 'INVALID_PAYMENT_ID') !== false) {
-                $errorMessage = 'Invalid payment reference. Please start a new payment.';
-            }
-            
+            $errorMessage = match (true) {
+                str_contains($e->getMessage(), 'credentials') => 'Payment service configuration error.',
+                str_contains($e->getMessage(), 'access token') => 'Unable to connect to payment service.',
+                str_contains($e->getMessage(), 'network'),
+                str_contains($e->getMessage(), 'timeout') => 'Network error occurred.',
+                str_contains($e->getMessage(), 'PAYMENT_ALREADY_DONE') => 'This payment has already been processed.',
+                str_contains($e->getMessage(), 'INVALID_PAYMENT_ID') => 'Invalid payment reference.',
+                default => 'Failed to process PayPal payment.',
+            };
+
             return redirect()->route('registration.create', $conference->public_id)
                 ->with('error', $errorMessage);
         }
@@ -655,7 +619,7 @@ class RegistrationController extends Controller
     public function paypalCancel(Conference $conference)
     {
         $invoiceHistoryId = session('invoice_history_id');
-        
+
         // Update invoice history as cancelled
         if ($invoiceHistoryId) {
             $invoiceHistory = InvoiceHistory::find($invoiceHistoryId);
@@ -666,7 +630,7 @@ class RegistrationController extends Controller
                 ]);
             }
         }
-        
+
         // Clear PayPal session data
         session()->forget(['paypal_payment_id', 'invoice_history_id']);
 
@@ -686,11 +650,19 @@ class RegistrationController extends Controller
 
         return Inertia::render('Registration/Success', [
             'audience' => $audience->only([
-                'public_id', 'first_name', 'last_name', 'email',
-                'payment_method', 'payment_status', 'paid_fee', 'country'
+                'public_id',
+                'first_name',
+                'last_name',
+                'email',
+                'payment_method',
+                'payment_status',
+                'paid_fee',
+                'country'
             ]),
             'conference' => $audience->conference->only([
-                'name', 'initial', 'date'
+                'name',
+                'initial',
+                'date'
             ])
         ]);
     }
@@ -698,20 +670,47 @@ class RegistrationController extends Controller
     /**
      * Calculate registration fee
      */
-    private function calculateFee(Conference $conference, string $country, string $presentationType): float
+    private function calculateFee(Conference $conference, string $country, string $presentationType, string $email, $voucher = null): array
     {
         $isIndonesia = $country === 'ID';
-        
+
+        $fee = 0;
         switch ($presentationType) {
             case 'online_author':
-                return $isIndonesia ? $conference->online_fee : $conference->online_fee_usd;
+                $fee = $isIndonesia ? $conference->online_fee : $conference->online_fee_usd;
+                break;
             case 'onsite':
-                return $isIndonesia ? $conference->onsite_fee : $conference->onsite_fee_usd;
+                $fee = $isIndonesia ? $conference->onsite_fee : $conference->onsite_fee_usd;
+                break;
             case 'participant_only':
-                return $isIndonesia ? $conference->participant_fee : $conference->participant_fee_usd;
-            default:
-                return 0;
+                $fee = $isIndonesia ? $conference->participant_fee : $conference->participant_fee_usd;
+                break;
         }
+
+        $membershipDiscountAmount = 0;
+        $voucherDiscountAmount = 0;
+        $membership = app(MembershipBenefitService::class)->resolveActiveMembershipByEmail($email);
+        $benefitCalculation = app(MembershipBenefitService::class)->calculateForFee($membership, (float) $fee);
+        $fee = $benefitCalculation['paid_fee'];
+        $membershipDiscountAmount = $benefitCalculation['discount_amount'];
+
+        if ($fee > 0) {
+            // Apply voucher discount on the remaining fee
+            if ($voucher) {
+                $voucherDiscountAmount = app(VoucherService::class)->calculateDiscount($voucher, $fee);
+                $fee -= $voucherDiscountAmount;
+                if ($fee < 0) {
+                    $fee = 0;
+                }
+            }
+        }
+
+        return [
+            'paid_fee' => $fee,
+            'discount_amount' => $membershipDiscountAmount + $voucherDiscountAmount,
+            'membership_id' => $membership?->id,
+            'benefit_usages' => $benefitCalculation['applied_benefits'] ?? [],
+        ];
     }
 
     /**
@@ -722,11 +721,11 @@ class RegistrationController extends Controller
         try {
             // Create the audience record with pending payment status
             $audience = $this->createAudienceRecord($conference, $registrationData, 'payment_gateway', null, 'pending_payment');
-            
+
             // Clear session data since we've saved to database
             $sessionKey = 'registration_' . $conference->public_id;
             session()->forget($sessionKey);
-            
+
             // send email confirmation
             $audience->sendEmail();
             // Redirect to payment details page
@@ -734,7 +733,7 @@ class RegistrationController extends Controller
                 'conference' => $conference->public_id,
                 'audience' => $audience->public_id
             ]);
-            
+
         } catch (\Exception $e) {
             \Log::error('Failed to save audience data for PayPal payment', [
                 'error' => $e->getMessage(),
@@ -744,7 +743,7 @@ class RegistrationController extends Controller
 
             // Provide more specific error messages
             $errorMessage = 'Failed to process registration. Please try again.';
-            
+
             if (strpos($e->getMessage(), 'Duplicate') !== false || strpos($e->getMessage(), 'unique') !== false) {
                 $errorMessage = 'This email is already registered for this conference. Please check your registration status.';
             } elseif (strpos($e->getMessage(), 'validation') !== false) {
@@ -771,12 +770,27 @@ class RegistrationController extends Controller
 
         return Inertia::render('Registration/PaymentDetails', [
             'conference' => $conference->only([
-                'id', 'public_id', 'name', 'initial', 'date', 'city', 'country'
+                'id',
+                'public_id',
+                'name',
+                'initial',
+                'date',
+                'city',
+                'country'
             ]),
             'audience' => $audience->only([
-                'id', 'public_id', 'first_name', 'last_name', 'email', 'institution',
-                'paper_title', 'presentation_type', 'paid_fee', 'payment_status',
-                'payment_method', 'country'
+                'id',
+                'public_id',
+                'first_name',
+                'last_name',
+                'email',
+                'institution',
+                'paper_title',
+                'presentation_type',
+                'paid_fee',
+                'payment_status',
+                'payment_method',
+                'country'
             ])
         ]);
     }
@@ -787,89 +801,74 @@ class RegistrationController extends Controller
     private function initiatePayPalPaymentForExistingAudience(Conference $conference, array $registrationData, Audience $audience)
     {
         try {
-            // Check for existing pending payment for this audience
-            $existingInvoice = InvoiceHistory::where('audience_id', $audience->id)
-                ->where('conference_id', $conference->id)
+            // 🔎 cari invoice pending milik audience (scoped by polymorphic relation)
+            $invoiceHistory = $audience->invoices()
                 ->where('status', 'pending')
                 ->where('payment_gateway', 'paypal')
+                ->latest()
                 ->first();
 
-            $paymentResult = null;
-            $invoiceHistory = null;
+            if ($invoiceHistory && $invoiceHistory->transaction_id) {
+                $paymentId = $invoiceHistory->transaction_id;
 
-            if ($existingInvoice && $existingInvoice->transaction_id) {
-                // Use existing PayPal payment
-                $paymentId = $existingInvoice->transaction_id;
-                $invoiceHistory = $existingInvoice;
                 \Log::info('Using existing PayPal payment', [
                     'payment_id' => $paymentId,
                     'audience_id' => $audience->id,
-                    'invoice_id' => $existingInvoice->id
+                    'invoice_id' => $invoiceHistory->id
                 ]);
+
+                $approvalUrl = data_get($invoiceHistory->gateway_response, 'approval_url');
+
             } else {
-                // Create new PayPal payment
-                $payPalService = new PayPalService();
-                
+                // 🧾 build payment request
                 $amount = $registrationData['paid_fee'];
-                $currency = 'USD'; // PayPal mostly uses USD
+                $currency = 'USD';
                 $description = "Registration for {$conference->name} - {$registrationData['first_name']} {$registrationData['last_name']}";
                 $returnUrl = route('registration.paypal.return', $conference->public_id);
                 $cancelUrl = route('registration.paypal.cancel', $conference->public_id);
 
-                $paymentResult = $payPalService->createPayment($amount, $currency, $description, $returnUrl, $cancelUrl);
+                $paymentResult = app(PayPalService::class)
+                    ->createPayment($amount, $currency, $description, $returnUrl, $cancelUrl);
+
                 $paymentId = $paymentResult['payment_id'];
 
-                // Create or update invoice history
-                if ($existingInvoice) {
-                    $existingInvoice->update([
-                        'transaction_id' => $paymentId,
-                        'amount' => $amount,
-                        'currency' => $currency,
-                        'gateway_response' => $paymentResult,
-                        'payment_initiated_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                    $invoiceHistory = $existingInvoice;
-                } else {
-                    $invoiceHistory = InvoiceHistory::create([
-                        'audience_id' => $audience->id,
-                        'conference_id' => $conference->id,
-                        'payment_gateway' => 'paypal',
-                        'payment_method' => 'payment_gateway',
-                        'transaction_id' => $paymentId,
-                        'amount' => $amount,
-                        'currency' => $currency,
-                        'status' => 'pending',
-                        'description' => $description,
-                        'return_url' => $returnUrl,
-                        'cancel_url' => $cancelUrl,
-                        'gateway_response' => $paymentResult,
-                        'payment_initiated_at' => now(),
-                    ]);
-                }
+                $invoicePayload = [
+                    'transaction_id' => $paymentId,
+                    'payment_gateway' => 'paypal',
+                    'payment_method' => 'payment_gateway',
+                    'amount' => $amount,
+                    'discount_amount' => $registrationData['discount_amount'] ?? 0,
+                    'currency' => $currency,
+                    'status' => 'pending',
+                    'description' => $description,
+                    'return_url' => $returnUrl,
+                    'cancel_url' => $cancelUrl,
+                    'gateway_response' => $paymentResult,
+                    'payment_initiated_at' => now(),
+                ];
 
-                \Log::info('Created PayPal payment for existing audience', [
+                // 🔄 update jika ada invoice lama tanpa transaction_id, else create baru
+                $invoiceHistory = $invoiceHistory
+                    ? tap($invoiceHistory)->update($invoicePayload)
+                    : $audience->invoices()->create($invoicePayload);
+
+                $approvalUrl = $paymentResult['approval_url'];
+
+                \Log::info('Created PayPal payment for audience', [
                     'payment_id' => $paymentId,
                     'audience_id' => $audience->id,
                     'invoice_id' => $invoiceHistory->id
                 ]);
             }
 
-            // Store payment details in session for return handling
+            // 💾 simpan session untuk return handler
             session([
                 'paypal_payment_id' => $paymentId,
                 'invoice_history_id' => $invoiceHistory->id,
                 'audience_id' => $audience->id
             ]);
 
-            // Get approval URL from payment result and redirect
-            if ($existingInvoice && $existingInvoice->gateway_response && isset($existingInvoice->gateway_response['approval_url'])) {
-                $approvalUrl = $existingInvoice->gateway_response['approval_url'];
-            } else {
-                $approvalUrl = $paymentResult['approval_url'];
-            }
-
-            // For Inertia, use location header for external redirects
+            // 🌐 external redirect (Inertia compatible)
             return response('', 409)
                 ->header('X-Inertia-Location', $approvalUrl);
 
@@ -883,7 +882,7 @@ class RegistrationController extends Controller
 
             // Provide more specific error messages based on the error type
             $errorMessage = 'Payment processing failed. Please try again.';
-            
+
             if (strpos($e->getMessage(), 'credentials') !== false) {
                 $errorMessage = 'Payment service configuration error. Please contact support.';
             } elseif (strpos($e->getMessage(), 'access token') !== false) {

@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
 import { IconCalendarStats, IconChevronRight } from '@tabler/icons-react';
-import { Box, Collapse, Group, Text, ThemeIcon, UnstyledButton } from '@mantine/core';
+import { Box, Collapse, Divider, Group, Text, ThemeIcon, UnstyledButton } from '@mantine/core';
 import classes from './NavbarLinksGroup.module.css';
 import { router } from '@inertiajs/react';
 
 interface LinksGroupProps {
-  icon: React.FC<any>;
+  icon?: React.FC<any>;
   label: string;
   initiallyOpened?: boolean;
   link?: string;
   active?: boolean;
   links?: { label: string; link: string }[];
+  type?: 'divider';
 }
 
-export function LinksGroup({ icon: Icon, label, link, initiallyOpened, links, active }: LinksGroupProps) {
+export function LinksGroup({ icon: Icon, label, link, initiallyOpened, links, active, type }: LinksGroupProps) {
   const hasLinks = Array.isArray(links);
   const [opened, setOpened] = useState(initiallyOpened || false);
   const items = (hasLinks ? links : []).map(link => (
@@ -43,24 +44,29 @@ export function LinksGroup({ icon: Icon, label, link, initiallyOpened, links, ac
   return (
     <>
       <UnstyledButton onClick={handleMenu} className={`${classes.control} ${active ? classes.controlActive : ''}`}>
-        <Group justify="space-between" gap={0}>
-          <Box style={{ display: 'flex', alignItems: 'center' }}>
-            <ThemeIcon variant="light" size={30}>
-              <Icon size={18} />
-            </ThemeIcon>
-            <Box ml="md">{label}</Box>
-          </Box>
-          {hasLinks && (
-            <IconChevronRight
-              className={classes.chevron}
-              stroke={1.5}
-              size={16}
-              style={{ transform: opened ? 'rotate(-90deg)' : 'none' }}
-            />
-          )}
-        </Group>
+        {type === 'divider' ? (
+          <Divider my="xs" label={label} labelPosition="left" />
+        ) : (
+          <Group justify="space-between" gap={0}>
+            <Box style={{ display: 'flex', alignItems: 'center' }}>
+              <ThemeIcon variant="light" size={30}>
+                {Icon ? <Icon size={18} /> : null}
+              </ThemeIcon>
+              <Box ml="md">{label}</Box>
+            </Box>
+            {hasLinks && (
+              <IconChevronRight
+                className={classes.chevron}
+                stroke={1.5}
+                size={16}
+                style={{ transform: opened ? 'rotate(-90deg)' : 'none' }}
+              />
+            )}
+          </Group>
+        )}
       </UnstyledButton>
       {hasLinks ? <Collapse in={opened}>{items}</Collapse> : null}
+
     </>
   );
 }

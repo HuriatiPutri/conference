@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InvoiceHistory extends Model
 {
+  public function reference()
+    {
+        return $this->morphTo();
+    }
     use HasFactory;
 
     protected $table = 'invoice_history';
@@ -20,6 +24,7 @@ class InvoiceHistory extends Model
         'public_id',
         'audience_id',
         'joiv_registration_id',
+        'membership_id',
         'conference_id',
         'payment_gateway',
         'payment_method',
@@ -27,6 +32,7 @@ class InvoiceHistory extends Model
         'payer_id',
         'invoice_number',
         'amount',
+        'discount_amount',
         'currency',
         'status',
         'gateway_response',
@@ -37,6 +43,7 @@ class InvoiceHistory extends Model
         'payment_initiated_at',
         'payment_completed_at',
         'paid_at',
+        'payment_proof_path',
         'notes',
     ];
 
@@ -52,29 +59,38 @@ class InvoiceHistory extends Model
      * Generate unique public ID for the invoice
      */
     protected static function boot()
-    {
-        parent::boot();
-        
-        static::creating(function ($model) {
-            // Generate unique string ID
-            if (empty($model->id)) {
-                $model->id = 'IH-' . strtoupper(uniqid());
-            }
-            
-            if (empty($model->public_id)) {
-                $model->public_id = 'INV-' . strtoupper(uniqid());
-            }
-            
-            if (empty($model->invoice_number)) {
-                $model->invoice_number = 'INV-' . date('Ymd') . '-' . str_pad(
-                    static::whereDate('created_at', today())->count() + 1, 
-                    4, 
-                    '0', 
-                    STR_PAD_LEFT
-                );
-            }
-        });
-    }
+{
+    parent::boot();
+
+    static::creating(function ($model) {
+
+        // Tentukan prefix berdasarkan jenis pembayaran
+        $prefix = match ($model->payment_method) {
+            'paypal' => 'PP-',
+            'bank_transfer' => 'TF-',
+            'membership' => 'MB-',
+            default => 'IH-',
+        };
+
+        // Generate ID hanya jika belum diset manual
+        if (empty($model->id)) {
+            $model->id = $prefix . strtoupper(bin2hex(random_bytes(4)));
+        }
+
+        if (empty($model->public_id)) {
+            $model->public_id = 'INV-' . strtoupper(uniqid());
+        }
+
+        if (empty($model->invoice_number)) {
+            $model->invoice_number = 'INV-' . now()->format('Ymd') . '-' . str_pad(
+                static::whereDate('created_at', today())->count() + 1,
+                4,
+                '0',
+                STR_PAD_LEFT
+            );
+        }
+    });
+}
 
     /**
      * Relationship with Audience
@@ -98,6 +114,14 @@ class InvoiceHistory extends Model
     public function joivRegistration(): BelongsTo
     {
         return $this->belongsTo(JoivRegistration::class);
+    }
+
+    /**
+     * Relationship with Membership
+     */
+    public function membership(): BelongsTo
+    {
+        return $this->belongsTo(Membership::class);
     }
 
     /**

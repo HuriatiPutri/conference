@@ -1,6 +1,6 @@
 import React from 'react';
 import { MantineProvider, AppShell, Container, Group, Title, Button, Anchor } from '@mantine/core';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import '@mantine/core/styles.css';
 import 'primeicons/primeicons.css';
 
@@ -10,6 +10,8 @@ interface PublicLayoutProps {
 }
 
 function PublicLayout({ children, title }: PublicLayoutProps) {
+  const { auth } = usePage().props as any;
+
   return (
     <>
       <Head title={title} />
@@ -25,16 +27,35 @@ function PublicLayout({ children, title }: PublicLayoutProps) {
                     SOTVI Conference
                   </Title>
                 </Anchor>
-                <Group gap="sm">
+                {auth?.user ? (
                   <Button
                     component={Link}
-                    href="/register"
-                    variant="light"
+                    href="/dashboard"
+                    variant="subtle"
                     size="sm"
                   >
-                    Register
+                    Dashboard
                   </Button>
-                </Group>
+                ) : (
+                  <Group gap="sm">
+                    <Button
+                      component={Link}
+                      href="/register-membership"
+                      variant="subtle"
+                      size="sm"
+                    >
+                      Join Us
+                    </Button>
+                    <Button
+                      component={Link}
+                      href="/login/member"
+                      variant="subtle"
+                      size="sm"
+                    >
+                      Login
+                    </Button>
+                  </Group>
+                )}
               </Group>
             </Container>
           </AppShell.Header>

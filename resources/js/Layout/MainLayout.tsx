@@ -1,13 +1,13 @@
-import { Head } from '@inertiajs/react';
-import { MantineProvider } from '@mantine/core';
+import { Head, usePage, router } from '@inertiajs/react';
+import { Avatar, MantineProvider, Menu } from '@mantine/core';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import { PrimeReactProvider } from 'primereact/api';
-import { Avatar } from 'primereact/avatar';
 import React from 'react';
 import styles from './styles.module.css';
 import Navigation from '../Components/Elements/Navbar/Navigation';
 import { Notifications } from '@mantine/notifications';
+import { IconKey, IconSettings, IconUser } from '@tabler/icons-react';
 
 interface MainLayoutProps {
   title?: string;
@@ -17,6 +17,7 @@ interface MainLayoutProps {
 export default function MainLayout({ title, children }: MainLayoutProps) {
   const [drawerVisible, setDrawerVisible] = React.useState(false);
   const [isMobile, setIsMobile] = React.useState(false);
+  const { auth } = usePage().props as any;
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -55,7 +56,27 @@ export default function MainLayout({ title, children }: MainLayoutProps) {
                   <span>{title}</span>
                 </div>
                 <div className={styles.userMenu}>
-                  <Avatar label="P" shape="circle" />
+                  <Menu shadow="md" width={200}>
+                    <Menu.Target>
+                      <div style={{ cursor: 'pointer' }}>
+                        <Avatar color="blue">
+                          {auth.user?.name ? auth.user.name.charAt(0).toUpperCase() : 'U'}
+                        </Avatar>
+                      </div>
+                    </Menu.Target>
+
+                    <Menu.Dropdown>
+                      <Menu.Item leftSection={<IconUser size={16} />} onClick={() => router.visit('/profile')}>
+                        Profile
+                      </Menu.Item>
+                      <Menu.Item leftSection={<IconSettings size={16} />} onClick={() => router.visit('/settings')}>
+                        Settings
+                      </Menu.Item>
+                      <Menu.Item leftSection={<IconKey size={16} />} onClick={() => router.visit('/profile/password')}>
+                        Change Password
+                      </Menu.Item>
+                    </Menu.Dropdown>
+                  </Menu>
                 </div>
               </div>
               <div className="container mx-auto mt-4">{children}</div>

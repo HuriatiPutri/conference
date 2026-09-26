@@ -4,15 +4,19 @@
     flex-direction: row;
     height: 100vh;
 }
+
 .navbar {
     width: 250px;
     background-color: white;
     display: none;
+
     &.navbarOpen {
         display: block;
         transform: translateX(0);
     }
+
     transition: transform 0.3s ease-in-out;
+
     h2 {
         margin: 1rem 0;
         text-align: center;
@@ -28,6 +32,7 @@
     width: 100%;
     justify-content: space-between;
 }
+
 .breadcrumbs {
     display: flex;
     align-items: center;
@@ -71,16 +76,47 @@
         transform: translateX(-100%);
         transition: transform 0.3s ease-in-out;
     }
+
     .navbarVisible {
         transform: translateX(0);
         box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
     }
+
     .burger {
         font-size: 1.5rem;
         cursor: pointer;
     }
+
     .header {
         padding: 1rem;
     }
-    
+
+}
+
+.wrapper {
+    min-height: 900px;
+    background-size: cover;
+    background-image: url(https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D);
+}
+
+.form {
+    border-right: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7));
+    min-height: 900px;
+    max-width: 600px;
+    padding: 30px;
+    padding-top: 80px;
+    border-radius: 0;
+
+    @media (max-width: $mantine-breakpoint-sm) {
+        max-width: 100%;
+    }
+}
+
+.title {
+    color: light-dark(var(--mantine-color-black), var(--mantine-color-white));
+    font-family: Outfit, var(--mantine-font-family);
+    font-weight: 500;
+    text-align: center;
+    margin-top: var(--mantine-spacing-md);
+    margin-bottom: 50px;
 }

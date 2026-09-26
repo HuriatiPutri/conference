@@ -10,16 +10,21 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 class JoivRegistrationExport implements FromQuery, WithHeadings, WithMapping
 {
     protected $filters;
+    protected $user;
 
-    public function __construct($filters = [])
+    public function __construct($filters = [], $user = null)
     {
         $this->filters = $filters;
+        $this->user = $user;
     }
 
     public function query()
     {
         $query = JoivRegistration::query();
 
+        if ($this->user->hasRole('user')) {
+            $query->where('user_id', $this->user->id)->orWhere('email_address', $this->user->email);
+        }
         // Apply filters
         if (!empty($this->filters['country'])) {
             $query->where('country', $this->filters['country']);
@@ -35,11 +40,11 @@ class JoivRegistrationExport implements FromQuery, WithHeadings, WithMapping
 
         if (!empty($this->filters['search'])) {
             $searchTerm = $this->filters['search'];
-            $query->where(function($q) use ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
                 $q->where('first_name', 'ILIKE', "%{$searchTerm}%")
-                  ->orWhere('last_name', 'ILIKE', "%{$searchTerm}%")
-                  ->orWhere('email_address', 'ILIKE', "%{$searchTerm}%")
-                  ->orWhere('paper_title', 'ILIKE', "%{$searchTerm}%");
+                    ->orWhere('last_name', 'ILIKE', "%{$searchTerm}%")
+                    ->orWhere('email_address', 'ILIKE', "%{$searchTerm}%")
+                    ->orWhere('paper_title', 'ILIKE', "%{$searchTerm}%");
             });
         }
 
