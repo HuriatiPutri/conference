@@ -47,6 +47,7 @@ class VouchersController extends Controller
             'applies_to.*' => 'in:conference_registration,joiv_article,membership_registration',
             'discount_type' => 'required|in:percent,fixed',
             'discount_value' => 'required|numeric|min:0',
+            'discount_value_usd' => 'nullable|numeric|min:0',
             'discount_description' => 'nullable|string',
             'status' => 'required|in:active,inactive',
         ]);
@@ -78,6 +79,7 @@ class VouchersController extends Controller
             'applies_to.*' => 'in:conference_registration,joiv_article,membership_registration',
             'discount_type' => 'required|in:percent,fixed',
             'discount_value' => 'required|numeric|min:0',
+            'discount_value_usd' => 'nullable|numeric|min:0',
             'discount_description' => 'nullable|string',
             'status' => 'required|in:active,inactive',
         ]);

@@ -112,8 +112,9 @@ class MembershipRegistrationController extends Controller
         if ($membership->voucher_id) {
             $voucher = \App\Models\Voucher::find($membership->voucher_id);
             if ($voucher) {
-                $baseFee = $membership->country === 'ID' ? $membership->package->price_idr : $membership->package->price_usd;
-                $discountAmount = app(VoucherService::class)->calculateDiscount($voucher, $baseFee);
+                $currency = $membership->country === 'ID' ? 'IDR' : 'USD';
+                $baseFee = $currency === 'IDR' ? $membership->package->price_idr : $membership->package->price_usd;
+                $discountAmount = app(VoucherService::class)->calculateDiscount($voucher, $baseFee, $currency);
             }
         }
 

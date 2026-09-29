@@ -18,6 +18,7 @@ function VoucherEdit() {
     quota: voucher.quota || 1,
     discount_type: voucher.discount_type || 'percent',
     discount_value: voucher.discount_value || 0,
+    discount_value_usd: voucher.discount_value_usd || 0,
     discount_description: voucher.discount_description || '',
     status: voucher.status || 'active',
     applies_to: voucher.applies_to || [],
@@ -109,18 +110,45 @@ function VoucherEdit() {
                   required
                 />
 
-                <TextInput
-                  label={data.discount_type === 'percent' ? 'Discount Percentage' : 'Discount Amount'}
-                  type="number"
-                  step={data.discount_type === 'percent' ? 1 : 0.01}
-                  min={0}
-                  max={data.discount_type === 'percent' ? 100 : undefined}
-                  placeholder={data.discount_type === 'percent' ? '10' : '5.00'}
-                  value={data.discount_value}
-                  onChange={(e) => setData('discount_value', Number(e.target.value || 0))}
-                  error={errors.discount_value}
-                  required
-                />
+                {data.discount_type === 'percent' ? (
+                  <TextInput
+                    label="Discount Percentage (%)"
+                    type="number"
+                    step={1}
+                    min={0}
+                    max={100}
+                    placeholder="e.g. 10"
+                    value={data.discount_value}
+                    onChange={(e) => setData('discount_value', Number(e.target.value || 0))}
+                    error={errors.discount_value}
+                    required
+                  />
+                ) : (
+                  <Group grow>
+                    <TextInput
+                      label="Discount Amount (IDR)"
+                      type="number"
+                      step={1}
+                      min={0}
+                      placeholder="e.g. 50000"
+                      value={data.discount_value}
+                      onChange={(e) => setData('discount_value', Number(e.target.value || 0))}
+                      error={errors.discount_value}
+                      required
+                    />
+                    <TextInput
+                      label="Discount Amount (USD)"
+                      type="number"
+                      step={0.01}
+                      min={0}
+                      placeholder="e.g. 5.00"
+                      value={data.discount_value_usd}
+                      onChange={(e) => setData('discount_value_usd', Number(e.target.value || 0))}
+                      error={errors.discount_value_usd}
+                      required
+                    />
+                  </Group>
+                )}
 
                 <TextInput
                   label="Discount Description (Optional)"

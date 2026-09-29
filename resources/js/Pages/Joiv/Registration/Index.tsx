@@ -23,13 +23,13 @@ import VoucherValidation from '../../../Components/VoucherValidation';
 export default function JoivRegistrationIndex() {
   const { auth } = usePage().props as any;
 
-  const [discountVoucher, setDiscountVoucher] = useState<{ type: string; value: number; description?: string } | null>(null);
+  const [discountVoucher, setDiscountVoucher] = useState<{ type: string; value: number; value_usd?: number; description?: string } | null>(null);
   const { registrationFeeIDR, registrationFeeUSD } = usePage().props as unknown as {
     registrationFeeIDR: string | number;
     registrationFeeUSD: string | number;
   };
   const defaultCountry = auth?.user?.membership?.country || '';
-  const { data, setData, post, processing, errors } = useForm({
+  const { data, setData, post, processing, errors, setError, clearErrors } = useForm({
     first_name: auth?.user?.membership?.first_name || '',
     last_name: auth?.user?.membership?.last_name || '',
     email_address: auth?.user?.membership?.email || '',
@@ -51,15 +51,14 @@ export default function JoivRegistrationIndex() {
   const packageBenefits = membership?.package?.package_benefits || [];
 
 
-  const calculateFee = (country: string): { fee: number, discountAmount: number, totalFee: number, discountPercentage: number } => {
-    if (!country) return { fee: 0, discountAmount: 0, totalFee: 0, discountPercentage: 0 };
+  const calculateFee = (country: string): { fee: number, discountAmount: number, totalFee: number, discountPercentage: number, isIndonesia: boolean } => {
+    if (!country) return { fee: 0, discountAmount: 0, totalFee: 0, discountPercentage: 0, isIndonesia: false };
 
     const isIndonesia = country === 'ID';
     let fee = isIndonesia ? Number(registrationFeeIDR) : Number(registrationFeeUSD);
     let discountAmount = 0;
     let totalFee = 0;
     let discountPercentage = 0;
-
 
     if (isMember) {
       discountPercentage = packageBenefits.reduce((maxDiscount: number, benefit: any) => {
@@ -76,9 +75,14 @@ export default function JoivRegistrationIndex() {
         totalFee = fee;
       }
     } else {
-      discountPercentage = discountVoucher?.type === 'percent' ? Number(discountVoucher.value) : 0;
-      if (discountPercentage > 0) {
-        discountAmount = fee * (discountPercentage / 100);
+      if (discountVoucher) {
+        if (discountVoucher.type === 'percent') {
+          discountPercentage = Number(discountVoucher.value);
+          discountAmount = fee * (discountPercentage / 100);
+        } else if (discountVoucher.type === 'fixed') {
+          const fixedDiscount = isIndonesia ? Number(discountVoucher.value || 0) : Number(discountVoucher.value_usd || 0);
+          discountAmount = Math.min(fee, fixedDiscount);
+        }
         totalFee = fee - discountAmount;
       } else {
         totalFee = fee;
@@ -87,17 +91,22 @@ export default function JoivRegistrationIndex() {
 
     // Ensure total fee is not negative
     if (totalFee < 0) {
-      totalFee = fee;
+      totalFee = 0;
     }
 
-    return { fee, discountAmount, totalFee, discountPercentage };
+    return { fee, discountAmount, totalFee, discountPercentage, isIndonesia };
   };
 
-  const { fee, discountPercentage, totalFee } = calculateFee(data.country);
-  const currency = data.country === 'ID' ? 'IDR' : 'USD';
+  const { fee, discountAmount, discountPercentage, totalFee, isIndonesia } = calculateFee(data.country);
+  const currency = isIndonesia ? 'IDR' : 'USD';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+    if (data.full_paper && data.full_paper.size > MAX_FILE_SIZE) {
+      setError('full_paper', 'The full paper may not be greater than 50MB.');
+      return;
+    }
     post('/joiv/registration', {
       forceFormData: true,
     });
@@ -213,7 +222,16 @@ export default function JoivRegistrationIndex() {
                 accept="application/pdf,.doc,.docx"
                 leftSection={<IconUpload size={14} />}
                 value={data.full_paper}
-                onChange={(file) => setData('full_paper', file)}
+                onChange={(file) => {
+                  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+                  if (file && file.size > MAX_FILE_SIZE) {
+                    setError('full_paper', 'The full paper may not be greater than 50MB.');
+                    setData('full_paper', null);
+                  } else {
+                    clearErrors('full_paper');
+                    setData('full_paper', file);
+                  }
+                }}
                 error={errors.full_paper}
                 description="Accepted formats: PDF, DOC, DOCX (Max: 50MB)"
                 required
@@ -231,13 +249,14 @@ export default function JoivRegistrationIndex() {
                     onValidationChange={(isValid, discountData) => {
                       console.log('Voucher validation result:', { isValid, discountData });
                       if (isValid) {
-                        setDiscountVoucher(discountData as { type: string; value: number; description?: string } | null);
+                        setDiscountVoucher(discountData as { type: string; value: number; value_usd?: number; description?: string } | null);
                       } else {
                         setDiscountVoucher(null);
                       }
                     }}
                     transactionType="joiv_article"
                     email={data.email_address}
+                    isIndonesia={isIndonesia}
                   />
                 </>
               )}
@@ -253,7 +272,7 @@ export default function JoivRegistrationIndex() {
                 <Group justify="space-between">
                   <Text fw={500}>Registration Fee:</Text>
                   <Stack gap={0} align="flex-end">
-                    {discountPercentage > 0 && (
+                    {discountAmount > 0 && (
                       <Text fw={700} size="sm" c="orange" td="line-through">
                         {formatCurrency(fee, currency.toLowerCase() as 'idr' | 'usd')}
                       </Text>
@@ -261,9 +280,9 @@ export default function JoivRegistrationIndex() {
                     <Text fw={700} size="lg" c="blue">
                       {formatCurrency(totalFee, currency.toLowerCase() as 'idr' | 'usd')}
                     </Text>
-                    {discountPercentage > 0 && (
+                    {discountAmount > 0 && (
                       <Text size="xs" c="green" fw={500}>
-                        You saved {formatCurrency(fee - totalFee, currency.toLowerCase() as 'idr' | 'usd')} with your {isMember ? 'membership benefits' : 'voucher'}
+                        You saved {formatCurrency(discountAmount, currency.toLowerCase() as 'idr' | 'usd')} with your {isMember ? 'membership benefits' : 'voucher'}
                       </Text>
                     )}
                   </Stack>

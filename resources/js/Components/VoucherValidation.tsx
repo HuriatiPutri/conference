@@ -5,10 +5,11 @@ import { IconCheck, IconX } from '@tabler/icons-react';
 interface VoucherValidationProps {
   value: string;
   onChange: (value: string) => void;
-  onValidationChange: (isValid: boolean, discount?: { type: string; value: number; description?: string }) => void;
+  onValidationChange: (isValid: boolean, discount?: { type: string; value: number; value_usd?: number; description?: string }) => void;
   transactionType: 'conference_registration' | 'joiv_article' | 'membership_registration';
   email: string;
   disabled?: boolean;
+  isIndonesia?: boolean
 }
 
 interface ValidationResult {
@@ -16,6 +17,7 @@ interface ValidationResult {
   message: string;
   discount_type?: string;
   discount_value?: number;
+  discount_value_usd?: number;
   discount_description?: string;
 }
 
@@ -26,10 +28,11 @@ export default function VoucherValidation({
   transactionType,
   email,
   disabled = false,
+  isIndonesia = false,
 }: Readonly<VoucherValidationProps>) {
   const [validationState, setValidationState] = useState<'idle' | 'loading' | 'valid' | 'invalid'>('idle');
   const [validationMessage, setValidationMessage] = useState('');
-  const [discount, setDiscount] = useState<{ type: string; value: number; description?: string } | null>(null);
+  const [discount, setDiscount] = useState<{ type: string; value: number; value_usd?: number; description?: string } | null>(null);
 
   const validateVoucher = useCallback(async (code: string) => {
     if (!code.trim() || code.length !== 6) {
@@ -64,6 +67,7 @@ export default function VoucherValidation({
         const discountData = {
           type: data.discount_type || 'percent',
           value: data.discount_value || 0,
+          value_usd: data.discount_value_usd || 0,
           description: data.discount_description,
         };
         setDiscount(discountData);
@@ -142,7 +146,10 @@ export default function VoucherValidation({
       {discount && validationState === 'valid' && (
         <div style={{ padding: '10px', backgroundColor: '#f0f9ff', borderRadius: '4px', borderLeft: '3px solid #00a3ff' }}>
           <Text size="sm" fw={500}>
-            Discount: {discount.type === 'percent' ? `${discount.value}%` : `$${discount.value.toFixed(2)}`}
+            Discount:{' '}
+            {discount.type === 'percent'
+              ? `${discount.value}%`
+              : isIndonesia ? `Rp ${Number(discount.value || 0).toLocaleString('id-ID')}` : `$${Number(discount.value_usd || 0).toLocaleString('en-US')}`}
           </Text>
           {discount.description && <Text size="xs" c="dimmed">{discount.description}</Text>}
         </div>
