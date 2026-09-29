@@ -15,6 +15,7 @@ class Voucher extends Model
         'applies_to',
         'discount_type',
         'discount_value',
+        'discount_value_usd',
         'discount_description',
         'status',
         'created_by',
@@ -26,6 +27,7 @@ class Voucher extends Model
         'end_date' => 'date',
         'applies_to' => 'array',
         'discount_value' => 'decimal:2',
+        'discount_value_usd' => 'decimal:2',
     ];
 
     public function claims()

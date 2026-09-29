@@ -32,6 +32,24 @@ export const TableData = ({ handleDelete }: { handleDelete: any }) => {
       sortable: true,
     },
     {
+      field: 'discount',
+      label: 'Discount',
+      renderCell: (row: any) => {
+        if (row.discount_type === 'percent') {
+          return <Badge color="blue" variant="light">{Number(row.discount_value)}%</Badge>;
+        }
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span>Rp {Number(row.discount_value || 0).toLocaleString('id-ID')}</span>
+            {Number(row.discount_value_usd) > 0 && (
+              <span style={{ fontSize: '11px', color: '#888' }}>${Number(row.discount_value_usd).toFixed(2)} USD</span>
+            )}
+          </div>
+        );
+      },
+      sortable: false,
+    },
+    {
       field: 'applies_to',
       label: 'Applies To',
       renderCell: (row: any) => (

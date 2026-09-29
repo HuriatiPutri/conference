@@ -41,6 +41,7 @@ class VoucherValidationController extends Controller
             'message' => 'Valid voucher code.',
             'discount_type' => $voucher->discount_type,
             'discount_value' => $voucher->discount_value,
+            'discount_value_usd' => $voucher->discount_value_usd,
             'discount_description' => $voucher->discount_description,
         ];
     }

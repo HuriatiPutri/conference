@@ -697,7 +697,8 @@ class RegistrationController extends Controller
         if ($fee > 0) {
             // Apply voucher discount on the remaining fee
             if ($voucher) {
-                $voucherDiscountAmount = app(VoucherService::class)->calculateDiscount($voucher, $fee);
+                $currency = $isIndonesia ? 'IDR' : 'USD';
+                $voucherDiscountAmount = app(VoucherService::class)->calculateDiscount($voucher, $fee, $currency);
                 $fee -= $voucherDiscountAmount;
                 if ($fee < 0) {
                     $fee = 0;

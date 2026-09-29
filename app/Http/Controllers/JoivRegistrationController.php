@@ -84,7 +84,7 @@ class JoivRegistrationController extends Controller
         // Calculate voucher discount if applicable
         $voucherDiscount = 0;
         if ($voucher) {
-            $voucherDiscount = app(VoucherService::class)->calculateDiscount($voucher, $feeAfterMembershipBenefits);
+            $voucherDiscount = app(VoucherService::class)->calculateDiscount($voucher, $feeAfterMembershipBenefits, $currency);
         }
 
         // Calculate final paid fee

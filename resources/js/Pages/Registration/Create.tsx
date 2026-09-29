@@ -35,12 +35,12 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
 
   const defaultCountry = auth?.user?.membership?.country || '';
   const [selectedCountry, setSelectedCountry] = useState<string>(defaultCountry);
-  const [discountVoucher, setDiscountVoucher] = useState<{ type: string; value: number; description?: string } | null>(null);
+  const [discountVoucher, setDiscountVoucher] = useState<{ type: string; value: number; value_usd?: number; description?: string } | null>(null);
 
   const [selectedType, setSelectedType] = useState<string>(DEFAULT_PRESENTATION_TYPE);
   const isJOIV = conference.name === 'JOIV : International Journal on Informatics Visualization';
 
-  const { data, setData, post, processing, errors } = useForm({
+  const { data, setData, post, processing, errors, setError, clearErrors } = useForm({
     first_name: auth?.user?.membership?.first_name || '',
     last_name: auth?.user?.membership?.last_name || '',
     paper_title: '',
@@ -98,9 +98,14 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
         totalFee = fee;
       }
     } else {
-      discountPercentage = discountVoucher?.type === 'percent' ? Number(discountVoucher.value) : 0;
-      if (discountPercentage > 0) {
-        discountAmount = fee * (discountPercentage / 100);
+      if (discountVoucher) {
+        if (discountVoucher.type === 'percent') {
+          discountPercentage = Number(discountVoucher.value);
+          discountAmount = fee * (discountPercentage / 100);
+        } else if (discountVoucher.type === 'fixed') {
+          const fixedDiscount = isIndonesia ? Number(discountVoucher.value || 0) : Number(discountVoucher.value_usd || 0);
+          discountAmount = Math.min(fee, fixedDiscount);
+        }
         totalFee = fee - discountAmount;
       } else {
         totalFee = fee;
@@ -109,18 +114,23 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
 
     // Ensure total fee is not negative
     if (totalFee < 0) {
-      totalFee = fee;
+      totalFee = 0;
     }
 
     return { fee, discountAmount, totalFee, discountPercentage };
   };
 
 
-  const { fee, discountPercentage, totalFee } = calculateFee(selectedCountry, selectedType);
+  const { fee, discountAmount, discountPercentage, totalFee } = calculateFee(selectedCountry, selectedType);
   const currency = selectedCountry === 'ID' ? 'IDR' : 'USD';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+    if (data.full_paper && data.full_paper.size > MAX_FILE_SIZE) {
+      setError('full_paper', 'The full paper may not be greater than 50MB.');
+      return;
+    }
     post(`/registration/${conference.public_id}`, {
       forceFormData: true,
     });
@@ -269,7 +279,16 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
                 accept=".pdf,.doc,.docx"
                 leftSection={<IconUpload size={14} />}
                 value={data.full_paper}
-                onChange={(file) => setData('full_paper', file)}
+                onChange={(file) => {
+                  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+                  if (file && file.size > MAX_FILE_SIZE) {
+                    setError('full_paper', 'The full paper may not be greater than 50MB.');
+                    setData('full_paper', null);
+                  } else {
+                    clearErrors('full_paper');
+                    setData('full_paper', file);
+                  }
+                }}
                 error={errors.full_paper}
                 description="Accepted formats: PDF, DOC, DOCX (Max: 50MB)"
                 required
@@ -287,13 +306,14 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
                     onChange={(value) => setData('voucher_code', value)}
                     onValidationChange={(isValid, discountData) => {
                       if (isValid) {
-                        setDiscountVoucher(discountData as { type: string; value: number; description?: string } | null);
+                        setDiscountVoucher(discountData as { type: string; value: number; value_usd?: number; description?: string } | null);
                       } else {
                         setDiscountVoucher(null);
                       }
                     }}
                     transactionType="conference_registration"
                     email={data.email}
+                    isIndonesia={selectedCountry === 'ID'}
                   />
                 </>
               )}
@@ -306,7 +326,7 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
                 <Group justify="space-between">
                   <Text fw={500}>Registration Fee:</Text>
                   <Stack gap={0} align="flex-end">
-                    {discountPercentage > 0 && (
+                    {discountAmount > 0 && (
                       <Text fw={700} size="sm" c="orange" td="line-through">
                         {formatCurrency(fee, currency.toLowerCase() as 'idr' | 'usd')}
                       </Text>
@@ -314,9 +334,9 @@ export default function RegistrationCreate({ conference }: RegistrationCreatePro
                     <Text fw={700} size="lg" c="blue">
                       {formatCurrency(totalFee, currency.toLowerCase() as 'idr' | 'usd')}
                     </Text>
-                    {discountPercentage > 0 && (
+                    {discountAmount > 0 && (
                       <Text size="xs" c="green" fw={500}>
-                        You saved {formatCurrency(fee - totalFee, currency.toLowerCase() as 'idr' | 'usd')} with your {isMember ? 'membership benefits' : 'voucher'}
+                        You saved {formatCurrency(discountAmount, currency.toLowerCase() as 'idr' | 'usd')} with your {isMember ? 'membership benefits' : 'voucher'}
                       </Text>
                     )}
                   </Stack>

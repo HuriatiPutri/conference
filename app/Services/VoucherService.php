@@ -55,7 +55,7 @@ class VoucherService
         });
     }
 
-    public function calculateDiscount(?Voucher $voucher, float $baseAmount): float
+    public function calculateDiscount(?Voucher $voucher, float $baseAmount, string $currency = 'IDR'): float
     {
         if (!$voucher) {
             return 0;
@@ -66,7 +66,11 @@ class VoucherService
         }
 
         if ($voucher->discount_type === 'fixed') {
-            return min($voucher->discount_value, $baseAmount);
+            if (strtoupper($currency) === 'USD' && $voucher->discount_value_usd !== null && (float) $voucher->discount_value_usd > 0) {
+                return min((float) $voucher->discount_value_usd, $baseAmount);
+            }
+
+            return min((float) $voucher->discount_value, $baseAmount);
         }
 
         return 0;
