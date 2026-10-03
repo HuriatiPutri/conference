@@ -30,7 +30,7 @@ class AudiencesController extends Controller
 
         // Build query with filters
         $query = Audience::query()
-            ->with(['conference', 'key_notes', 'parallel_sessions'])
+            ->with(['conference', 'key_notes', 'parallel_sessions', 'voucher', 'benefitUsages.membershipBenefit'])
             ->whereHas('conference');
 
         if ($user->hasRole('user')) {
@@ -132,7 +132,7 @@ class AudiencesController extends Controller
     public function show(Audience $audience): Response
     {
         return Inertia::render('Admin/Audiences/Show', [
-            'audience' => new AudienceResource($audience->loadMissing(['conference', 'key_notes', 'parallel_sessions'])),
+            'audience' => new AudienceResource($audience->loadMissing(['conference', 'key_notes', 'parallel_sessions', 'voucher', 'benefitUsages.membershipBenefit'])),
         ]);
     }
 

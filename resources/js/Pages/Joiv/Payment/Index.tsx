@@ -76,7 +76,25 @@ export default function JoivPaymentIndex({ registration }: JoivPaymentProps) {
               </Group>
               <Divider />
               <Group justify="space-between">
-                <Text fw={700} size="lg">Total Amount:</Text>
+                <Text fw={500}>Registration Fee:</Text>
+                <Text
+                  fw={registration.discount_amount && Number(registration.discount_amount) > 0 ? 400 : 700}
+                  td={registration.discount_amount && Number(registration.discount_amount) > 0 ? 'line-through' : undefined}
+                  c={registration.discount_amount && Number(registration.discount_amount) > 0 ? 'dimmed' : undefined}
+                >
+                  {formatCurrency(registration.original_fee || registration.paid_fee, currency)}
+                </Text>
+              </Group>
+              {registration.discount_amount && Number(registration.discount_amount) > 0 ? (
+                <Group justify="space-between">
+                  <Text fw={500} c="green">Total Discount:</Text>
+                  <Text fw={600} c="green">
+                    -{formatCurrency(registration.discount_amount, currency)}
+                  </Text>
+                </Group>
+              ) : null}
+              <Group justify="space-between">
+                <Text fw={700} size="lg">Total Amount to Pay:</Text>
                 <Text fw={700} size="lg" c="blue">
                   {formatCurrency(registration.paid_fee, currency)}
                 </Text>

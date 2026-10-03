@@ -26,6 +26,8 @@ interface RegistrationData {
   email: string;
   country: string;
   presentation_type: string;
+  original_fee?: number;
+  discount_amount?: number;
   paid_fee: number;
 }
 
@@ -80,22 +82,44 @@ export default function RegistrationPayment({ conference, registrationData }: Re
           </div>
 
           <Paper withBorder p="md" style={{ backgroundColor: 'var(--mantine-color-green-0)' }}>
-            <Group justify="space-between">
-              <div>
-                <Text fw={500}>Registration Details</Text>
-                <Text size="sm" c="dimmed">
-                  {registrationData.first_name} {registrationData.last_name}
+            <Stack gap="xs">
+              <Group justify="space-between">
+                <div>
+                  <Text fw={500}>Registration Details</Text>
+                  <Text size="sm" c="dimmed">
+                    {registrationData.first_name} {registrationData.last_name}
+                  </Text>
+                  <Text size="sm" c="dimmed">
+                    {registrationData.presentation_type?.replace('_', ' ').toUpperCase()}
+                  </Text>
+                </div>
+              </Group>
+              <Divider my={2} />
+              <Group justify="space-between">
+                <Text fw={500} size="sm">Registration Fee:</Text>
+                <Text
+                  fw={registrationData.discount_amount && Number(registrationData.discount_amount) > 0 ? 400 : 600}
+                  td={registrationData.discount_amount && Number(registrationData.discount_amount) > 0 ? 'line-through' : undefined}
+                  c={registrationData.discount_amount && Number(registrationData.discount_amount) > 0 ? 'dimmed' : undefined}
+                >
+                  {formatCurrency(registrationData.original_fee || registrationData.paid_fee, currency)}
                 </Text>
-                <Text size="sm" c="dimmed">
-                  {registrationData.presentation_type?.replace('_', ' ').toUpperCase()}
-                </Text>
-              </div>
-              <div>
+              </Group>
+              {registrationData.discount_amount && Number(registrationData.discount_amount) > 0 ? (
+                <Group justify="space-between">
+                  <Text fw={500} size="sm" c="green">Total Discount:</Text>
+                  <Text fw={600} size="sm" c="green">
+                    -{formatCurrency(registrationData.discount_amount, currency)}
+                  </Text>
+                </Group>
+              ) : null}
+              <Group justify="space-between" align="center">
+                <Text fw={700} size="lg">Total Amount to Pay:</Text>
                 <Text fw={700} size="xl" c="green">
                   {formatCurrency(registrationData.paid_fee, currency)}
                 </Text>
-              </div>
-            </Group>
+              </Group>
+            </Stack>
           </Paper>
 
           <Divider />

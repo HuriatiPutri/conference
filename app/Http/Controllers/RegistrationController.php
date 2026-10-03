@@ -114,6 +114,7 @@ class RegistrationController extends Controller
 
         // Calculate fee based on country and presentation type
         $feeCalculation = $this->calculateFee($conference, $validatedData['country'], $validatedData['presentation_type'], $validatedData['email'], $voucher);
+        $originalFee = $feeCalculation['original_fee'];
         $paidFee = $feeCalculation['paid_fee'];
         $discountAmount = $feeCalculation['discount_amount'];
 
@@ -130,6 +131,7 @@ class RegistrationController extends Controller
                 'phone_number' => $validatedData['phone_number'],
                 'country' => $validatedData['country'],
                 'presentation_type' => $validatedData['presentation_type'],
+                'original_fee' => $originalFee,
                 'paid_fee' => $paidFee,
                 'discount_amount' => $discountAmount,
                 'voucher_id' => $voucher?->id,
@@ -465,6 +467,7 @@ class RegistrationController extends Controller
             'phone_number' => $registrationData['phone_number'],
             'country' => $registrationData['country'],
             'presentation_type' => $registrationData['presentation_type'],
+            'original_fee' => $registrationData['original_fee'] ?? null,
             'paid_fee' => $registrationData['paid_fee'],
             'discount_amount' => $registrationData['discount_amount'] ?? 0,
             'voucher_id' => $registrationData['voucher_id'] ?? null,
@@ -674,19 +677,20 @@ class RegistrationController extends Controller
     {
         $isIndonesia = $country === 'ID';
 
-        $fee = 0;
+        $originalFee = 0;
         switch ($presentationType) {
             case 'online_author':
-                $fee = $isIndonesia ? $conference->online_fee : $conference->online_fee_usd;
+                $originalFee = $isIndonesia ? $conference->online_fee : $conference->online_fee_usd;
                 break;
             case 'onsite':
-                $fee = $isIndonesia ? $conference->onsite_fee : $conference->onsite_fee_usd;
+                $originalFee = $isIndonesia ? $conference->onsite_fee : $conference->onsite_fee_usd;
                 break;
             case 'participant_only':
-                $fee = $isIndonesia ? $conference->participant_fee : $conference->participant_fee_usd;
+                $originalFee = $isIndonesia ? $conference->participant_fee : $conference->participant_fee_usd;
                 break;
         }
 
+        $fee = (float) $originalFee;
         $membershipDiscountAmount = 0;
         $voucherDiscountAmount = 0;
         $membership = app(MembershipBenefitService::class)->resolveActiveMembershipByEmail($email);
@@ -707,6 +711,7 @@ class RegistrationController extends Controller
         }
 
         return [
+            'original_fee' => (float) $originalFee,
             'paid_fee' => $fee,
             'discount_amount' => $membershipDiscountAmount + $voucherDiscountAmount,
             'membership_id' => $membership?->id,
@@ -788,6 +793,8 @@ class RegistrationController extends Controller
                 'institution',
                 'paper_title',
                 'presentation_type',
+                'original_fee',
+                'discount_amount',
                 'paid_fee',
                 'payment_status',
                 'payment_method',

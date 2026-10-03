@@ -210,8 +210,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('vouchers/report', [\App\Http\Controllers\Admin\VouchersController::class, 'report'])->name('vouchers.report');
 });
 
-// Public API Routes - Voucher Validation
+// Public API Routes - Voucher Validation & Membership Check
 Route::get('/api/vouchers/validate/{code}', [\App\Http\Controllers\VoucherValidationController::class, 'check'])->name('vouchers.validate');
+Route::get('/api/membership/check', [\App\Http\Controllers\MembershipCheckController::class, 'check'])->name('membership.check');
 
 // Registration - Public Access (No Auth Middleware)
 Route::get('/registration/{conference:public_id}', [RegistrationController::class, 'create'])->name('registration.create');

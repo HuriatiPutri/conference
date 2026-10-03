@@ -24,6 +24,7 @@ const PAYMENT_STATUS_OPTIONS = [
   { value: 'paid', label: 'Paid' },
   { value: 'cancelled', label: 'Cancelled' },
   { value: 'refunded', label: 'Refunded' },
+  { value: 'expired', label: 'Expired' },
 ];
 
 export function JoivPaymentStatusModal({ opened, onClose, registration }: JoivPaymentStatusModalProps) {

@@ -45,6 +45,7 @@ export const FilterData = ({
               { value: 'pending_payment', label: 'Pending' },
               { value: 'cancelled', label: 'Cancelled' },
               { value: 'refunded', label: 'Refunded' },
+              { value: 'expired', label: 'Expired' },
             ]}
             value={paymentStatusFilter}
             onChange={(value) => setPaymentStatusFilter(value || '')}

@@ -5,13 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Facades\Mail;
 
 class InvoiceHistory extends Model
 {
-  public function reference()
-    {
-        return $this->morphTo();
-    }
     use HasFactory;
 
     protected $table = 'invoice_history';
@@ -22,8 +20,8 @@ class InvoiceHistory extends Model
 
     protected $fillable = [
         'public_id',
-        'audience_id',
-        'joiv_registration_id',
+        'reference_id',
+        'reference_type',
         'membership_id',
         'conference_id',
         'payment_gateway',
@@ -91,6 +89,14 @@ class InvoiceHistory extends Model
         }
     });
 }
+
+    /**
+     * Polymorphic reference relationship (Audience, JoivRegistration, Membership)
+     */
+    public function reference(): MorphTo
+    {
+        return $this->morphTo();
+    }
 
     /**
      * Relationship with Audience

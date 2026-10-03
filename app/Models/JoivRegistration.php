@@ -28,6 +28,8 @@ class JoivRegistration extends Model
         'voucher_code',
         'loa_approved_at',
         'full_paper_path',
+        'original_fee',
+        'discount_amount',
         'payment_status',
         'payment_method',
         'payment_proof_path',
@@ -38,6 +40,12 @@ class JoivRegistration extends Model
         'updated_by',
     ];
 
+    protected $casts = [
+        'original_fee' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'paid_fee' => 'decimal:2',
+    ];
+
     protected $dates = ['deleted_at', 'loa_approved_at'];
 
     public function resolveRouteBinding($value, $field = null)
@@ -45,15 +53,21 @@ class JoivRegistration extends Model
         return $this->where($field ?? 'id', $value)->withTrashed()->firstOrFail();
     }
 
-    public function invoices(){
-      return $this->morphMany(InvoiceHistory::class, 'reference');
+    public function invoices(): MorphMany
+    {
+        return $this->morphMany(InvoiceHistory::class, 'reference');
     }
 
-        public function benefitUsages(): MorphMany
-        {
-                return $this->morphMany(BenefitUsage::class, 'reference');
-        }
-    
+    public function invoiceHistories(): MorphMany
+    {
+        return $this->morphMany(InvoiceHistory::class, 'reference');
+    }
+
+    public function benefitUsages(): MorphMany
+    {
+        return $this->morphMany(BenefitUsage::class, 'reference');
+    }
+
     // Relationships
     public function creator(): BelongsTo
     {
@@ -63,11 +77,6 @@ class JoivRegistration extends Model
     public function updater(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
-    }
-
-    public function invoiceHistories(): HasMany
-    {
-        return $this->hasMany(InvoiceHistory::class, 'joiv_registration_id');
     }
 
     public function loaVolume(): BelongsTo
@@ -89,7 +98,7 @@ class JoivRegistration extends Model
             case 'payment_gateway':
                 return 'Payment Gateway';
             default:
-                return 'Metode Pembayaran Tidak Diketahui';
+                return '-';
         }
     }
 
@@ -104,6 +113,8 @@ class JoivRegistration extends Model
                 return 'Cancelled';
             case 'refunded':
                 return 'Refunded';
+            case 'expired':
+                return 'Expired';
             default:
                 return 'Status Tidak Diketahui';
         }
@@ -112,6 +123,31 @@ class JoivRegistration extends Model
     public function getFullName()
     {
         return $this->first_name . ' ' . $this->last_name;
+    }
+
+    /**
+     * Send registration confirmation email with payment link.
+     */
+    public function sendRegistrationEmail()
+    {
+        $data = [
+            'name' => $this->first_name . ' ' . $this->last_name,
+            'initial' => 'JOIV',
+            'registration_number' => $this->public_id ?? 'REG-' . $this->id,
+            'registration_date' => $this->created_at ? $this->created_at->format('d M Y') : now()->format('d M Y'),
+            'paper_title' => $this->paper_title ?? 'Untitled Paper',
+            'conference_name' => 'JOIV: International Journal on Informatics Visualization',
+            'year' => now()->format('Y'),
+            'place' => 'Online, International',
+            'email' => $this->email_address,
+            'phone_number' => $this->phone_number,
+            'payment_link' => route('joiv.payment', ['registration' => $this->public_id]),
+        ];
+
+        \Illuminate\Support\Facades\Mail::send('emails.registration_confirmation', $data, function ($message) {
+            $message->to($this->email_address, "{$this->first_name} {$this->last_name}")
+                ->subject('Registration Confirmation – JOIV');
+        });
     }
 
     /**
@@ -136,7 +172,7 @@ class JoivRegistration extends Model
 
         \Illuminate\Support\Facades\Mail::send('emails.loa_email', $data, function ($message) {
             $message->to($this->email_address, "{$this->first_name} {$this->last_name}")
-                    ->subject("Letter of Acceptance (LoA) – JOIV");
+                ->subject("Letter of Acceptance (LoA) – JOIV");
 
             try {
                 $loaPdf = $this->generateLoaPdfContent();
@@ -182,11 +218,101 @@ class JoivRegistration extends Model
             ];
 
             $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('letters-of-approval.template-clean', compact('data'))
-                      ->setPaper('A4', 'portrait');
+                ->setPaper('A4', 'portrait');
 
             return $pdf->output();
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Error generating JOIV LoA PDF: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Send payment confirmation/status update email with optional receipt.
+     */
+    public function sendPaymentConfirmationEmail()
+    {
+        $amountFormatted = $this->country === 'ID'
+            ? number_format($this->paid_fee, 0, ',', '.')
+            : number_format($this->paid_fee, 2);
+
+        $data = [
+            'name' => $this->first_name . ' ' . $this->last_name,
+            'initial' => 'JOIV',
+            'registration_number' => $this->public_id ?? 'REG-' . $this->id,
+            'registration_date' => $this->created_at ? $this->created_at->format('d M Y') : now()->format('d M Y'),
+            'paper_title' => $this->paper_title ?? 'Untitled Paper',
+            'conference_name' => 'JOIV: International Journal on Informatics Visualization',
+            'year' => now()->format('Y'),
+            'place' => 'Online, International',
+            'email' => $this->email_address,
+            'phone_number' => $this->phone_number,
+            'amount' => $amountFormatted,
+            'payment_date' => $this->updated_at ? $this->updated_at->format('d M Y H:i:s') : now()->format('d M Y H:i:s'),
+            'payment_method' => $this->getPaymentMethodText(),
+            'payment_status' => $this->getPaymentStatusText(),
+        ];
+
+        $template = [
+            'paid' => 'emails.payment_confirmation',
+            'cancelled' => 'emails.payment_cancelled',
+            'refunded' => 'emails.payment_refunded',
+            'pending_payment' => 'emails.payment_pending',
+            'expired' => 'emails.payment_expired',
+        ];
+
+        if (!isset($template[$this->payment_status])) {
+            return;
+        }
+
+        \Illuminate\Support\Facades\Mail::send($template[$this->payment_status], $data, function ($message) {
+            $message->to($this->email_address, "{$this->first_name} {$this->last_name}")
+                ->subject("Payment Confirmation – JOIV");
+
+            // Attach receipt PDF jika status adalah 'paid'
+            if ($this->payment_status === 'paid') {
+                try {
+                    $receiptPdf = $this->generateReceiptPdfContent();
+                    if ($receiptPdf) {
+                        $fileName = "receipt-{$this->first_name}-{$this->last_name}.pdf";
+                        $message->attachData($receiptPdf, $fileName, [
+                            'mime' => 'application/pdf',
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Error attaching JOIV receipt PDF: ' . $e->getMessage());
+                }
+            }
+        });
+    }
+
+    /**
+     * Generate Receipt PDF content.
+     */
+    public function generateReceiptPdfContent()
+    {
+        try {
+            $data = [
+                'name' => $this->first_name . ' ' . $this->last_name,
+                'address' => $this->institution . ', ' . $this->country,
+                'paper_title' => $this->paper_title ?? 'N/A',
+                'conference' => 'JOIV',
+                'conference_name' => 'JOIV: International Journal on Informatics Visualization',
+                'conference_cover' => null,
+                'date' => now()->format('Y'),
+                'amount' => $this->country === 'ID' ? 'Rp' . number_format($this->paid_fee, 0, ',', '.') : '$' . number_format($this->paid_fee, 2),
+                'payment_method' => $this->payment_method === 'transfer_bank' ? 'Bank Transfer' : 'Payment Gateway',
+                'payment_date' => $this->updated_at ? $this->updated_at->format('d M Y H:i') : now()->format('d M Y H:i'),
+                'invoice_id' => 'Ref. No.' . strtoupper($this->public_id) . '/PAID/JOIV/' . now()->format('Y'),
+                'signature' => storage_path('app/public/images/joiv-signature.png'),
+            ];
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('receipt.joiv', compact('data'))
+                ->setPaper('A4', 'portrait');
+
+            return $pdf->output();
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error generating JOIV Receipt PDF: ' . $e->getMessage());
             return null;
         }
     }

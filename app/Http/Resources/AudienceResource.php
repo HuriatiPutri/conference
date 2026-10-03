@@ -13,7 +13,12 @@ class AudienceResource extends JsonResource
             'paper_title','institution','email','phone_number','country',
             'presentation_type','paid_fee','payment_status','payment_method',
             'payment_proof_path','full_paper_path','created_at','updated_at','deleted_at',
+            'voucher_id','voucher_code',
         ]), [
+            'original_fee' => (float) ($this->original_fee ?? $this->paid_fee),
+            'discount_amount' => (float) ($this->discount_amount ?? 0),
+            'voucher' => $this->whenLoaded('voucher'),
+            'benefit_usages' => $this->whenLoaded('benefitUsages'),
             // hasMany
             'key_notes' => $this->when(
                 $this->relationLoaded('key_notes'),
