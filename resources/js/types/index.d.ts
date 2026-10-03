@@ -140,6 +140,8 @@ export interface Audiences {
   phone_number: string;
   country: string;
   presentation_type: string;
+  original_fee?: number;
+  discount_amount?: number;
   paid_fee: number;
   payment_status: string;
   payment_method: string;
@@ -148,6 +150,10 @@ export interface Audiences {
   full_paper_path: string;
   conference_id: number;
   conference: Conference;
+  voucher_id?: number | null;
+  voucher_code?: string | null;
+  voucher?: Voucher | null;
+  benefit_usages?: BenefitUsage[] | null;
   key_notes: KeyNote[];
   parallel_sessions: ParallelSession[];
   created_at: string;
@@ -187,7 +193,29 @@ export interface JoivRegistration {
   payment_status: string;
   payment_method: string | null;
   payment_proof_path: string | null;
+  original_fee?: number | null;
+  discount_amount?: number | null;
   paid_fee: number;
+  voucher_id?: number | null;
+  voucher_code?: string | null;
+  voucher?: {
+    id: number;
+    code: string;
+    discount_type: string;
+    discount_value: number;
+    discount_value_usd: number | null;
+    discount_description: string | null;
+  } | null;
+  benefit_usages?: {
+    id: number;
+    consumed_value: number;
+    benefit_type: string;
+    membership_benefit?: {
+      id: number;
+      name: string;
+      code: string;
+    };
+  }[];
   created_at: string;
   updated_at: string;
   deleted_at: string | null;

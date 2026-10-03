@@ -7,6 +7,7 @@ export const getStatusBadge = (status: string) => {
     pending_payment: { color: 'yellow', label: 'Pending' },
     cancelled: { color: 'red', label: 'Cancelled' },
     refunded: { color: 'gray', label: 'Refunded' },
+    expired: { color: 'dark', label: 'Expired' },
   };
 
   const statusInfo = statusMap[status] || { color: 'gray', label: status };

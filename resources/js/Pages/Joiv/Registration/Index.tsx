@@ -42,63 +42,147 @@ export default function JoivRegistrationIndex() {
     full_paper: null as File | null,
   });
 
-  const [isMember] = useState<boolean>(
+  const [memberInfo, setMemberInfo] = useState<{
+    is_member: boolean;
+    package_name?: string;
+    discount_benefits?: Array<{
+      benefit_name: string;
+      benefit_type: string;
+      value_type: string;
+      value: number;
+    }>;
+  } | null>(
     auth?.user?.membership?.status === 'active'
+      ? {
+          is_member: true,
+          package_name: auth.user.membership.package?.name,
+          discount_benefits: auth.user.membership.package?.package_benefits
+            ?.filter((b: any) => b.membership_benefit?.benefit_type === 'discount' || b.value_type === 'percentage')
+            ?.map((b: any) => ({
+              benefit_name: b.membership_benefit?.name || 'Discount',
+              benefit_type: b.membership_benefit?.benefit_type || 'discount',
+              value_type: b.value_type,
+              value: Number(b.value),
+            })) || [],
+        }
+      : null
   );
 
-  const membership = auth?.user?.membership;
-  const packageName = membership?.package?.name || '-';
-  const packageBenefits = membership?.package?.package_benefits || [];
+  // Dynamic membership check by email
+  React.useEffect(() => {
+    if (!data.email_address || !data.email_address.includes('@')) {
+      if (!auth?.user?.membership || auth.user.membership.status !== 'active') {
+        setMemberInfo(null);
+      }
+      return;
+    }
 
+    if (auth?.user?.membership?.status === 'active' && data.email_address === auth.user.membership.email) {
+      return;
+    }
 
-  const calculateFee = (country: string): { fee: number, discountAmount: number, totalFee: number, discountPercentage: number, isIndonesia: boolean } => {
-    if (!country) return { fee: 0, discountAmount: 0, totalFee: 0, discountPercentage: 0, isIndonesia: false };
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/membership/check?email=${encodeURIComponent(data.email_address)}`);
+        const result = await res.json();
+        if (result.is_member) {
+          setMemberInfo({
+            is_member: true,
+            package_name: result.membership?.package_name,
+            discount_benefits: result.membership?.discount_benefits || [],
+          });
+        } else {
+          setMemberInfo(null);
+        }
+      } catch (err) {
+        console.error('Error checking membership:', err);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [data.email_address]);
+
+  const calculateFee = (country: string) => {
+    if (!country) {
+      return {
+        baseFee: 0,
+        memberDiscountAmount: 0,
+        memberDiscountPercent: 0,
+        voucherDiscountAmount: 0,
+        totalDiscount: 0,
+        totalFee: 0,
+        isIndonesia: false,
+      };
+    }
 
     const isIndonesia = country === 'ID';
-    let fee = isIndonesia ? Number(registrationFeeIDR) : Number(registrationFeeUSD);
-    let discountAmount = 0;
-    let totalFee = 0;
-    let discountPercentage = 0;
+    const baseFee = isIndonesia ? Number(registrationFeeIDR) : Number(registrationFeeUSD);
 
-    if (isMember) {
-      discountPercentage = packageBenefits.reduce((maxDiscount: number, benefit: any) => {
-        console.log('Evaluating benefit for discount:', benefit);
-        const isDiscount = benefit.membership_benefit?.benefit_type === 'discount' || benefit.value_type === 'percentage';
-        const value = benefit.value_type === 'percentage' ? benefit.value : 0;
-        return isDiscount ? Math.max(maxDiscount, value) : maxDiscount;
-      }, 0);
+    // 1. Calculate Member Discount
+    let memberDiscountAmount = 0;
+    let memberDiscountPercent = 0;
 
-      if (discountPercentage > 0) {
-        discountAmount = fee * (discountPercentage / 100);
-        totalFee = fee - discountAmount;
-      } else {
-        totalFee = fee;
-      }
-    } else {
-      if (discountVoucher) {
-        if (discountVoucher.type === 'percent') {
-          discountPercentage = Number(discountVoucher.value);
-          discountAmount = fee * (discountPercentage / 100);
-        } else if (discountVoucher.type === 'fixed') {
-          const fixedDiscount = isIndonesia ? Number(discountVoucher.value || 0) : Number(discountVoucher.value_usd || 0);
-          discountAmount = Math.min(fee, fixedDiscount);
+    if (memberInfo?.is_member && memberInfo.discount_benefits && memberInfo.discount_benefits.length > 0) {
+      for (const b of memberInfo.discount_benefits) {
+        if (b.benefit_type === 'free_registration') {
+          memberDiscountAmount = baseFee;
+          memberDiscountPercent = 100;
+          break;
+        } else if (b.benefit_type === 'discount') {
+          if (b.value_type === 'percentage') {
+            const discount = baseFee * (b.value / 100);
+            if (discount > memberDiscountAmount) {
+              memberDiscountAmount = discount;
+              memberDiscountPercent = b.value;
+            }
+          } else if (b.value_type === 'fixed') {
+            const fixedDiscount = b.value;
+            if (fixedDiscount > memberDiscountAmount) {
+              memberDiscountAmount = Math.min(baseFee, fixedDiscount);
+            }
+          }
         }
-        totalFee = fee - discountAmount;
-      } else {
-        totalFee = fee;
       }
     }
 
-    // Ensure total fee is not negative
-    if (totalFee < 0) {
-      totalFee = 0;
+    const feeAfterMember = Math.max(0, baseFee - memberDiscountAmount);
+
+    // 2. Calculate Voucher Discount (applied on fee after member discount)
+    let voucherDiscountAmount = 0;
+    if (discountVoucher) {
+      if (discountVoucher.type === 'percent') {
+        voucherDiscountAmount = feeAfterMember * (Number(discountVoucher.value) / 100);
+      } else if (discountVoucher.type === 'fixed') {
+        const fixedVoucher = isIndonesia ? Number(discountVoucher.value || 0) : Number(discountVoucher.value_usd || discountVoucher.value || 0);
+        voucherDiscountAmount = Math.min(feeAfterMember, fixedVoucher);
+      }
     }
 
-    return { fee, discountAmount, totalFee, discountPercentage, isIndonesia };
+    const totalFee = Math.max(0, feeAfterMember - voucherDiscountAmount);
+    const totalDiscount = memberDiscountAmount + voucherDiscountAmount;
+
+    return {
+      baseFee,
+      memberDiscountAmount,
+      memberDiscountPercent,
+      voucherDiscountAmount,
+      totalDiscount,
+      totalFee,
+      isIndonesia,
+    };
   };
 
-  const { fee, discountAmount, discountPercentage, totalFee, isIndonesia } = calculateFee(data.country);
-  const currency = isIndonesia ? 'IDR' : 'USD';
+  const {
+    baseFee,
+    memberDiscountAmount,
+    memberDiscountPercent,
+    voucherDiscountAmount,
+    totalDiscount,
+    totalFee,
+    isIndonesia,
+  } = calculateFee(data.country);
+
+  const currency = isIndonesia ? 'idr' : 'usd';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -237,56 +321,83 @@ export default function JoivRegistrationIndex() {
                 required
               />
 
-              {!isMember && (
-                <>
-                  <Divider mt="md" label="Claim Voucher to get Discount" />
-                  <Text size="sm" c="dimmed">
-                    If you have a voucher code, enter it below to check for discounts on your registration fee.
+              {memberInfo?.is_member && (
+                <Alert color="blue" icon={<IconInfoCircle size={16} />}>
+                  <Text size="sm">
+                    <strong>Active Member detected:</strong> You are registered as a <strong>{memberInfo.package_name}</strong> member.
+                    {memberDiscountPercent > 0 && ` Your ${memberDiscountPercent}% discount benefit is applied automatically.`}
                   </Text>
-                  <VoucherValidation
-                    value={data.voucher_code}
-                    onChange={(value) => setData('voucher_code', value)}
-                    onValidationChange={(isValid, discountData) => {
-                      console.log('Voucher validation result:', { isValid, discountData });
-                      if (isValid) {
-                        setDiscountVoucher(discountData as { type: string; value: number; value_usd?: number; description?: string } | null);
-                      } else {
-                        setDiscountVoucher(null);
-                      }
-                    }}
-                    transactionType="joiv_article"
-                    email={data.email_address}
-                    isIndonesia={isIndonesia}
-                  />
-                </>
+                </Alert>
               )}
+
+              <Divider mt="md" label="Claim Voucher to get Additional Discount" />
+              <Text size="sm" c="dimmed">
+                If you have a voucher code, enter it below to check for additional discounts on your registration fee.
+              </Text>
+              <VoucherValidation
+                value={data.voucher_code}
+                onChange={(value) => setData('voucher_code', value)}
+                onValidationChange={(isValid, discountData) => {
+                  if (isValid) {
+                    setDiscountVoucher(discountData as { type: string; value: number; value_usd?: number; description?: string } | null);
+                  } else {
+                    setDiscountVoucher(null);
+                  }
+                }}
+                transactionType="joiv_article"
+                email={data.email_address}
+                isIndonesia={isIndonesia}
+              />
 
               <Divider mt="md" />
 
-              {(discountPercentage > 0 && isMember) && (
-                <Alert color='green'>
-                  <Text size="sm">Your <b>{discountPercentage}% discount</b> is applied</Text>
-                </Alert>
-              )}
               <Card withBorder padding="md" bg="blue.0">
-                <Group justify="space-between">
-                  <Text fw={500}>Registration Fee:</Text>
-                  <Stack gap={0} align="flex-end">
-                    {discountAmount > 0 && (
-                      <Text fw={700} size="sm" c="orange" td="line-through">
-                        {formatCurrency(fee, currency.toLowerCase() as 'idr' | 'usd')}
-                      </Text>
-                    )}
-                    <Text fw={700} size="lg" c="blue">
-                      {formatCurrency(totalFee, currency.toLowerCase() as 'idr' | 'usd')}
+                <Stack gap="xs">
+                  <Group justify="space-between">
+                    <Text fw={500}>Base Registration Fee:</Text>
+                    <Text fw={totalDiscount > 0 ? 500 : 700} td={totalDiscount > 0 ? 'line-through' : undefined} c={totalDiscount > 0 ? 'dimmed' : undefined}>
+                      {formatCurrency(baseFee, currency)}
                     </Text>
-                    {discountAmount > 0 && (
-                      <Text size="xs" c="green" fw={500}>
-                        You saved {formatCurrency(discountAmount, currency.toLowerCase() as 'idr' | 'usd')} with your {isMember ? 'membership benefits' : 'voucher'}
+                  </Group>
+
+                  {memberDiscountAmount > 0 && (
+                    <Group justify="space-between">
+                      <Text fw={500} c="indigo">
+                        Member Discount ({memberInfo?.package_name || 'Member'}{memberDiscountPercent > 0 ? ` - ${memberDiscountPercent}%` : ''}):
                       </Text>
-                    )}
-                  </Stack>
-                </Group>
+                      <Text fw={600} c="indigo">
+                        -{formatCurrency(memberDiscountAmount, currency)}
+                      </Text>
+                    </Group>
+                  )}
+
+                  {voucherDiscountAmount > 0 && (
+                    <Group justify="space-between">
+                      <Text fw={500} c="teal">
+                        Voucher Discount ({data.voucher_code}):
+                      </Text>
+                      <Text fw={600} c="teal">
+                        -{formatCurrency(voucherDiscountAmount, currency)}
+                      </Text>
+                    </Group>
+                  )}
+
+                  <Divider my={4} />
+
+                  <Group justify="space-between">
+                    <div>
+                      <Text fw={700} size="md">Total Fee to Pay:</Text>
+                      {totalDiscount > 0 && (
+                        <Text size="xs" c="green" fw={500}>
+                          You saved {formatCurrency(totalDiscount, currency)}
+                        </Text>
+                      )}
+                    </div>
+                    <Text fw={700} size="xl" c="blue">
+                      {formatCurrency(totalFee, currency)}
+                    </Text>
+                  </Group>
+                </Stack>
               </Card>
 
               <Group justify="flex-end" mt="lg">

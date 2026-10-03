@@ -62,7 +62,7 @@ class JoivArticleController extends Controller
             });
         }
 
-        $registrations = $query->with('loaVolume')
+        $registrations = $query->with(['loaVolume', 'voucher', 'benefitUsages.membershipBenefit'])
             ->orderBy('created_at', 'desc')
             ->paginate($perPage)
             ->appends(Request::all());
@@ -90,6 +90,7 @@ class JoivArticleController extends Controller
             'pending' => (clone $summaryQuery)->where('payment_status', 'pending_payment')->count(),
             'cancelled' => (clone $summaryQuery)->where('payment_status', 'cancelled')->count(),
             'refunded' => (clone $summaryQuery)->where('payment_status', 'refunded')->count(),
+            'expired' => (clone $summaryQuery)->where('payment_status', 'expired')->count(),
         ];
 
         // Get unique countries and institutions for filters
@@ -112,7 +113,7 @@ class JoivArticleController extends Controller
      */
     public function show(JoivRegistration $joivArticle): Response
     {
-        $joivArticle->load(['creator', 'updater', 'invoiceHistories']);
+        $joivArticle->load(['creator', 'updater', 'invoiceHistories', 'loaVolume', 'voucher', 'benefitUsages.membershipBenefit']);
 
         return Inertia::render('Admin/JoivArticles/Show', [
             'registration' => $joivArticle,
@@ -176,19 +177,23 @@ class JoivArticleController extends Controller
         return redirect()->back()->with('success', 'LoA information updated successfully. You can now download the letter and it has been sent to the participant.');
     }
 
-    /**
-     * Update payment status
-     */
     public function updatePaymentStatus(JoivRegistration $joivArticle, Request $request): RedirectResponse
     {
         $validated = $request::validate([
-            'payment_status' => 'required|in:pending_payment,paid,cancelled,refunded',
+            'payment_status' => 'required|in:pending_payment,paid,cancelled,refunded,expired',
         ]);
 
         $joivArticle->update([
             'payment_status' => $validated['payment_status'],
             'updated_by' => Auth::id(),
         ]);
+
+        // Send payment confirmation / status update email to participant
+        try {
+            $joivArticle->sendPaymentConfirmationEmail();
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send JOIV payment status email to participant ID ' . $joivArticle->id . ': ' . $e->getMessage());
+        }
 
         return redirect()->back()->with('success', 'Payment status updated successfully.');
     }

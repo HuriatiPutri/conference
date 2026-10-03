@@ -28,6 +28,8 @@ interface Audience {
   institution: string;
   paper_title?: string;
   presentation_type: string;
+  original_fee?: number;
+  discount_amount?: number;
   paid_fee: number;
   payment_status: string;
   payment_method: string;
@@ -122,17 +124,38 @@ export default function PaymentDetails({ conference, audience }: PaymentDetailsP
           </Paper>
 
           <Paper withBorder p="md" style={{ backgroundColor: 'var(--mantine-color-green-0)' }}>
-            <Group justify="space-between" align="center">
-              <div>
-                <Text fw={500} size="lg">Total Amount</Text>
-                <Text size="sm" c="dimmed">
-                  Registration fee for {audience.presentation_type?.replace('_', ' ')}
+            <Stack gap="xs">
+              <Group justify="space-between" align="center">
+                <Text fw={500} size="sm">Registration Fee:</Text>
+                <Text
+                  fw={audience.discount_amount && Number(audience.discount_amount) > 0 ? 400 : 600}
+                  td={audience.discount_amount && Number(audience.discount_amount) > 0 ? 'line-through' : undefined}
+                  c={audience.discount_amount && Number(audience.discount_amount) > 0 ? 'dimmed' : undefined}
+                >
+                  {formatCurrency(audience.original_fee || audience.paid_fee, currency)}
                 </Text>
-              </div>
-              <Text fw={700} size="xl" c="green">
-                {formatCurrency(audience.paid_fee, currency)}
-              </Text>
-            </Group>
+              </Group>
+              {audience.discount_amount && Number(audience.discount_amount) > 0 ? (
+                <Group justify="space-between" align="center">
+                  <Text fw={500} size="sm" c="green">Total Discount:</Text>
+                  <Text fw={600} size="sm" c="green">
+                    -{formatCurrency(audience.discount_amount, currency)}
+                  </Text>
+                </Group>
+              ) : null}
+              <Divider my={2} />
+              <Group justify="space-between" align="center">
+                <div>
+                  <Text fw={700} size="lg">Total Amount to Pay</Text>
+                  <Text size="xs" c="dimmed">
+                    Registration fee for {audience.presentation_type?.replace('_', ' ')}
+                  </Text>
+                </div>
+                <Text fw={700} size="xl" c="green">
+                  {formatCurrency(audience.paid_fee, currency)}
+                </Text>
+              </Group>
+            </Stack>
           </Paper>
 
           <Divider />

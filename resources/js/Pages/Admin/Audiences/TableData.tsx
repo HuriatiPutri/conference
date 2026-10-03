@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Checkbox, Stack, Text } from "@mantine/core";
+import { Badge, Button, Checkbox, Stack, Text } from "@mantine/core";
 import { Audiences } from "../../../types";
 import { BadgeStatus } from "./ExtendComponent";
 import { formatCurrency } from "../../../utils";
@@ -10,6 +10,7 @@ import { ActionButtonExt } from "../Conferences/ExtendComponent";
 type DataProps = {
   _handleRedirectWa: (row: Audiences) => void;
   handlePaymentStatusClick: (row: Audiences) => void;
+  role?: string;
 }
 export const TableData = ({ _handleRedirectWa, handlePaymentStatusClick, role }: DataProps) => [
   {
@@ -84,13 +85,47 @@ export const TableData = ({ _handleRedirectWa, handlePaymentStatusClick, role }:
   {
     label: 'Amount Paid',
     name: 'paid_fee',
-    renderCell: (row: Audiences) => (
-      <Text fz={'sm'} style={{ whiteSpace: 'nowrap' }}>
-        {row.country === 'ID'
-          ? formatCurrency(row.paid_fee, 'idr')
-          : formatCurrency(row.paid_fee, 'usd')}
-      </Text>
-    ),
+    renderCell: (row: Audiences) => {
+      const currency = row.country === 'ID' ? 'idr' : 'usd';
+      const hasVoucher = !!(row.voucher || row.voucher_code);
+      const discountBenefitUsages = row.benefit_usages?.filter(
+        (bu) => (bu.benefit_type === 'discount' || bu.benefit_type === 'free_registration') && Number(bu.consumed_value) > 0
+      ) || [];
+      const originalFee = Number(row.original_fee || (Number(row.paid_fee) + Number(row.discount_amount || 0)));
+      const hasDiscount = originalFee > Number(row.paid_fee) || hasVoucher || discountBenefitUsages.length > 0;
+
+      return (
+        <Stack gap={3}>
+          <Text fw={600} size="sm" style={{ whiteSpace: 'nowrap' }}>
+            {formatCurrency(row.paid_fee, currency)}
+          </Text>
+
+          {hasDiscount && originalFee > Number(row.paid_fee) && (
+            <Text size="xs" c="dimmed" style={{ textDecoration: 'line-through', whiteSpace: 'nowrap' }}>
+              {formatCurrency(originalFee, currency)}
+            </Text>
+          )}
+
+          {hasVoucher && (
+            <Badge size="xs" color="teal" variant="light">
+              Voucher: {row.voucher?.code || row.voucher_code}
+              {row.voucher?.discount_type === 'percentage'
+                ? ` (-${row.voucher.discount_value}%)`
+                : row.voucher?.discount_value
+                ? ` (-${formatCurrency(row.country === 'ID' ? row.voucher.discount_value : (row.voucher.discount_value_usd || row.voucher.discount_value), currency)})`
+                : ''}
+            </Badge>
+          )}
+
+          {discountBenefitUsages.map((bu, idx) => (
+            <Badge key={idx} size="xs" color="indigo" variant="light">
+              {bu.membership_benefit?.name || 'Member Discount'}
+              {bu.consumed_value ? ` (-${formatCurrency(bu.consumed_value, currency)})` : ''}
+            </Badge>
+          ))}
+        </Stack>
+      );
+    },
   },
   {
     label: 'Payment Status',

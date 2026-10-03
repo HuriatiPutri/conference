@@ -7,25 +7,7 @@ import MainLayout from '../../../Layout/MainLayout';
 import { formatCurrency } from '../../../utils';
 import { getStatusBadge } from '../../../Components/BadgeStatus';
 
-interface JoivRegistration {
-  id: number;
-  public_id: string;
-  first_name: string;
-  last_name: string;
-  email_address: string;
-  phone_number: string;
-  institution: string;
-  country: string;
-  paper_id: string | null;
-  paper_title: string;
-  full_paper_path: string | null;
-  payment_status: string;
-  payment_method: string | null;
-  payment_proof_path: string | null;
-  paid_fee: number;
-  created_at: string;
-  updated_at: string;
-}
+import { JoivRegistration } from '../../../types';
 
 function JoivArticleShow() {
   const { registration } = usePage<{
@@ -154,9 +136,61 @@ function JoivArticleShow() {
                     <Text>{getPaymentMethodText(registration.payment_method)}</Text>
                   </Group>
 
+                  {/* Original Price */}
                   <Group justify="space-between">
-                    <Text fw={500}>Amount:</Text>
-                    <Text fw={700} c="blue">{formatCurrency(registration.paid_fee, 'usd')}</Text>
+                    <Text fw={500}>Original Price:</Text>
+                    <Text fw={500}>
+                      {formatCurrency(
+                        Number(registration.original_fee || (Number(registration.paid_fee) + Number(registration.discount_amount || 0))),
+                        registration.country === 'ID' ? 'idr' : 'usd'
+                      )}
+                    </Text>
+                  </Group>
+
+                  {/* Voucher */}
+                  {(registration.voucher || registration.voucher_code) && (
+                    <Group justify="space-between">
+                      <Text fw={500}>Voucher:</Text>
+                      <Group gap="xs">
+                        <Text fw={600} c="teal">{registration.voucher?.code || registration.voucher_code}</Text>
+                        {registration.voucher?.discount_type === 'percentage' && (
+                          <Text size="sm" c="teal">({registration.voucher.discount_value}% OFF)</Text>
+                        )}
+                        {registration.voucher?.discount_type === 'fixed' && (
+                          <Text size="sm" c="teal">
+                            (-{formatCurrency(registration.country === 'ID' ? registration.voucher.discount_value : (registration.voucher.discount_value_usd || registration.voucher.discount_value), registration.country === 'ID' ? 'idr' : 'usd')})
+                          </Text>
+                        )}
+                      </Group>
+                    </Group>
+                  )}
+
+                  {/* Membership Discount (hanya benefit potongan harga) */}
+                  {registration.benefit_usages?.filter(bu => (bu.benefit_type === 'discount' || bu.benefit_type === 'free_registration') && Number(bu.consumed_value) > 0).map((bu, idx) => (
+                    <Group key={idx} justify="space-between">
+                      <Text fw={500}>Member Discount ({bu.membership_benefit?.name || 'Discount'}):</Text>
+                      <Text size="sm" c="indigo" fw={600}>
+                        -{formatCurrency(bu.consumed_value, registration.country === 'ID' ? 'idr' : 'usd')}
+                      </Text>
+                    </Group>
+                  ))}
+
+                  {/* Total Discount jika ada */}
+                  {Number(registration.discount_amount || 0) > 0 && (
+                    <Group justify="space-between">
+                      <Text fw={500}>Total Discount:</Text>
+                      <Text fw={600} c="red">
+                        -{formatCurrency(Number(registration.discount_amount), registration.country === 'ID' ? 'idr' : 'usd')}
+                      </Text>
+                    </Group>
+                  )}
+
+                  {/* Final Paid Fee */}
+                  <Group justify="space-between">
+                    <Text fw={500}>Paid Fee (Final):</Text>
+                    <Text fw={700} c="blue" size="lg">
+                      {formatCurrency(registration.paid_fee, registration.country === 'ID' ? 'idr' : 'usd')}
+                    </Text>
                   </Group>
 
                   <Group justify="space-between">
@@ -205,6 +239,7 @@ function JoivArticleShow() {
                       { value: 'paid', label: 'Paid' },
                       { value: 'cancelled', label: 'Cancelled' },
                       { value: 'refunded', label: 'Refunded' },
+                      { value: 'expired', label: 'Expired' },
                     ]}
                     value={data.payment_status}
                     onChange={(value) => setData('payment_status', value || 'pending_payment')}

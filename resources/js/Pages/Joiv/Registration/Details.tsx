@@ -99,17 +99,38 @@ export default function PaymentDetails({ registration }: PaymentDetailsProps) {
           </Paper>
 
           <Paper withBorder p="md" style={{ backgroundColor: 'var(--mantine-color-green-0)' }}>
-            <Group justify="space-between" align="center">
-              <div>
-                <Text fw={500} size="lg">Total Amount</Text>
-                <Text size="sm" c="dimmed">
-                  Registration fee
+            <Stack gap="xs">
+              <Group justify="space-between" align="center">
+                <Text fw={500} size="sm">Registration Fee:</Text>
+                <Text
+                  fw={registration.discount_amount && Number(registration.discount_amount) > 0 ? 400 : 600}
+                  td={registration.discount_amount && Number(registration.discount_amount) > 0 ? 'line-through' : undefined}
+                  c={registration.discount_amount && Number(registration.discount_amount) > 0 ? 'dimmed' : undefined}
+                >
+                  {formatCurrency(registration.original_fee || registration.paid_fee, currency)}
                 </Text>
-              </div>
-              <Text fw={700} size="xl" c="green">
-                {formatCurrency(registration.paid_fee, currency)}
-              </Text>
-            </Group>
+              </Group>
+              {registration.discount_amount && Number(registration.discount_amount) > 0 ? (
+                <Group justify="space-between" align="center">
+                  <Text fw={500} size="sm" c="green">Discount Applied:</Text>
+                  <Text fw={600} size="sm" c="green">
+                    -{formatCurrency(registration.discount_amount, currency)}
+                  </Text>
+                </Group>
+              ) : null}
+              <Divider my={2} />
+              <Group justify="space-between" align="center">
+                <div>
+                  <Text fw={700} size="lg">Total Amount</Text>
+                  <Text size="xs" c="dimmed">
+                    Amount to pay
+                  </Text>
+                </div>
+                <Text fw={700} size="xl" c="green">
+                  {formatCurrency(registration.paid_fee, currency)}
+                </Text>
+              </Group>
+            </Stack>
           </Paper>
 
           <Divider />

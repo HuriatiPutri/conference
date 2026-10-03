@@ -150,9 +150,49 @@ export const TableData = ({ handleUpdateStatus, handleView, role }: DataProps) =
 
   },
   {
-    label: 'paid_fee',
+    label: 'Paid Fee',
     name: 'paid_fee',
-    renderCell: (row: JoivRegistration) => formatCurrency(row.paid_fee, row.country === 'ID' ? 'idr' : 'usd'),
+    renderCell: (row: JoivRegistration) => {
+      const currency = row.country === 'ID' ? 'idr' : 'usd';
+      const hasVoucher = !!(row.voucher || row.voucher_code);
+      const discountBenefitUsages = row.benefit_usages?.filter(
+        (bu) => (bu.benefit_type === 'discount' || bu.benefit_type === 'free_registration') && Number(bu.consumed_value) > 0
+      ) || [];
+      const originalFee = Number(row.original_fee || (Number(row.paid_fee) + Number(row.discount_amount || 0)));
+      const hasDiscount = originalFee > Number(row.paid_fee) || hasVoucher || discountBenefitUsages.length > 0;
+
+      return (
+        <Stack gap={3}>
+          <Text fw={600} size="sm">
+            {formatCurrency(row.paid_fee, currency)}
+          </Text>
+
+          {hasDiscount && originalFee > Number(row.paid_fee) && (
+            <Text size="xs" c="dimmed" style={{ textDecoration: 'line-through' }}>
+              {formatCurrency(originalFee, currency)}
+            </Text>
+          )}
+
+          {hasVoucher && (
+            <Badge size="xs" color="teal" variant="light">
+              Voucher: {row.voucher?.code || row.voucher_code}
+              {row.voucher?.discount_type === 'percentage'
+                ? ` (-${row.voucher.discount_value}%)`
+                : row.voucher?.discount_value
+                ? ` (-${formatCurrency(row.country === 'ID' ? row.voucher.discount_value : (row.voucher.discount_value_usd || row.voucher.discount_value), currency)})`
+                : ''}
+            </Badge>
+          )}
+
+          {discountBenefitUsages.map((bu, idx) => (
+            <Badge key={idx} size="xs" color="indigo" variant="light">
+              {bu.membership_benefit?.name || 'Member Discount'}
+              {bu.consumed_value ? ` (-${formatCurrency(bu.consumed_value, currency)})` : ''}
+            </Badge>
+          ))}
+        </Stack>
+      );
+    },
   },
   {
     label: 'Actions',

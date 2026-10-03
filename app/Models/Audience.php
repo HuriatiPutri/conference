@@ -26,6 +26,7 @@ class Audience extends Model
         'phone_number',
         'country',
         'presentation_type',
+        'original_fee',
         'paid_fee',
         'discount_amount',
         'payment_status',
@@ -41,7 +42,13 @@ class Audience extends Model
         'loa_volume_id',
     ];
 
-        public function resolveRouteBinding($value, $field = null)
+    protected $casts = [
+        'original_fee' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'paid_fee' => 'decimal:2',
+    ];
+
+    public function resolveRouteBinding($value, $field = null)
     {
         return $this->where($field ?? 'id', $value)->withTrashed()->firstOrFail();
     }
@@ -76,9 +83,14 @@ class Audience extends Model
         return $this->hasMany(ParallelSession::class);
     }
 
-    public function invoice_histories(): HasMany
+    public function invoice_histories()
     {
-        return $this->hasMany(InvoiceHistory::class);
+        return $this->morphMany(InvoiceHistory::class, 'reference');
+    }
+
+    public function invoiceHistories()
+    {
+        return $this->morphMany(InvoiceHistory::class, 'reference');
     }
 
     public function loaVolume()
@@ -99,7 +111,7 @@ class Audience extends Model
             case 'payment_gateway':
                 return 'Payment Gateway';
             default:
-                return 'Metode Pembayaran Tidak Diketahui';
+                return 'Unknow';
         }
     }
 
@@ -113,7 +125,7 @@ class Audience extends Model
             case 'participant_only':
                 return 'Participant Only';
             default:
-                return 'Jenis Peserta Tidak Diketahui';
+                return 'Unknow';
         }
     }
 
@@ -283,7 +295,7 @@ class Audience extends Model
 
         Mail::send('emails.loa_email', $data, function ($message) {
             $message->to($this->email, "{$this->first_name} {$this->last_name}")
-                    ->subject("Letter of Acceptance (LoA) – {$this->conference->initial}");
+                ->subject("Letter of Acceptance (LoA) – {$this->conference->initial}");
 
             try {
                 $loaPdf = $this->generateLoaPdfContent();
@@ -329,13 +341,32 @@ class Audience extends Model
             ];
 
             $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('letters-of-approval.template-clean', compact('data'))
-                      ->setPaper('A4', 'portrait');
+                ->setPaper('A4', 'portrait');
 
             return $pdf->output();
         } catch (\Exception $e) {
             Log::error('Error generating LoA PDF: ' . $e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * Get original fee accessor (with fallback).
+     */
+    public function getOriginalFeeAttribute($value)
+    {
+        if ($value !== null && (float) $value > 0) {
+            return (float) $value;
+        }
+
+        $paid = (float) ($this->attributes['paid_fee'] ?? 0);
+        $discount = (float) ($this->attributes['discount_amount'] ?? 0);
+
+        if ($discount > 0) {
+            return $paid + $discount;
+        }
+
+        return $paid;
     }
 }
 

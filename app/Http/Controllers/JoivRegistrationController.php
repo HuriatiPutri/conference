@@ -87,8 +87,9 @@ class JoivRegistrationController extends Controller
             $voucherDiscount = app(VoucherService::class)->calculateDiscount($voucher, $feeAfterMembershipBenefits, $currency);
         }
 
-        // Calculate final paid fee
+        // Calculate final paid fee and total discount
         $paidFee = max(0, $feeAfterMembershipBenefits - $voucherDiscount);
+        $totalDiscount = max(0, (float) $baseFee - $paidFee);
 
         // Create registration record
         $registration = JoivRegistration::create([
@@ -101,6 +102,8 @@ class JoivRegistrationController extends Controller
             'paper_id' => $validatedData['paper_id'],
             'paper_title' => $validatedData['paper_title'],
             'full_paper_path' => $fullPaperPath,
+            'original_fee' => $baseFee,
+            'discount_amount' => $totalDiscount,
             'paid_fee' => $paidFee,
             'currency' => $currency,
             'public_id' => $publicId,
@@ -127,6 +130,13 @@ class JoivRegistrationController extends Controller
                 'full_paper_path' => $fullPaperPath,
             ]
         ]);
+
+        // Send registration confirmation email with payment link
+        try {
+            $registration->sendRegistrationEmail();
+        } catch (\Exception $e) {
+            \Log::error('Failed to send registration email to JOIV participant ID ' . $registration->id . ': ' . $e->getMessage());
+        }
 
         return redirect()->route('joiv.payment', ['registration' => $registration->public_id]);
     }

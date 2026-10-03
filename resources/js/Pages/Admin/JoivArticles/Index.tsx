@@ -10,35 +10,10 @@ import { route } from 'ziggy-js';
 import { JoivPaymentStatusModal } from '../../../Components/Modals/JoivPaymentStatusModal';
 import MainLayout from '../../../Layout/MainLayout';
 import SummaryModule from '../../../Modules/SummaryModule';
-import { JoivRegistrationFee, PaginatedData } from '../../../types';
+import { JoivRegistration, JoivRegistrationFee, PaginatedData } from '../../../types';
 import CurrentFee from './CurrentFee';
 import { FilterData } from './FilterData';
 import { TableData } from './TableData';
-
-interface JoivRegistration {
-  id: number;
-  public_id: string;
-  first_name: string;
-  last_name: string;
-  email_address: string;
-  phone_number: string;
-  institution: string;
-  country: string;
-  paper_id: string | null;
-  paper_title: string;
-  loa_authors: string | null;
-  loa_volume_id: number | null;
-  loa_approved_at: string | null;
-  loa_volume?: {
-    id: number;
-    volume: string;
-  };
-  full_paper_path: string | null;
-  payment_status: string;
-  payment_method: string | null;
-  paid_fee: number;
-  created_at: string;
-}
 
 function JoivArticleIndex() {
   const { auth, registrations, filters, summary, countries, currentFee } = usePage<{
@@ -56,6 +31,7 @@ function JoivArticleIndex() {
       pending: number;
       cancelled: number;
       refunded: number;
+      expired?: number;
     };
     countries: string[];
     auth: { role: string };
